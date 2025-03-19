@@ -119,6 +119,43 @@ index_array
 
         return str_to_display
 
+    @classmethod
+    def equal(cls, macular_dict_array1, macular_dict_array2):
+        equality = True
+
+        # Equality between the attributes of the two MacularDictArray.
+        if macular_dict_array1.__dict__.keys() == macular_dict_array2.__dict__.keys():
+            # Dictionary attributes search.
+            for attributes in macular_dict_array1.__dict__:
+                # Case of the data and index attributes.
+                if attributes == "_data" or attributes == "_index":
+                    # Equality between the outputs contained in data and index.
+                    equality = equality & (cls.equal_dict_array(macular_dict_array1.__dict__[attributes],
+                                                                macular_dict_array2.__dict__[attributes]))
+                # Case of other attributes.
+                else:
+                    equality = equality & (
+                                macular_dict_array1.__dict__[attributes] == macular_dict_array2.__dict__[attributes])
+        else:
+            equality = False
+
+        return equality
+
+    @classmethod
+    def equal_dict_array(cls, dict_array1, dict_array2):
+        """Function to compare equality between dictionaries of arrays such as the data and index
+        attributes of MacularDictArray"""
+        equality = True
+
+        if dict_array1.keys() == dict_array2.keys():
+            # Equality between all the arrays of both dictionaries.
+            for output in dict_array2:
+                equality = equality & np.array_equal(dict_array1[output], dict_array2[output])
+        else:
+            equality = False
+
+        return equality
+
     def checking_pre_existing_file(self, dict_simulation, dict_preprocessing):
         try:
             print(dict_simulation['path_data'])
