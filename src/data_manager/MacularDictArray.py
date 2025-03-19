@@ -113,7 +113,10 @@ index_array
 
     def __repr__(self):
         """Function to display a MacularDictArray."""
-        str_to_display = f"ID : {self.simulation_id}\nCond : {self.cond}\nSimulation parameters : {self.dict_simulation}\n"
+
+        # Generation of text to be displayed.
+        str_to_display = (f"ID : {self.simulation_id}\nCond : {self.cond}\nSimulation parameters : "
+                          f"{self.dict_simulation}\n")
         str_to_display += f"Preprocessing parameters : {self.dict_preprocessing}\n"
         str_to_display += f"Index : {self.index}\nData : {self.data}"
 
@@ -183,12 +186,12 @@ index_array
                 raise ValueError("Incorrect configuration")
 
     def update_from_simulation_dict(self, dict_simulation):
-        self._simulation_id = dict_simulation["path_data"].split("/")[-1]
         self._dict_simulation = dict_simulation
+        self._simulation_id = dict_simulation["path_data"].split("/")[-1]
         dict_array_constructor = MacularDictArrayConstructor()
         self._cond = dict_array_constructor.name_extraction(dict_simulation["path_data"])
         self._data, self._index = {}, {"default": []}
-        self.set_data_index_dict_array()
+        self.setup_data_index_dict_array()
 
     def update_from_preprocessing_dict(self, dict_preprocessing):
         self._dict_preprocessing = dict_preprocessing
@@ -218,7 +221,7 @@ index_array
         with open(f"{self.dict_simulation['path_data']}.pyb", "wb") as pyb_file:
             pickle.dump(self, pyb_file)
 
-    def set_data_index_dict_array(self):
+    def setup_data_index_dict_array(self):
         self.extract_data_index_from_macular_csv()
         self.concatenate_data_index_dict_array()
         MacularDictArrayConstructor.dict_output_celltype_array_rotation(self.data, (0, 1))
