@@ -55,7 +55,7 @@ class DataPreprocessor:
 
     @staticmethod
     def binning_index(index, bin_size, n_bin):
-        return index[:bin_size * n_bin].reshape((n_bin, bin_size)).mean(axis=-1)
+        return index[:bin_size * n_bin].reshape((n_bin, bin_size)).mean(axis=-1).round(5)
 
     @staticmethod
     def binning_data_array(array, bin_size, n_bin):
