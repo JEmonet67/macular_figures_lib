@@ -27,19 +27,25 @@ class DataPreprocessor:
     @staticmethod
     def vsdi_computing(macular_dict_array_data):
         print("VSDI computing...", end="")
+        # Set the average excitatory and inhibitory voltages.
         exc_mean_voltage = macular_dict_array_data["muVn_CorticalExcitatory"]
         inh_mean_voltage = macular_dict_array_data["muVn_CorticalInhibitory"]
 
+        # Set of initial average voltages.
         initial_exc_mean_voltage = exc_mean_voltage[:, :, 0]
+        initial_inh_mean_voltage = inh_mean_voltage[:, :, 0]
+
+        # Extension of the initial voltages to have the same time dimension as the data to be normalised.
         initial_exc_mean_voltage = np.repeat(initial_exc_mean_voltage[:, :, np.newaxis],
                                              exc_mean_voltage.shape[-1], axis=2)
-        initial_inh_mean_voltage = inh_mean_voltage[:, :, 0]
         initial_inh_mean_voltage = np.repeat(initial_inh_mean_voltage[:, :, np.newaxis],
                                              inh_mean_voltage.shape[-1], axis=2)
 
+        # Calculation of the VSDI of the excitatory and inhibitory populations.
         vsdi_exc = (-(exc_mean_voltage - initial_exc_mean_voltage) / initial_exc_mean_voltage)
         vsdi_inh = (-(inh_mean_voltage - initial_inh_mean_voltage) / initial_inh_mean_voltage)
 
+        # Calculation of the VSDI of the cortical column.
         vsdi = vsdi_exc * 0.8 + vsdi_inh * 0.2
 
         return vsdi
