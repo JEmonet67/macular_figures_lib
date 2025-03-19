@@ -53,19 +53,9 @@ index_array
                 Summary
 
         """
+        print(f"\n{dict_simulation['path_data']}")
         self.checking_pre_existing_file(dict_simulation, dict_preprocessing)
-
-        if self.dict_simulation != dict_simulation or self.dict_preprocessing != dict_preprocessing:
-            print("Simulation and/or Preprocessing dictionary differ...")
-            user_choice = input("Which configuration should be kept ? json or pyb : ").lower()
-            if user_choice == "json":
-                self.update_from_simulation_dict(dict_simulation)
-                self.update_from_preprocessing_dict(dict_preprocessing)
-            elif user_choice == "pyb":
-                pass
-            else:
-                raise ValueError("Incorrect configuration")
-
+        self.checking_difference_file_json(dict_simulation, dict_preprocessing)
         self.save()
 
     @property
@@ -138,6 +128,22 @@ index_array
             print("NO FILE FOR THE UPDATE. Using the dictionaries.")
             self.update_from_simulation_dict(dict_simulation)
             self.update_from_preprocessing_dict(dict_preprocessing)
+
+    def checking_difference_file_json(self, dict_simulation, dict_preprocessing):
+        # Test of the difference between file/json
+        if self.dict_simulation != dict_simulation or self.dict_preprocessing != dict_preprocessing:
+            print("Simulation and/or Preprocessing dictionary differ...")
+            user_choice = input("Which configuration should be kept ? json or pyb : ").lower()
+            # Conservation of the json file.
+            if user_choice == "json":
+                self.update_from_simulation_dict(dict_simulation)
+                self.update_from_preprocessing_dict(dict_preprocessing)
+            # Conservation of the pyb file.
+            elif user_choice == "pyb":
+                pass
+            # Incorrect user response.
+            else:
+                raise ValueError("Incorrect configuration")
 
     def update_from_simulation_dict(self, dict_simulation):
         self._simulation_id = dict_simulation["path_data"].split("/")[-1]
