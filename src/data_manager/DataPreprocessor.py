@@ -79,6 +79,10 @@ class DataPreprocessor:
         return list_index_centered
 
     @staticmethod
+    def spatial_centering(index, n_cells, dx):
+        return index - int(n_cells/2)*dx
+
+    @staticmethod
     def derivative_computing_3d_array(array, index, n=1):
         """Function to compute derivative of a 3D array to be derived. The derivative can depend
         on n_value or to be instant."""

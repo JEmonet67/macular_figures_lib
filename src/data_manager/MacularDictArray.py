@@ -418,6 +418,7 @@ class MacularDictArray:
         self._data, self._index = {}, {"default": []}
         del self._dict_simulation["path_pyb"]
         del self._dict_simulation["path_csv"]
+        self._data, self._index = {}, {"temporal": [], "spatial_x": np.array([]), "spatial_y": np.array([])}
         self.setup_data_index_dict_array()
 
     def update_from_preprocessing_dict(self, dict_preprocessing):
@@ -481,6 +482,8 @@ class MacularDictArray:
         The spatial orientation of the dataset within the numpy array is also different, which requires a
         correction.
         """
+        self.setup_spatial_index("x")
+        self.setup_spatial_index("y")
         self.extract_data_index_from_macular_csv()
         self.concatenate_data_index_dict_array()
         MacularDictArrayConstructor.dict_measurements_array_rotation(self.data, (0, 1))
@@ -545,15 +548,26 @@ class MacularDictArray:
             (self.dict_simulation["n_cells_x"], self.dict_simulation["n_cells_y"]), i_chunk)
         print("Done!")
 
-        self.index["default"] += [dataframe_chunk.index.to_numpy()]
+        self.index["temporal"] += [dataframe_chunk.index.to_numpy()]
 
     def concatenate_data_index_dict_array(self):
         """
         Concatenation of datasets and index separated into chunks within a list.
         """
-        self.index["default"] = np.concatenate(self.index["default"])
+        self.index["temporal"] = np.concatenate(self.index["temporal"])
         for key in self.data:
             self.data[key] = np.concatenate(self.data[key], axis=-1)
+
+    def setup_spatial_index(self, name_axis):
+        """Function calculating the spatial index of the MacularDictArray for a given axis (x or y).
+
+        Parameters
+        ----------
+        name_axis : str
+            Name of the axis for which the index is to be calculated. The two possible values are ‘x’ and ‘y’.
+        """
+        self.index[f"spatial_{name_axis}"] = np.array([i_cell * self.dict_simulation["dx"] for i_cell in
+                                                  range(self.dict_simulation[f"n_cells_{name_axis}"])])
 
     def setup_data_dict_array_preprocessing(self):
         """Implementation of all the procedures for transforming the dataset indicated in the dictionary of
@@ -574,9 +588,10 @@ class MacularDictArray:
         print("Preprocessing : ", end="")
         try:
             if self.dict_preprocessing["binning"]:
-                bin_size, n_bin = DataPreprocessor.computing_binning_parameters(self.index["default"],
+                print(f"Binning {self.dict_preprocessing['binning']}s...", end="")
+                bin_size, n_bin = DataPreprocessor.computing_binning_parameters(self.index["temporal"],
                                                                                 self.dict_preprocessing["binning"])
-                self.index["default"] = DataPreprocessor.binning_index(self.index["default"], bin_size, n_bin)
+                self.index["temporal"] = DataPreprocessor.binning_index(self.index["temporal"], bin_size, n_bin)
                 for measurement in self.data:
                     self.data[measurement] = DataPreprocessor.binning_data_array(self.data[measurement], bin_size,
                                                                                  n_bin)
@@ -591,9 +606,28 @@ class MacularDictArray:
 
         try:
             if self.dict_preprocessing["temporal_centering"]:
-                list_time_bar_center = CoordinateManager.get_list_time_bar_center(self.dict_simulation)
-                self.index[f"centered"] = DataPreprocessor.temporal_centering(
-                    self.index["default"], list_time_bar_center)
+                print("Temporal centering...", end="")
+                list_time_bar_center = CoordinateManager.get_list_time_motion_center(self.dict_simulation)
+                self.index[f"temporal_centered"] = DataPreprocessor.temporal_centering(
+                    self.index["temporal"], list_time_bar_center)
+        except KeyError:
+            pass
+
+        # Spatial centering of x-axis index array.
+        try:
+            if self.dict_preprocessing["spatial_x_centering"]:
+                print("Spatial x centering...", end="")
+                self.index[f"spatial_x_centered"] = DataPreprocessor.spatial_centering(
+                    self.index["spatial_x"], self.dict_simulation["n_cells_x"], self.dict_simulation["dx"])
+        except KeyError:
+            pass
+
+        # Spatial centering of y-axis index array.
+        try:
+            if self.dict_preprocessing["spatial_y_centering"]:
+                print("Spatial y centering...", end="")
+                self.index[f"spatial_y_centered"] = DataPreprocessor.spatial_centering(
+                    self.index["spatial_y"], self.dict_simulation["n_cells_y"], self.dict_simulation["dx"])
         except KeyError:
             pass
 
