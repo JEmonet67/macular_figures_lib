@@ -106,3 +106,8 @@ class DataPreprocessor:
                 df_dxdt[:, :, i_derivate] = df_dxdt[:, :, i_derivate] / (index[i_derivate + n] - index[i_derivate - n])
 
         return df_dxdt
+
+    @staticmethod
+    def crop_edge(array, x_edge, y_edge):
+        """Function to crop parts of an array."""
+        return array[y_edge:array.shape[0]-y_edge, x_edge:array.shape[1]-x_edge, :]
