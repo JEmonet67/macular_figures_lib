@@ -705,6 +705,35 @@ class MacularDictArray:
         except KeyError:
             pass
 
+        # Computation of indexes in milliseconds
+        try:
+            if self.dict_preprocessing["ms"]:
+                indexes = list(self.index.keys())
+                for name_index in indexes:
+                    if type(self.index[name_index]) == list:
+                        self.index[f"{name_index}_ms"] = []
+                        for i_index in range(len(self.index[name_index])):
+                            index_ms = self.index[name_index][i_index].copy() * 1000
+                            self.index[f"{name_index}_ms"] += [index_ms]
+                    else:
+                        self.index[f"{name_index}_ms"] = self.index[name_index] * 1000
+        except KeyError:
+            pass
+
+        # Crop of x and y edges
+        try:
+            if self.dict_preprocessing["edge"]:
+                if type(self.dict_preprocessing["edge"]) == int:
+                    for measurement in self.data:
+                        DataPreprocessor.crop_edge(measurement, self.dict_preprocessing["edge"],
+                                                   self.dict_preprocessing["edge"])
+                elif type(self.dict_preprocessing["edge"]) == tuple:
+                    for measurement in self.data:
+                        DataPreprocessor.crop_edge(measurement, self.dict_preprocessing["edge"][0],
+                                               self.dict_preprocessing["edge"][1])
+        except KeyError:
+            pass
+
         print("Done!")
 
     def copy(self, path_pyb=""):
