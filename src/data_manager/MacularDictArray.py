@@ -127,6 +127,7 @@ class MacularDictArray:
         """
         dict_simulation_copy = dict_simulation.copy()
         dict_preprocessing_copy = dict_preprocessing.copy()
+        dict_preprocessing_copy = self.cleaning_dict_preprocessing(dict_preprocessing_copy)
 
         if "path_pyb" not in dict_simulation_copy:
             dict_simulation_copy["path_pyb"] = dict_simulation_copy["path_csv"].replace("csv", "pyb")
@@ -330,6 +331,32 @@ class MacularDictArray:
             equality = False
 
         return equality
+
+    @staticmethod
+    def cleaning_dict_preprocessing(dict_preprocessing):
+        """Cleans the preprocessing dictionary by removing all keys associated with a value of False.
+
+        The purpose of this cleanup is to take into account that preprocesses missing from the preprocess dictionary are
+        equivalent to preprocesses that are present but with a value set to False.
+
+        Parameters
+        ----------
+        dict_preprocessing : dict
+            Dictionary for configuring the various processes to be implemented on the simulation data.
+
+        Returns
+        ----------
+        dict_preprocessing_cleaned : dict
+            Preprocessing dictionary with no keys associated with False values.
+        """
+        dict_preprocessing_cleaned = dict_preprocessing.copy()
+
+        for preprocess in dict_preprocessing:
+            if not dict_preprocessing[preprocess]:
+                del dict_preprocessing_cleaned[preprocess]
+
+        return dict_preprocessing_cleaned
+
 
     def checking_pre_existing_file(self, dict_simulation, dict_preprocessing):
         """Checks that a pyb file corresponding to the file path in the
@@ -549,6 +576,36 @@ class MacularDictArray:
         print("Done!")
 
         self.index["temporal"] += [dataframe_chunk.index.to_numpy()]
+
+    def transient_computing(self):
+        """Function to calculate the value of the transient to be removed from the data set.
+
+        The transient is taken primarily from the simulation dictionary. If it is not defined there, we get the
+        transient value from the file name. If it is not in either of these, it takes the default value (0). In the
+        simulation dictionary, the transient can be given in seconds or frames. In both cases, to specify, the transient
+        value is supplemented with the letters s (seconds) or f (frames).
+
+        Returns
+        ----------
+        transient : float
+            Returns the value of the calculated transient.
+        """
+        dict_array_constructor = MacularDictArrayConstructor()
+
+        transient = 0
+
+        # Case of the transient obtained in the simulation dictionary.
+        if "transient" in self.dict_simulation:
+            transient = float(self.dict_simulation["transient"][:-1])
+            if self.dict_simulation["transient"][-1] == "f":
+                transient = transient * self.dict_simulation["delta_t"]
+
+        # Case of the transient extracted from the name of the csv file.
+        elif (dict_array_constructor.transient_reg.findall(self.path_csv) and
+              dict_array_constructor.transient_reg.findall(self.path_csv) != [""]):
+            transient = dict_array_constructor.transient_extraction(self.path_csv) * self.dict_simulation["delta_t"]
+
+        return transient
 
     def concatenate_data_index_dict_array(self):
         """
