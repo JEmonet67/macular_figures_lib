@@ -125,20 +125,51 @@ class MacularDictArray:
         dict_preprocessing : dict
             Dictionary for configuring the various processes to be implemented on the simulation dataset.
         """
-        print(f"\n{dict_simulation['path_data']}")
-        self.checking_pre_existing_file(dict_simulation, dict_preprocessing)
-        self.checking_difference_file_json(dict_simulation, dict_preprocessing)
+        dict_simulation_copy = dict_simulation.copy()
+        dict_preprocessing_copy = dict_preprocessing.copy()
+
+        if "path_pyb" not in dict_simulation_copy:
+            dict_simulation_copy["path_pyb"] = dict_simulation_copy["path_csv"].replace("csv", "pyb")
+        print(f"\n{dict_simulation_copy['path_pyb']}")
+
+        self.checking_pre_existing_file(dict_simulation_copy, dict_preprocessing_copy)
         self.save()
 
     @property
-    def simulation_id(self):
-        """Getter for the n_sim attribute."""
-        return self._simulation_id
+    def path_csv(self):
+        """Getter for the path_csv attribute.
 
-    @simulation_id.setter
-    def simulation_id(self, simulation_id):
-        """Setter for the simulation_id attribute."""
-        self._simulation_id = simulation_id
+        The content of the path_csv attribute can be an absolute or relative path. When accessing path_csv, if
+        the path is relative it is transformed into an absolute path before being returned.
+        """
+        if not os.path.isabs(self._path_csv):
+            return os.path.normpath(f"{os.getcwd()}/{self._path_csv}")
+        else:
+            return self._path_csv
+
+    @path_csv.setter
+    def path_csv(self, path_csv):
+        """Setter for the path_csv attribute.
+        """
+        self._path_csv = path_csv
+
+    @property
+    def path_pyb(self):
+        """Getter for the path_pyb attribute.
+
+        The content of the path_pyb attribute can be an absolute or relative path. When accessing path_pyb, if
+        the path is relative it is transformed into an absolute path before being returned.
+        """
+        if not os.path.isabs(self._path_pyb):
+            return os.path.normpath(f"{os.getcwd()}/{self._path_pyb}")
+        else:
+            return self._path_pyb
+
+    @path_pyb.setter
+    def path_pyb(self, path_pyb):
+        """Setter for the path_pyb attribute.
+        """
+        self._path_pyb = path_pyb
 
     @property
     def dict_simulation(self):
@@ -165,7 +196,11 @@ class MacularDictArray:
 
         The modification of dict_preprocessing leads to a recomputation of the data and index attributes.
         """
-        self.update_from_simulation_dict(self.dict_simulation)
+        dict_simulation_with_path = self.dict_simulation.copy()
+        dict_simulation_with_path["path_csv"] = self._path_csv
+        dict_simulation_with_path["path_pyb"] = self._path_pyb
+
+        self.update_from_simulation_dict(dict_simulation_with_path)
         self.update_from_preprocessing_dict(dict_preprocessing)
 
     @property
@@ -227,8 +262,11 @@ class MacularDictArray:
         """
 
         # Generation of text to be displayed.
-        str_to_display = (f"ID : {self.simulation_id}\nCond : {self.cond}\nSimulation parameters : "
-                          f"{self.dict_simulation}\n")
+        str_to_display = f"Path pyb : {'/'.join(self.path_pyb.split('/')[:-1])}\n"
+        str_to_display += f"ID pyb : {self.path_pyb.split('/')[-1]}\n"
+        str_to_display += f"Path csv : {'/'.join(self.path_csv.split('/')[:-1])}\n"
+        str_to_display += f"ID csv : {self.path_csv.split('/')[-1]}\n"
+        str_to_display += f"Simulation parameters : {self.dict_simulation}\n"
         str_to_display += f"Preprocessing parameters : {self.dict_preprocessing}\n"
         str_to_display += f"Index : {self.index}\nData : {self.data}"
 
@@ -266,10 +304,13 @@ class MacularDictArray:
                     # Equality between the outputs contained in data and index.
                     equality = equality & (cls.equal_dict_array(macular_dict_array1.__dict__[attributes],
                                                                 macular_dict_array2.__dict__[attributes]))
+                # Case of the path_pyb attribute, which is ignored.
+                elif attributes == "_path_pyb":
+                    continue
                 # Case of other attributes.
                 else:
                     equality = equality & (
-                                macular_dict_array1.__dict__[attributes] == macular_dict_array2.__dict__[attributes])
+                            macular_dict_array1.__dict__[attributes] == macular_dict_array2.__dict__[attributes])
         else:
             equality = False
 
@@ -321,8 +362,9 @@ class MacularDictArray:
             Dictionary for configuring the various processes to be implemented on the simulation dataset.
         """
         try:
-            print(dict_simulation['path_data'])
-            self.update_from_file(f"{dict_simulation['path_data']}.pyb")
+            # Update MacularDictArray from an existing file if possible.
+            self.update_from_file(dict_simulation['path_pyb'])
+
         except (FileNotFoundError, EOFError):
             print("NO FILE FOR THE UPDATE. Using the dictionaries.")
             self.update_from_simulation_dict(dict_simulation)
@@ -349,8 +391,14 @@ class MacularDictArray:
         ValueError
             The value error is raised in the event of an incorrect response from the user.
         """
-        # Test of the difference between file/json
-        if self.dict_simulation != dict_simulation or self.dict_preprocessing != dict_preprocessing:
+        # Removal of the remaining path_data parameter
+        dict_simulation_no_path = dict_simulation.copy()
+        del dict_simulation_no_path["path_csv"]
+        del dict_simulation_no_path["path_pyb"]
+
+        # Checking difference between each dictionary and path_csv
+        if (self.dict_simulation != dict_simulation_no_path or self.dict_preprocessing != dict_preprocessing
+                or self._path_csv != dict_simulation["path_csv"]):
             print("Simulation and/or Preprocessing dictionary differ...")
             user_choice = input("Which configuration should be kept ? json or pyb : ").lower()
             # Conservation of the json file.
@@ -364,6 +412,9 @@ class MacularDictArray:
             else:
                 raise ValueError("Incorrect configuration")
 
+            return 1
+        return 0
+
     def update_from_simulation_dict(self, dict_simulation):
         """Updating the MacularDictArray from a simulation dictionary (dict_simulation).
 
@@ -375,11 +426,12 @@ class MacularDictArray:
             Dictionary containing all the parameters of the Macular simulations necessary for the processing of the
             MacularDictArray.
         """
+        self._path_pyb = dict_simulation["path_pyb"]
+        self._path_csv = dict_simulation["path_csv"]
         self._dict_simulation = dict_simulation
-        self._simulation_id = dict_simulation["path_data"].split("/")[-1]
-        dict_array_constructor = MacularDictArrayConstructor()
-        self._cond = dict_array_constructor.name_extraction(dict_simulation["path_data"])
         self._data, self._index = {}, {"default": []}
+        del self._dict_simulation["path_pyb"]
+        del self._dict_simulation["path_csv"]
         self.setup_data_index_dict_array()
 
     def update_from_preprocessing_dict(self, dict_preprocessing):
@@ -395,9 +447,9 @@ class MacularDictArray:
         self._dict_preprocessing = dict_preprocessing
         self.setup_data_dict_array_preprocessing()
 
-    def update_from_file(self, path_pyb_file):
-        """Update of a newly created or already existing MacularDictArray object
-        with a MacularDictArray stored in a pyb file.
+    def update_from_file(self, path_pyb):
+        """Update of a newly created or already existing MacularDictArray object with a MacularDictArray stored in a
+        pyb file.
 
         Parameters
         ----------
@@ -405,14 +457,14 @@ class MacularDictArray:
             Path to the pyb file containing the dataset.
         """
         print("FILE UPDATING...", end="")
-        with open(path_pyb_file, "rb") as pyb_file:
+        with open(path_pyb, "rb") as pyb_file:
             tmp_dict = pickle.load(pyb_file).__dict__
         self.__dict__.clear()
         self.__dict__.update(tmp_dict)
         print("UPDATED!")
 
     @classmethod
-    def load(cls, path_pyb_file):
+    def load(cls, path_pyb):
         """Import of a MacularDictArray object that already exists and is stored in a pyb file.
 
         Parameters
@@ -421,7 +473,7 @@ class MacularDictArray:
             Path to the pyb file containing the dataset.
         """
         print("FILE LOADING...", end="")
-        with open(path_pyb_file, "rb") as pyb_file:
+        with open(path_pyb, "rb") as pyb_file:
             macular_dict_array = pickle.load(pyb_file)
         print("LOADED!")
 
@@ -431,7 +483,8 @@ class MacularDictArray:
         """Saving the MacularDictArray in a pyb file whose path and name correspond to that
         present in the attribute of the simulation dictionary.
         """
-        with open(f"{self.dict_simulation['path_data']}.pyb", "wb") as pyb_file:
+        print(1)
+        with open(f"{self.path_pyb}", "wb") as pyb_file:
             pickle.dump(self, pyb_file)
 
     def setup_data_index_dict_array(self):
@@ -453,15 +506,15 @@ class MacularDictArray:
         choice accelerates the reading of large datasets by parallelising them. As a result, the datasets
         and the index obtained after extraction are also subdivided and combined into a list.
         """
-        print("Data/Index extraction.")
-        path_csv_file = f"{self.dict_simulation['path_data']}.csv"
-        chunked_dataframe = pd.read_csv(path_csv_file, chunksize=2000)
+        print("\nData/Index extraction.")
+        # Import of the data contained in the csv into a segmented dataframe.
+        chunked_dataframe = pd.read_csv(self.path_csv, chunksize=2000)
 
         i_chunk = 0
         print("Chunk : ")
         for dataframe_chunk in chunked_dataframe:
             print(f"{i_chunk + 1}, ", end="")
-            self.dataframe_chunk_processing(dataframe_chunk, path_csv_file, i_chunk)
+            self.dataframe_chunk_processing(dataframe_chunk, i_chunk)
             i_chunk += 1
 
     def dataframe_chunk_processing(self, dataframe_chunk, path_csv_file, i_chunk):
@@ -564,3 +617,76 @@ class MacularDictArray:
                     self.data[output], self.index["default"], self.dict_preprocessing["derivative"][output])
 
         print("Done!")
+
+    def copy(self, path_pyb=""):
+        """Function used to copy a MacularDictArray.
+
+        The copy is performed deeply by also copying all the objects included in the MacularDictArray. It is also
+        possible to specify a new .pyb file path to be used in the copy of the MacularDictArray.
+
+        Parameters
+        ----------
+        path_pyb : str
+            Path to file with .pyb extension where to save the MacularDictArray object in a binary file.
+
+        Returns
+        ----------
+        macular_dict_array_copy : MacularDictArray
+            Returns the copy of the current MacularDictArray.
+        """
+        macular_dict_array_copy = copy.deepcopy(self)
+
+        if path_pyb:
+            macular_dict_array_copy.path_pyb = path_pyb
+
+        return macular_dict_array_copy
+
+
+    @classmethod
+    def make_multiple_macular_dict_array(cls, multiple_dicts_simulations, multiple_dicts_preprocessings):
+        """Class method to create several MultiDictArray in succession.
+
+        MultiDictArrays are created from dictionaries of simulation and preprocessing dictionaries. Each specific
+        parameter of the MacularDictArray is associated with conditions (keys) whose names are not important here. In addition, it is
+        possible to create a key named ‘global’ which allows you to group together all the parameters whose values are
+        shared by all the MacularDictArray to be created.
+
+        Parameters
+        ----------
+        multiple_dicts_simulations : dict of dict
+            Dictionary associating simulation condition names with simulation dictionaries. The dictionary may
+            also contain a ‘global’ key containing parameters shared between all
+            simulations. The simulation dictionary cannot be empty or contains only a ‘global’ key. There must be
+            at least one difference, such as the pyb file name.
+
+        multiple_dicts_preprocessings : dict of dict
+            Dictionary associating preprocessing condition names with preprocessing dictionaries. The dictionary may
+            also contain a ‘global’ key containing parameters shared between all preprocessing of MacularDictArray. The
+            preprocessing dictionary can be empty or contains only a ‘global’ key.
+        """
+        for condition in multiple_dicts_simulations:
+            if condition != "global":
+                # Loading simulation dictionary parameters shared between simulations.
+                try:
+                    dict_simulation = multiple_dicts_simulations["global"]
+                except KeyError:
+                    dict_simulation = {}
+
+                # Loading preprocessing dictionary parameters shared between simulations.
+                try:
+                    dict_preprocessing = multiple_dicts_preprocessings["global"]
+                except KeyError:
+                    dict_preprocessing = {}
+
+                # Loading simulation-specific simulation dictionary parameters.
+                for param_simulation in multiple_dicts_simulations[condition]:
+                    dict_simulation[param_simulation] = multiple_dicts_simulations[condition][param_simulation]
+
+                # Loading preprocessing-specific simulation dictionary parameters if there is one.
+                try:
+                    for preprocess in multiple_dicts_preprocessings[condition]:
+                        dict_preprocessing[preprocess] = multiple_dicts_preprocessings[condition][preprocess]
+                except KeyError:
+                    pass
+
+                MacularDictArray(dict_simulation, dict_preprocessing)
