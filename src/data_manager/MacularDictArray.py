@@ -287,7 +287,7 @@ class MacularDictArray:
             for attributes in macular_dict_array1.__dict__:
                 # Case of the data and index attributes.
                 if attributes == "_data" or attributes == "_index":
-                    # Equality between the outputs contained in data and index.
+                    # Equality between the measurements contained in data and index.
                     equality = equality & (cls.equal_dict_array(macular_dict_array1.__dict__[attributes],
                                                                 macular_dict_array2.__dict__[attributes]))
                 # Case of the path_pyb attribute, which is ignored.
@@ -324,8 +324,8 @@ class MacularDictArray:
 
         if dict_array1.keys() == dict_array2.keys():
             # Equality between all the arrays of both dictionaries.
-            for output in dict_array2:
-                equality = equality & np.array_equal(dict_array1[output], dict_array2[output])
+            for measurement in dict_array2:
+                equality = equality & np.array_equal(dict_array1[measurement], dict_array2[measurement])
         else:
             equality = False
 
@@ -483,7 +483,7 @@ class MacularDictArray:
         """
         self.extract_data_index_from_macular_csv()
         self.concatenate_data_index_dict_array()
-        MacularDictArrayConstructor.dict_output_celltype_array_rotation(self.data, (0, 1))
+        MacularDictArrayConstructor.dict_measurements_array_rotation(self.data, (0, 1))
 
     def extract_data_index_from_macular_csv(self):
         """Function allowing the extraction of the dataset and index contained in a Macular csv.
@@ -533,16 +533,15 @@ class MacularDictArray:
             dataframe_chunk, dict_array_constructor.transient_extraction(
                 path_csv_file, self.dict_simulation["delta_t"]), self.dict_simulation["end"])
 
-        list_num, list_output_celltype = dict_array_constructor.get_list_num_output_celltype(path_csv_file)
+        list_num, list_measurements = dict_array_constructor.get_list_num_measurements(self.path_csv)
 
         if self._data == {}:
-            self._data = MacularDictArrayConstructor.init_dict_output_celltype_array(list_output_celltype)
-
-        MacularDictArrayConstructor.extend_dict_output_celltype_array(
+            self._data = MacularDictArrayConstructor.init_dict_measurements_array(list_measurements)
+        MacularDictArrayConstructor.extend_dict_measurements_array(
             self.data, self.dict_simulation["n_cells_x"], self.dict_simulation["n_cells_y"],
             dataframe_chunk.shape[0])
-        MacularDictArrayConstructor.fill_dict_output_celltype_array_chunk(
-            dataframe_chunk, self.data, list_output_celltype, list_num,
+        MacularDictArrayConstructor.fill_dict_measurements_array_chunk(
+            dataframe_chunk, self.data, list_measurements, list_num,
             (self.dict_simulation["n_cells_x"], self.dict_simulation["n_cells_y"]), i_chunk)
         print("Done!")
 
@@ -578,8 +577,9 @@ class MacularDictArray:
                 bin_size, n_bin = DataPreprocessor.computing_binning_parameters(self.index["default"],
                                                                                 self.dict_preprocessing["binning"])
                 self.index["default"] = DataPreprocessor.binning_index(self.index["default"], bin_size, n_bin)
-                for output in self.data:
-                    self.data[output] = DataPreprocessor.binning_data_array(self.data[output], bin_size, n_bin)
+                for measurement in self.data:
+                    self.data[measurement] = DataPreprocessor.binning_data_array(self.data[measurement], bin_size,
+                                                                                 n_bin)
         except KeyError:
             pass
 
@@ -597,10 +597,16 @@ class MacularDictArray:
         except KeyError:
             pass
 
-        if self.dict_preprocessing["derivative"]:
-            for output in self.dict_preprocessing["derivative"]:
-                self.data[f"{output}_derivative"] = DataPreprocessor.derivative_computing_3d_array(
-                    self.data[output], self.index["default"], self.dict_preprocessing["derivative"][output])
+        # Computation of the array of data derivatives.
+        try:
+            if self.dict_preprocessing["derivative"]:
+                print("Derivating...", end="")
+                for measurement in self.dict_preprocessing["derivative"]:
+                    self.data[f"{measurement}_derivative"] = DataPreprocessor.derivative_computing_3d_array(
+                        self.data[measurement], self.index["temporal"],
+                        self.dict_preprocessing["derivative"][measurement])
+        except KeyError:
+            pass
 
         print("Done!")
 
