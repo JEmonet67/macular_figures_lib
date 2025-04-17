@@ -378,6 +378,10 @@ class MacularDictArray:
             # Update MacularDictArray from an existing file if possible.
             self.update_from_file(dict_simulation['path_pyb'])
 
+            # The comparison with json only occurs if the simulation dictionary does not contain only the pyb path.
+            if len(dict_simulation.keys()) > 1:
+                self.checking_difference_file_json(dict_simulation, dict_preprocessing)
+
         except (FileNotFoundError, EOFError):
             print("NO FILE FOR THE UPDATE. Using the dictionaries.")
             self.update_from_simulation_dict(dict_simulation)
