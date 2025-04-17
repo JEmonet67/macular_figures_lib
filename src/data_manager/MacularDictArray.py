@@ -204,20 +204,6 @@ class MacularDictArray:
         self.update_from_preprocessing_dict(dict_preprocessing)
 
     @property
-    def cond(self):
-        """Getter for the cond attribute."""
-        return self._cond
-
-    @cond.setter
-    def cond(self, cond):
-        """Setter for the cond attribute.
-
-        The cond attribute cannot be modified.
-        """
-        print("WARNING : The 'cond' attribute cannot be modified. Instead, please modify the simulation dictionary or "
-              "the simulation id.")
-
-    @property
     def data(self):
         """Getter for the data attribute."""
         return self._data
