@@ -1,4 +1,6 @@
+import os.path
 import pickle
+import copy
 
 import numpy as np
 import pandas as pd
@@ -11,16 +13,16 @@ from src.data_manager.MacularDictArrayConstructor import MacularDictArrayConstru
 class MacularDictArray:
     """Data container of a Macular simulation.
 
-    The creation of a MacularDictArray requires the presence of a csv file containing the dataset of a Macular
-    simulation. It also requires knowledge of some of the parameters of the Macular simulation. The data contained
-    in the csv are extracted, transformed into a numpy array and separated by output pair and cell type. These data
-    also undergo a rotation to correct the difference in rotation between Macular and numpy. The temporal index
-    is also accessed and stored.
+    The creation of a MacularDictArray requires the presence of a csv file containing the measurements of a Macular
+    simulation. It also requires knowledge of some of the parameters of the Macular simulation. The measurement
+    contained in the csv are extracted, transformed into a numpy array and separated by pair of output and cell type.
+    These measurements also undergo a rotation to correct the difference in rotation between Macular and numpy. The
+    temporal index is also accessed and stored.
 
-    Then, the dataset stored in the MacularDictArray undergoes a series of transformations determined by the
-    preprocessing dictionary. The transformations include centering the dataset on the center of the
-    cell receptor fields, binning, calculation of the cortical VSDI signal or a derivative. All these
-    processes are managed by the DataPreprocessor class.
+    Then, the data stored in the MacularDictArray undergoes a series of transformations determined by the
+    preprocessing dictionary. The transformations include centering the data on the center of the cell receptor fields,
+    centering spatial indexes, binning, calculation of the cortical VSDI signal or a derivative. All these processes are
+    managed by the DataPreprocessor class.
 
     Once the MacularDictArray has been created and transformed, the object is saved in a binary form. The location and
     name of the file is the same as that of the ‘.csv’ but with a ‘.pyb’ extension instead. The purpose of this PYB file
@@ -32,71 +34,61 @@ class MacularDictArray:
     function of the MaculaDictArray. In case of a difference, it is up to the user to decide which of the two to
     prioritise. Please note that it will also be up to the user to save the new MacularDictArray.
 
+    The name of the csv file used to create a MacularDictArray can be a unique identifier that respects the following
+    recommended nomenclature :
+    - One or two letters to differentiate between retino-cortical (RC) or retina-only (R) simulations.
+    - Three or more letters to define the name of the Macular code branch (RM: RefactoredMacular)
+    - Several letters defining the type of graph used (dSG: diSymGraph).
+    - Several letters defining the default parameter set (pCP: pConnecParams).
+    - Simulation identification number (0026).
+    - Name, value and unit of the modified parameter which is the subject of a possible comparison in a
+    MultiMacularDictArray (barSpeed6dps).
+    - Number of frames in the transient (0f).
+
+    Example :
+    "RC_RM_dSGpCP0026_barSpeed6dps_0f"
+
     Attributes
     ----------
-    simulation_id : str
-        Unique simulation identifier.
+    path_csv : str
+        The path of the csv file containing the Macular simulation data to be accessed.
 
-        This identifier corresponds to the name of the simulation file. This identifier should preferably follow the
-        nomenclature defined below :
-        - One or two letters to differentiate between retino-cortical (RC) or retina-only (R) simulations.
-        - Three or more letters to define the name of the Macular code branch (RM: RefactoredMacular)
-        - Several letters defining the type of graph used (dSG: diSymGraph).
-        - Several letters defining the default parameter set (pCP: pConnecParams).
-        - Simulation identification number (0026).
-        - Name, value and unit of the modified parameter which is the subject of a possible comparison in a
-        MultiMacularDictArray (barSpeed6dps).
-        - Number of frames in the transient (0f).
+        The path can be absolute or relative.
 
         Example :
-        "RC_RM_dSGpCP0026_barSpeed6dps_0f"
+        "/user/jemonet/macular_figures_lib/example/RC_RM_dSGpCP0026_barSpeed6dps_0f.csv"
+
+    path_pyb : str
+        Path to file with .pyb (python binary) extension where to save the MacularDictArray object in a binary file.
+
+        The path can be absolute or relative. If the .pyb file already exists, it will be possible to import it directly
+        instead of processing the csv file again. The path_pyb attribute can differ between two MacularDictArray because
+        it only affects the save location, not the processing or the data.
+
+        Example :
+        "/user/jemonet/macular_figures_lib/example/RC_RM_dSGpCP0026_barSpeed6dps_0f.pyb"
 
     dict_simulation : dict
         Dictionary containing all the parameters of the Macular simulations necessary for the processing of the
         MacularDictArray.
 
-        The mandatory parameters are:
-        - Path_data: The path to the file containing the Macular simulation data to be accessed but without csv
-        extension.
-        - n_cells_x: Number of cells on the x-axis of the Macular graph used.
-        - n_cells_y: Number of cells on the y-axis of the Macular graph used.
-        - dx: Distance between Macular cells in degrees.
-        - delta_t: Time between two frames of the stimulus.
-        - end: Time at which the dataset is cut in order to reduce it and remove an end transient. If this time
-        is ‘max’ then no cuts will be made.
-        - axis: Axis of the object's movement.
-
-        The optional parameters are:
-        - speed: Speed of the moving object in degrees/s if you want to use temporal centering.
-        - size_bar: Size of the bar if you want to use temporal centering.
-
+        This is a copy of the simulation dictionary used to create the MacularDictArray. This copy differs
+        in that the file paths path_csv and path_pyb are absent. For more information on the other parameters,
+        refer to the description of the __init__ function.
 
     dict_preprocessing : dict
-        Dictionary for configuring the various processes to be implemented on the simulation dataset.
+        Dictionary for configuring the various processes to be implemented on the simulation data.
 
-        The different keys in the processing dictionary are:
-        - ‘temporal_centering’ to center the time index of each cell on the moment when the bar reaches the
-        center of their receptor field. Two possible values: True and False.
-        - ‘binning’ to average the data of the output-cell type over a time interval that is entered as
-        the value associated with the key.
-        - ‘VSDI’ to calculate the voltage sensitive dye imaging signal of the cortex. Two possible values: True and
-        False.
-        - ‘derivative’ to calculate the derivative of the output-cell type. It is possible to add an integer value to
-        integrate over a larger interval. Otherwise, an instantaneous derivative will be obtained.
-
-    cond : str
-        Name, value and unit of the modified parameter which is the subject of a possible comparison in a
-        MultiMacularDictArray.
-
-        The extraction of this parameter requires that the simulation identifier follow the correct nomenclature.
-
-        Example :
-        "barSpeed6dps"
+        This is a copy of the preprocessing dictionary used to create the MacularDictArray. For more information on the
+        different parameters, refer to the description of the __init__ function.
 
     data : dict of numpy.array
-        Dictionary associating outputs and cell types to their 3D data array.
+        Dictionary associating measurements (outputs-cell types) to their 3D data array.
 
-        Each key corresponds to the name of the output linked by an underscore to the name of the cell type.
+        Each key corresponds to the name of the output linked by an underscore to the name of the cell type. This rule
+        primarily concerns measurements made by Macular and may differ for measurements calculated during preprocessing.
+        This is particularly the case for VSDI, which is simply called ‘VSDI’ because it is associated with two
+        different cell types.
 
         Example :
         "FiringRate_GanglionGainControl"
@@ -104,10 +96,17 @@ class MacularDictArray:
     index : dict of numpy.array
         Dictionary containing the 1D arrays of indexes before or after specific transformations.
 
-        The dictionary has a ‘default’ key to which the temporal index is associated as it is present in the
-        dataset of the accessed Macular simulation and after binning. It is possible to add other
-        temporal indexes such as ‘centering’ for centered indexes where the response of each cell is centered on the moment
-        of arrival of the bar in the center of their receptor field.
+        The index dictionary can contain the following index keys :
+        - 'temporal' (default key) in which the temporal index (in second) is associated as it is
+        present in the data of the accessed Macular simulation and after binning
+        - ‘spatial_x’ in degrees (default key) which is the indexes for the x-axis.
+        - ‘spatial_y’ in degrees (default key) which is the indexes for the y-axis.
+        - 'temporal_centered' (optional) for centered time indexes where the response of each cell is centered on the
+        moment of arrival of the bar in the center of their receptor field.
+        - ‘spatial_x_centered’ in degrees (default key) which is the indexes for the x-axis centered on the middle cell
+        of the x-axis of the grid cell.
+        - ‘spatial_y_centered’ in degrees (default key) which is the indexes for the y-axis  centered on the middle cell
+        of the y-axis of the grid cell.
     """
 
     def __init__(self, dict_simulation, dict_preprocessing):
@@ -122,8 +121,50 @@ class MacularDictArray:
         dict_simulation : dict
             Dictionary containing all the parameters of the Macular simulations necessary for the processing of the
             MacularDictArray.
+
+            The mandatory parameters are:
+            - path_csv : The path of the csv file containing the Macular simulation data to be accessed.
+            - n_cells_x: Number of cells on the x-axis of the Macular graph used.
+            - n_cells_y: Number of cells on the y-axis of the Macular graph used.
+            - dx: Distance between Macular cells in degrees.
+            - delta_t: Time between two frames of the stimulus.
+            - end: Time at which the data is cut in order to remove a transient at the beginning and a part at the end.
+            If this time is ‘max’ then no cuts will be made.
+
+            The optional parameters are:
+            - path_pyb : Path to file with .pyb (python binary) extension where to save the MacularDictArray object in a
+            binary file.
+            - speed: Speed of the moving object in degrees/s if you want to use temporal centering.
+            - size_bar: Size of the bar if you want to use temporal centering.
+            - transient: Duration at the start of the simulation to be removed, it can be in number of frames or in
+            seconds.
+            - axis: Axis of the object's movement ("horizontal" or "vertical") if there is one.
+
+            Note : It is possible to enter a simulation dictionary containing only the optional parameter ‘path_pyb’
+            in order to import the pre-existing pyb file without having to specify all the parameter values. In this
+            case, no comparison is made between the json and the pyb file.
+
         dict_preprocessing : dict
-            Dictionary for configuring the various processes to be implemented on the simulation dataset.
+            Dictionary for configuring the various processes to be implemented on the simulation data.
+
+            The different keys in the processing dictionary are:
+            - ‘temporal_centering’ to center the time index of each cell (in second) on the moment when the bar reaches
+            the center of their receptor field. Two possible values: True and False.
+            - 'spatial_x_centering' to center the x-axis index on the center of the grid cell length. Two possible
+            values: True  and False.
+            - 'spatial_y_centering' to center the y-axis index on the center of the grid cell width. Two possible
+            values: True and False.
+            - ‘binning’ to average the data of the measurements over a time interval that is entered as
+            the value associated with the key.
+            - ‘VSDI’ to calculate the voltage sensitive dye imaging signal of the cortex. Two possible values: True and
+            False.
+            - ‘derivative’ to calculate the derivative of the measurements. It is possible to add an integer value
+            to integrate over a larger interval. Otherwise, an instantaneous derivative will be obtained. The
+            ‘derivative’ key is associated with a dictionary that must contain the measurements to be processed as keys
+            and the size of the derivative interval as a value.
+            - 'ms' to add a temporal index expressed in milliseconds. Two possible values: True and False.
+            - 'edge' to crop the edges of arrays of all measurements in MacularDictArray. The value can be a
+            tuple to crop differently in x and y: (x_edge, y_edge) or an int to crop everywhere the same.
         """
         dict_simulation_copy = dict_simulation.copy()
         dict_preprocessing_copy = dict_preprocessing.copy()
@@ -236,15 +277,14 @@ class MacularDictArray:
         """Function to display a MacularDictArray.
 
         Example :
-        ID : RC_RM_dSGpCP0026_barSpeed6dps_head100_npOnes_0f
-        Cond : barSpeed6dps_head100_npOnes
-        Simulation parameters : {'path_data': '/user/jemonet/home/Documents/These/Code/macular_figures_lib/tests/
-        data_test/RC_RM_dSGpCP0026_barSpeed6dps_head100_npOnes_0f', 'n_cells_x': 83, 'n_cells_y': 15, 'dx': 0.225,
-        'delta_t': 0.0167, 'end': 'max', 'speed': 6, 'size_bar': 0.67, 'axis': 'horizontal'}
-        Preprocessing parameters : {'temporal_centering': False, 'binning': False, 'VSDI': False, 'derivative': False}
-        ID : 0026
-        Cond : BarSpeed6dps
-        Index : numpy.array()
+        Path pyb : /home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/data_manager
+        ID pyb : RC_RM_dSGpCP0026_barSpeed6dps_head100_npOnes_0f.pyb
+        Path csv : /home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/data_manager
+        ID csv : RC_RM_dSGpCP0026_barSpeed6dps_head100_npOnes_0f.csv
+        Simulation parameters : {'n_cells_x': 83, 'n_cells_y': 15, 'dx': 0.225, 'delta_t': 0.0167, 'end': 'max',
+        'speed': 6, 'size_bar': 0.67, 'axis': 'horizontal'}
+        Preprocessing parameters : {}
+        Index : {"temporal": numpy.array(), "spatial_x": numpy.array(), "spatial_y": numpy.array()}
         Data : numpy.array()
         """
 
@@ -264,8 +304,8 @@ class MacularDictArray:
         """Checking the equality between two MacularDictArray.
 
         Two MacularDictArray are equal if they have the same attributes and values associated with each of these
-        attributes. The simulation and preprocessing dictionaries stored in the MacularDictArray must also
-        strictly have the same keys and values.
+        attributes. Only the path_pyb attribute can differ between the two MacularDictArrays. The simulation and
+        preprocessing dictionaries stored in the MacularDictArray must also strictly have the same keys and values.
 
         Parameters
         ----------
@@ -277,7 +317,7 @@ class MacularDictArray:
 
         Returns
         ----------
-        Bool
+        equality : Bool
             Returns True if both MacularDictArray are equal and False otherwise.
         """
         equality = True
@@ -318,7 +358,7 @@ class MacularDictArray:
 
         Returns
         ----------
-        Bool
+        equality : Bool
             Returns True if both dict of numpy.array are equal and False otherwise.
         """
         equality = True
@@ -372,7 +412,7 @@ class MacularDictArray:
             MacularDictArray.
 
         dict_preprocessing : dict
-            Dictionary for configuring the various processes to be implemented on the simulation dataset.
+            Dictionary for configuring the various processes to be implemented on the simulation data.
         """
         try:
             # Update MacularDictArray from an existing file if possible.
@@ -383,6 +423,7 @@ class MacularDictArray:
                 self.checking_difference_file_json(dict_simulation, dict_preprocessing)
 
         except (FileNotFoundError, EOFError):
+            # Construction of a MacularDictArray from the dictionaries if no file exists.
             print("NO FILE FOR THE UPDATE. Using the dictionaries.")
             self.update_from_simulation_dict(dict_simulation)
             self.update_from_preprocessing_dict(dict_preprocessing)
@@ -391,8 +432,9 @@ class MacularDictArray:
         """Comparison between the simulation and preprocessing dictionary contained in the imported pyb and that
         specified in the init function of MacularDictArray.
 
-        In case of a difference between the two, it is up to the user to choose between the dictionaries
-        contained in the pyb or the one entered as input for the init function. This is a security measure.
+        The verification is carried out on the elements of the simulation and processing dictionaries, but also on
+        the path of the csv file. In case of a difference between the two, it is up to the user to choose between the
+        dictionaries contained in the pyb or the one entered as input for the init function.
 
         Parameters
         ----------
@@ -401,7 +443,7 @@ class MacularDictArray:
             MacularDictArray.
 
         dict_preprocessing : dict
-            Dictionary for configuring the various processes to be implemented on the simulation dataset.
+            Dictionary for configuring the various processes to be implemented on the simulation data.
 
         Raises
         ----------
@@ -435,7 +477,7 @@ class MacularDictArray:
     def update_from_simulation_dict(self, dict_simulation):
         """Updating the MacularDictArray from a simulation dictionary (dict_simulation).
 
-        The update concerns the value of the attributes dict_simulation, simulation_id, cond, data and index.
+        The update concerns the value of the attributes dict_simulation, simulation_id, data and index.
 
         Parameters
         ----------
@@ -446,7 +488,6 @@ class MacularDictArray:
         self._path_pyb = dict_simulation["path_pyb"]
         self._path_csv = dict_simulation["path_csv"]
         self._dict_simulation = dict_simulation
-        self._data, self._index = {}, {"default": []}
         del self._dict_simulation["path_pyb"]
         del self._dict_simulation["path_csv"]
         self._data, self._index = {}, {"temporal": [], "spatial_x": np.array([]), "spatial_y": np.array([])}
@@ -460,7 +501,7 @@ class MacularDictArray:
         Parameters
         ----------
         dict_preprocessing : dict
-            Dictionary for configuring the various processes to be implemented on the simulation dataset.
+            Dictionary for configuring the various processes to be implemented on the simulation data.
         """
         self._dict_preprocessing = dict_preprocessing
         self.setup_data_dict_array_preprocessing()
@@ -471,8 +512,11 @@ class MacularDictArray:
 
         Parameters
         ----------
-        path_pyb_file : str
-            Path to the pyb file containing the dataset.
+        path_pyb : str
+            Path to file with .pyb extension where a MacularDictArray object is saved in binary.
+
+            The path can be absolute or relative.
+
         """
         print("FILE UPDATING...", end="")
         with open(path_pyb, "rb") as pyb_file:
@@ -487,9 +531,10 @@ class MacularDictArray:
 
         Parameters
         ----------
-        path_pyb_file : str
-            Path to the pyb file containing the dataset.
-        """
+        path_pyb : str
+            Path to file with .pyb extension where a MacularDictArray object is saved in binary.
+
+            The path can be absolute or relative.        """
         print("FILE LOADING...", end="")
         with open(path_pyb, "rb") as pyb_file:
             macular_dict_array = pickle.load(pyb_file)
@@ -498,7 +543,7 @@ class MacularDictArray:
         return macular_dict_array
 
     def save(self):
-        """Saving the MacularDictArray in a pyb file whose path and name correspond to that
+        """Saving the MacularDictArray in a pyb (python binary) file whose path and name correspond to that
         present in the attribute of the simulation dictionary.
         """
         print(1)
@@ -506,11 +551,11 @@ class MacularDictArray:
             pickle.dump(self, pyb_file)
 
     def setup_data_index_dict_array(self):
-        """Setting up output-cell dictionaries type associated with a dataset in the form of numpy.arrays.
+        """Setting up measurements (output-cell type) dictionaries with data in the form of numpy.arrays.
 
-        This process first requires extracting the dataset and its index from the csv of the Macular simulation. This
+        This process first requires extracting the data and its index from the csv of the Macular simulation. This
         extraction is done on pieces of pandas dataframe, which therefore requires concatenation at the end.
-        The spatial orientation of the dataset within the numpy array is also different, which requires a
+        The spatial orientation of the data within the numpy array is also different, which requires a
         correction.
         """
         self.setup_spatial_index("x")
@@ -520,7 +565,7 @@ class MacularDictArray:
         MacularDictArrayConstructor.dict_measurements_array_rotation(self.data, (0, 1))
 
     def extract_data_index_from_macular_csv(self):
-        """Function allowing the extraction of the dataset and index contained in a Macular csv.
+        """Function allowing the extraction of the data and index contained in a Macular csv.
 
         The data contained in the csv Macular is read in chunks of dataframe of 2000 lines. This
         choice accelerates the reading of large datasets by parallelising them. As a result, the datasets
@@ -532,30 +577,28 @@ class MacularDictArray:
 
         i_chunk = 0
         print("Chunk : ")
+        # Processing of data frame segments
         for dataframe_chunk in chunked_dataframe:
             print(f"{i_chunk + 1}, ", end="")
             self.dataframe_chunk_processing(dataframe_chunk, i_chunk)
             i_chunk += 1
 
-    def dataframe_chunk_processing(self, dataframe_chunk, path_csv_file, i_chunk):
+    def dataframe_chunk_processing(self, dataframe_chunk, i_chunk):
         """Restructuring of a chunk of pandas dataframe into numpy array dictionaries for the index and
-        the dataset.
+        the data.
 
         The dataframe is first modified so that its index is the ‘Time’ column and to remove the entire ‘transient’ part
-        of the simulation, if there is one. The dictionary of the data attribute is configured to contain the output-
-        cell type within keys associated with empty lists. A numpy array of size (n_cells_x, n_cells_y, size_chunk) is
-        added to the list and then filled with the data from the chunk dataframe. Finally, the index of the chunk
-        dataframe is added to the empty list associated with the ‘default’ key of the index attribute.
+        of the simulation, if there is one. The dictionary of the data attribute is configured to contain the
+        measurements names within keys associated with empty lists. A numpy array of size (n_cells_x, n_cells_y,
+        size_chunk) is added to the list and then filled with the data from the chunk dataframe. Finally, the index of
+        the chunk dataframe is added to the empty list associated with the ‘temporal’ key of the index attribute.
 
         All these operations are carried out using the MacularDictArrayConstructor class.
 
         Parameters
         ----------
         dataframe_chunk : pandas.io.parsers.readers.TextFileReader
-            Morceau de dataframe de 2000 lignes à restructurer.
-
-        path_csv_file : str
-            Path to the csv file containing the dataset.
+            Portion of a dataframe of 2000 lines to be restructured.
 
         i_chunk : int
             Current chunk number.
@@ -571,6 +614,7 @@ class MacularDictArray:
 
         list_num, list_measurements = dict_array_constructor.get_list_num_measurements(self.path_csv)
 
+        # Implementation of data and index arrays.
         if self._data == {}:
             self._data = MacularDictArrayConstructor.init_dict_measurements_array(list_measurements)
         MacularDictArrayConstructor.extend_dict_measurements_array(
@@ -633,7 +677,7 @@ class MacularDictArray:
                                                   range(self.dict_simulation[f"n_cells_{name_axis}"])])
 
     def setup_data_dict_array_preprocessing(self):
-        """Implementation of all the procedures for transforming the dataset indicated in the dictionary of
+        """Implementation of all the procedures for transforming the data indicated in the dictionary of
         preprocessing.
 
         All these transformation processes are managed by the DataPreprocessor class.
@@ -641,14 +685,25 @@ class MacularDictArray:
         The different processes are:
         - ‘temporal_centering’ to center the time index of each cell on the moment when the bar reaches the
         center of their receptor field. Two possible values: True and False.
-        - ‘binning’ to average the data of the output-cell type over a time interval that is entered as
+        - 'spatial_x_centering' to center the x-axis index on the center of the grid cell length. Two possible values:
+        True and False.
+        - 'spatial_y_centering' to center the y-axis index on the center of the grid cell width. Two possible values:
+        True and False.
+        - ‘binning’ to average the data of the measurements over a time interval that is entered as
         the value associated with the key.
         - ‘VSDI’ to calculate the voltage sensitive dye imaging signal of the cortex. Two possible values: True and
         False.
-        - ‘derivative’ to calculate the derivative of the output-cell type. It is possible to add an integer value to
-        integrate over a larger interval. Otherwise, an instantaneous derivative will be obtained.
+        - ‘derivative’ to calculate the derivative of the measurements. It is possible to add an integer value
+        to integrate over a larger interval. Otherwise, an instantaneous derivative will be obtained. The
+        ‘derivative’ key is associated with a dictionary that must contain the measurements to be processed as keys
+        and the size of the derivative interval as a value.
+        - 'ms' to add a temporal index expressed in milliseconds. Two possible values: True and False.
+        - 'edge' to crop the edges of arrays of all measurements in MacularDictArray. The value can be a
+        tuple to crop differently in x and y: (x_edge, y_edge) or an int to crop everywhere the same.
         """
         print("Preprocessing : ", end="")
+
+        # Binning of data and index arrays.
         try:
             if self.dict_preprocessing["binning"]:
                 print(f"Binning {self.dict_preprocessing['binning']}s...", end="")
@@ -661,12 +716,15 @@ class MacularDictArray:
         except KeyError:
             pass
 
+        # Computation of the array of data VSDI.
         try:
             if self.dict_preprocessing["VSDI"]:
+                print("VSDI computing...", end="")
                 self.data["VSDI"] = DataPreprocessor.vsdi_computing(self.data)
         except KeyError:
             pass
 
+        # Temporal centering of index array.
         try:
             if self.dict_preprocessing["temporal_centering"]:
                 print("Temporal centering...", end="")
@@ -776,6 +834,15 @@ class MacularDictArray:
             also contain a ‘global’ key containing parameters shared between all
             simulations. The simulation dictionary cannot be empty or contains only a ‘global’ key. There must be
             at least one difference, such as the pyb file name.
+
+            Example :
+            {
+                "global": {"n_cells_x": 83, "n_cells_y": 15, "dx": 0.225, "delta_t": 0.0167,
+                            "end": "max", "size_bar": 0.67, "axis": "horizontal"},
+                "barSpeed6dps": {"path_pyb": path/to/file.pyb, "path_csv": path/to/file.csv, "speed":6}
+                "barSpeed30dps": {"path_pyb": path/to/file.pyb, "path_csv": path/to/file.csv, "speed":30}
+            }
+
 
         multiple_dicts_preprocessings : dict of dict
             Dictionary associating preprocessing condition names with preprocessing dictionaries. The dictionary may
