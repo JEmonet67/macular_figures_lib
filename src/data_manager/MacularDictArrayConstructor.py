@@ -51,32 +51,19 @@ MultiDataDictArray
                 Summary
 
         """
-        # Extraction of the name of the conditions present in the name of a file following the nomenclature.
-        self.name_reg = re.compile(".*/[A-Za-z]{1,2}_[A-Za-z]{1,3}_[A-Za-z]{6}[0-9]{4}_(.*)_[0-9]{1,4}f")
-
-        # Extraction of relevant information (up to three) present within a file name following the nomenclature.
-        self.file_reg = re.compile(r"\w{1,5}_\w{1,10}_\w{1,10}\d{4}_([A-Za-z]*)(-?\d*,?\d{0,3})([A-Za-z]*)_?([A-Za-z]*)"
-                                   r"(-?\d*,?\d{0,3})([A-Za-z]*)_?([A-Za-z]*)(-?\d*,?\d{0,3})([A-Za-z]*)_"
-                                   r"(\w{1,5})f.?(\w{0,4})")
+        # Extraction of the value of the number of transient frames in the simulation contained in the MacularDictArray.
+        self.transient_reg = re.compile(".*/[A-Za-z]{1,2}_[A-Za-z]{1,3}_[A-Za-z]{6}[0-9]{4}_.*_([0-9]{0,4}f?)")
 
         # Extraction of the output, the number and the Macular cell in the name of the column of a Macular csv.
         self.output_num_celltype_reg = re.compile(r"(.*?) \(([0-9]{1,5})\) (.*)")
 
     @property
-    def name_reg(self):
-        return self._name_reg
+    def transient_reg(self):
+        return self._transient_reg
 
-    @name_reg.setter
-    def name_reg(self, _name_reg):
-        self._name_reg = _name_reg
-
-    @property
-    def file_reg(self):
-        return self._file_reg
-
-    @file_reg.setter
-    def file_reg(self, file_reg):
-        self._file_reg = file_reg
+    @transient_reg.setter
+    def transient_reg(self, transient_reg):
+        self._transient_reg = transient_reg
 
     @property
     def output_num_celltype_reg(self):
@@ -88,12 +75,15 @@ MultiDataDictArray
 
     @staticmethod
     def crop_dataframe(dataframe, min_index, max_index):
+        # Definition of maximal time.
         if max_index == "max":
             max_index = dataframe.index[-1]
 
         print(f"Dataframe cropping from : {min(max(dataframe.index[0], min_index), max_index)}s "
               f"to {min(dataframe.index[-1], max_index)}s")
+        # Cropping of the dataframe between the minimum and maximum indicated.
         dataframe = dataframe[(dataframe.index >= min_index) & (dataframe.index <= max_index)]
+        # Re-centring of the index.
         dataframe.index = dataframe.index - min_index
 
         return dataframe
@@ -151,19 +141,11 @@ MultiDataDictArray
             type
                 Summary
 
-            Raises
-            ----------
-            type
-                Summary
-
-        """
-        return self.name_reg.findall(path_data)[0]
-
-    def transient_extraction(self, path_csv_file, delta_t):
-        return int(self.file_reg.findall(path_csv_file)[0][-2]) * delta_t
+    def transient_extraction(self, path_csv_file):
+        return int(self.transient_reg.findall(path_csv_file)[0][:-1])
 
     def sort_macular_dataframe(self, dataframe):
-        # Tri de l'index temporel en fonction du type cellulaire puis de l'output et du numéro
+        # Sorting of the temporal index according to cell type, then output and number
         print("Sorting...", end="")
         dataframe = dataframe.sort_index(axis=1, key=lambda x: [
             (self.output_num_celltype_reg.findall(elt)[0][2],
