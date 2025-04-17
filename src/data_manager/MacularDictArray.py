@@ -562,10 +562,12 @@ class MacularDictArray:
         """
         dict_array_constructor = MacularDictArrayConstructor()
 
+        # Transient computing
+        transient = self.transient_computing()
+        # Shaping of the dataframe fragment.
         dataframe_chunk = dataframe_chunk.set_index("Time")
-        dataframe_chunk = MacularDictArrayConstructor.crop_dataframe(
-            dataframe_chunk, dict_array_constructor.transient_extraction(
-                path_csv_file, self.dict_simulation["delta_t"]), self.dict_simulation["end"])
+        dataframe_chunk = MacularDictArrayConstructor.crop_dataframe(dataframe_chunk, transient,
+                                                                     self.dict_simulation["end"])
 
         list_num, list_measurements = dict_array_constructor.get_list_num_measurements(self.path_csv)
 
