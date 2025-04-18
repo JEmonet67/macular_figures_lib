@@ -849,6 +849,8 @@ class MacularDictArray:
             also contain a ‘global’ key containing parameters shared between all preprocessing of MacularDictArray. The
             preprocessing dictionary can be empty or contains only a ‘global’ key.
         """
+        multi_macular_dict_array = {}
+
         for condition in multiple_dicts_simulations:
             if condition != "global":
                 # Loading simulation dictionary parameters shared between simulations.
@@ -874,4 +876,4 @@ class MacularDictArray:
                 except KeyError:
                     pass
 
-                MacularDictArray(dict_simulation, dict_preprocessing)
+                multi_macular_dict_array[condition] = MacularDictArray(dict_simulation, dict_preprocessing)
