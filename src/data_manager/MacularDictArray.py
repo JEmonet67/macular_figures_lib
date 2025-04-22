@@ -840,7 +840,6 @@ class MacularDictArray:
 
         return macular_dict_array_copy
 
-
     @classmethod
     def make_multiple_macular_dict_array(cls, multiple_dicts_simulations, multiple_dicts_preprocessings):
         """Class method to create several MultiDictArray in succession.
@@ -869,9 +868,15 @@ class MacularDictArray:
 
 
         multiple_dicts_preprocessings : dict of dict
-            Dictionary associating preprocessing condition names with preprocessing dictionaries. The dictionary may
-            also contain a ‘global’ key containing parameters shared between all preprocessing of MacularDictArray. The
-            preprocessing dictionary can be empty or contains only a ‘global’ key.
+            Dictionary associating preprocessing condition names with preprocessing dictionaries.
+
+            The dictionary may also contain a ‘global’ key containing parameters shared between all preprocessing of
+            MacularDictArray. The preprocessing dictionary can be empty or contains only a ‘global’ key.
+
+        Returns
+        ----------
+        multi_macular_dict_array : dict of MacularDictArray
+            Returns a dictionary associating specific conditions with MacularDictArray.
         """
         multi_macular_dict_array = {}
 
@@ -901,3 +906,5 @@ class MacularDictArray:
                     pass
 
                 multi_macular_dict_array[condition] = MacularDictArray(dict_simulation, dict_preprocessing)
+
+        return multi_macular_dict_array
