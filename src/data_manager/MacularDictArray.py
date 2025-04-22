@@ -1,6 +1,7 @@
 import os.path
 import pickle
 import copy
+import re
 
 import numpy as np
 import pandas as pd
@@ -108,6 +109,10 @@ class MacularDictArray:
         of the x-axis of the grid cell.
         - ‘spatial_y_centered’ in degrees (default key) which is the indexes for the y-axis  centered on the middle cell
         of the y-axis of the grid cell.
+
+    transient_reg : re.Pattern
+        Regular expression to extract the value of the number of transient frames in the Macular simulation path if
+        the name of the simulation follow the recommended nomenclature.
     """
 
     def __init__(self, dict_simulation, dict_preprocessing):
@@ -167,6 +172,8 @@ class MacularDictArray:
             - 'edge' to crop the edges of arrays of all measurements in MacularDictArray. The value can be a
             tuple to crop differently in x and y: (x_edge, y_edge) or an int to crop everywhere the same.
         """
+        self._transient_reg = re.compile(".*/[A-Za-z]{1,2}_[A-Za-z]{1,3}_[A-Za-z]{6}[0-9]{4}_.*_([0-9]{0,4}f?)")
+
         dict_simulation_copy = dict_simulation.copy()
         dict_preprocessing_copy = dict_preprocessing.copy()
         dict_preprocessing_copy = self.cleaning_dict_preprocessing(dict_preprocessing_copy)
@@ -273,6 +280,16 @@ class MacularDictArray:
         """
         print("WARNING : The 'index' attribute cannot be modified. Instead, please modify the simulation dictionary or "
               "the simulation id.")
+
+    @property
+    def transient_reg(self):
+        """Getter for the transient_reg attribute."""
+        return self._transient_reg
+
+    @transient_reg.setter
+    def transient_reg(self, transient_reg):
+        """Setter for the transient_reg attribute."""
+        self._transient_reg = transient_reg
 
     def __repr__(self):
         """Function to display a MacularDictArray.
@@ -642,7 +659,6 @@ class MacularDictArray:
         transient : float
             Returns the value of the calculated transient.
         """
-        dict_array_constructor = MacularDictArrayConstructor()
 
         transient = 0
 
@@ -653,11 +669,17 @@ class MacularDictArray:
                 transient = transient * self.dict_simulation["delta_t"]
 
         # Case of the transient extracted from the name of the csv file.
-        elif (dict_array_constructor.transient_reg.findall(self.path_csv) and
-              dict_array_constructor.transient_reg.findall(self.path_csv) != [""]):
-            transient = dict_array_constructor.transient_extraction(self.path_csv) * self.dict_simulation["delta_t"]
+        elif (self.transient_reg.findall(self.path_csv) and
+              self.transient_reg.findall(self.path_csv) != [""]):
+            transient = self.transient_extraction() * self.dict_simulation["delta_t"]
 
         return transient
+
+    def transient_extraction(self):
+        """
+        Extracting the transient value from the CSV file path if it follows the nomenclature.
+        """
+        return int(self.transient_reg.findall(self.path_csv)[0][:-1])
 
     def concatenate_data_index_dict_array(self):
         """

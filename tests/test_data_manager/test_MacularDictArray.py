@@ -418,6 +418,16 @@ def test_index_setter():
     assert np.array_equal(macular_dict_array_head100_npones.index["temporal"], index_head100["temporal"])
 
 
+def test_transient_reg_getter():
+    assert macular_dict_array_head100.transient_reg == re.compile(".*/[A-Za-z]{1,2}_[A-Za-z]{1,3}_[A-Za-z]{6}[0-9]{"
+                                                                  "4}_.*_([0-9]{0,4}f?)")
+
+
+def test_transient_reg_setter():
+    macular_dict_array_test.transient_reg = "test"
+    assert macular_dict_array_test.transient_reg == "test"
+
+
 def test_repr():
     # Import of MacularDictArray to be displayed.
     path_pyb_file_head100_npones = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_npOnes_0f"
@@ -566,6 +576,12 @@ def test_transient_computing():
     assert macular_dict_array_test.transient_computing() == 0
 
 
+def test_transient_extraction():
+    macular_dict_array_test._path_csv = macular_dict_array_head100._path_csv.replace("_0f", "_12f")
+    print(macular_dict_array_test._path_csv)
+    assert macular_dict_array_test.transient_extraction() == 12
+
+
 def test_concatenate_data_index_dict_array():
     # Import of the initial MacularDictArray with empty data and index to be filled.
     with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head3000_extractedDataIndex_0f.pyb", "rb") as file:
@@ -686,7 +702,7 @@ def test_copy():
 
 def test_make_multiple_macular_dict_array():
     # Import pyb file for comparison.
-    with open(f"{path_data_test}/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f", "rb") as file:
+    with open(f"{path_data_test}/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb", "rb") as file:
         macular_dict_array_head100_15dps = pickle.load(file)
 
     # Delete the pyb files of the MacularDictArray to be used for the test if they exist.
@@ -701,7 +717,6 @@ def test_make_multiple_macular_dict_array():
         pass
 
     # Case of importing multiple MacularDictArrays with only individual simulation and preprocessing parameters.
-    path_pyb_file_head100_15dps = f"{path_data_test}/RC_RM_dSGpCP0028_barSpeed15dps_head100_0f"
     multiple_dicts_simulations = {"barSpeed6dps": {"path_csv": dict_simulation_head100["path_csv"],
                                                    "path_pyb": dict_simulation_head100["path_pyb"], "n_cells_x": 83,
                                                    "n_cells_y": 15, "dx": 0.225, "delta_t": 0.0167, "end": "max",
