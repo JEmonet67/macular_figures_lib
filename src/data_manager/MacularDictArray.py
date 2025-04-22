@@ -262,9 +262,13 @@ class MacularDictArray:
         """Setter for the data attribute.
 
         The data attribute cannot be modified.
+
+        Raises
+        ----------
+        AttributeError
+            The attribute error is raised if the user try to modify data.
         """
-        print("WARNING : The 'data' attribute cannot be modified. Instead, please modify the simulation dictionary or "
-              "the simulation id.")
+        raise AttributeError("The attribute data can't be modified.")
 
     @property
     def index(self):
@@ -276,9 +280,13 @@ class MacularDictArray:
         """Setter for the index attribute.
 
         The index attribute cannot be modified.
+
+        Raises
+        ----------
+        AttributeError
+            The attribute error is raised if the user try to modify index.
         """
-        print("WARNING : The 'index' attribute cannot be modified. Instead, please modify the simulation dictionary or "
-              "the simulation id.")
+        raise AttributeError("The attribute index can't be modified.")
 
     @property
     def transient_reg(self):

@@ -379,7 +379,11 @@ def test_data_setter():
         macular_dict_array_head100_npones = pickle.load(file)
 
     # Attempt to modify the data attribute
-    macular_dict_array_head100_npones.data = []
+    try:
+        macular_dict_array_head100_npones.data = []
+        assert False
+    except AttributeError:
+        assert True
 
     # Verification that the data attribute has not been modified
     for output in macular_dict_array_head100_npones.data:
@@ -409,8 +413,11 @@ def test_index_setter():
         macular_dict_array_head100_npones = pickle.load(file)
 
     # Attempt to modify the index attribute
-    macular_dict_array_head100_npones.index = {}
-
+    try:
+        macular_dict_array_head100_npones.data = {}
+        assert False
+    except AttributeError:
+        assert True
     with open(f"{path_data_test}/index.pyb", "rb") as file:
         index_head100 = pickle.load(file)
 
