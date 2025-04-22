@@ -34,21 +34,33 @@ class DataPreprocessor:
         initial_exc_mean_voltage = exc_mean_voltage[:, :, 0]
         initial_inh_mean_voltage = inh_mean_voltage[:, :, 0]
 
-        # Extension of the initial voltages to have the same time dimension as the data to be normalised.
-        initial_exc_mean_voltage = np.repeat(initial_exc_mean_voltage[:, :, np.newaxis],
-                                             exc_mean_voltage.shape[-1], axis=2)
-        initial_inh_mean_voltage = np.repeat(initial_inh_mean_voltage[:, :, np.newaxis],
-                                             inh_mean_voltage.shape[-1], axis=2)
-
         # Calculation of the VSDI of the excitatory and inhibitory populations.
-        vsdi_exc = (-(exc_mean_voltage - initial_exc_mean_voltage) / initial_exc_mean_voltage)
-        vsdi_inh = (-(inh_mean_voltage - initial_inh_mean_voltage) / initial_inh_mean_voltage)
+        vsdi_exc = -DataPreprocessor.array_normalization(exc_mean_voltage, initial_exc_mean_voltage)
+        vsdi_inh = -DataPreprocessor.array_normalization(inh_mean_voltage, initial_inh_mean_voltage)
 
         # Calculation of the VSDI of the cortical column.
         vsdi = vsdi_exc * 0.8 + vsdi_inh * 0.2
 
         return vsdi
 
+    @staticmethod
+    def array_normalization(array_to_normalize, baseline):
+        """Normalise an array by a single value, a 2D or 3D array."""
+        if type(baseline) == int:
+            normalized_array = (array_to_normalize - baseline) / baseline
+
+        elif type(baseline) == np.ndarray:
+            if len(array_to_normalize.shape) == 1:
+                normalized_array = (array_to_normalize - float(baseline)) / float(baseline)
+            elif len(array_to_normalize.shape) == 2:
+                normalized_array = (array_to_normalize - baseline) / baseline
+            elif len(array_to_normalize.shape) == 3:
+                # Extension of the initial voltages to have the same time dimension as the data to be normalised.
+                baseline_3d = np.repeat(baseline[:, :, np.newaxis],
+                                                     array_to_normalize.shape[-1], axis=2)
+                normalized_array = (array_to_normalize - baseline_3d) / baseline_3d
+
+        return normalized_array
 
     @staticmethod
     def computing_binning_parameters(index, bin_time):
