@@ -47,7 +47,7 @@ class DataframeHelpers:
 
         """
         # Extraction of the name, value and unit of a condition.
-        self.name_value_unit_cond_reg = re.compile("(^[A-Za-z]+)(-?[\d]{1,4},?\d{0,4})([A-Za-z]+$)")
+        self.name_value_unit_cond_reg = re.compile("(^[A-Za-z]+)(-?[0-9]{1,4},?[0-9]{0,4})([A-Za-z]+$)")
 
     @property
     def name_value_unit_cond_reg(self):
