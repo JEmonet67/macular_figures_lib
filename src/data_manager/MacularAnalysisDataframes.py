@@ -124,25 +124,26 @@ class MacularAnalysisDataframes:
     def multiple_dicts_preprocessings(self):
         """Getter for the multiple_dicts_preprocessings attribute.
         """
-        return self.multiple_dicts_preprocessings
+        return self._multiple_dicts_preprocessings
 
     @multiple_dicts_preprocessings.setter
     def multiple_dicts_preprocessings(self, multiple_dicts_preprocessings):
         """Setter for the multiple_dicts_preprocessings attribute.
         """
-        print("The attribute multiple_dicts_preprocessings can't be modified.")
+        raise AttributeError("The attribute multiple_dicts_preprocessings can't be modified.")
 
     @property
     def multiple_dicts_simulations(self):
         """Getter for the multiple_dicts_simulations attribute.
         """
-        return self.multiple_dicts_simulations
+        return self._multiple_dicts_simulations
 
     @multiple_dicts_simulations.setter
     def multiple_dicts_simulations(self, multiple_dicts_simulations):
         """Setter for the multiple_dicts_simulations attribute.
         """
-        print("The attribute multiple_dicts_simulations can't be modified.")
+        raise AttributeError("The attribute multiple_dicts_simulations can't be modified.")
+
 
     def cleaning_multiple_dicts_analysis(self):
         """Cleans the analysis dictionary by removing all keys associated with a value of False.
