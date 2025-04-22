@@ -791,7 +791,7 @@ class MacularDictArray:
             if self.dict_preprocessing["ms"]:
                 indexes = list(self.index.keys())
                 for name_index in indexes:
-                    if type(self.index[name_index]) == list:
+                    if isinstance(self.index[name_index], list):
                         self.index[f"{name_index}_ms"] = []
                         for i_index in range(len(self.index[name_index])):
                             index_ms = self.index[name_index][i_index].copy() * 1000
@@ -804,14 +804,14 @@ class MacularDictArray:
         # Crop of x and y edges
         try:
             if self.dict_preprocessing["edge"]:
-                if type(self.dict_preprocessing["edge"]) == int:
+                if isinstance(self.dict_preprocessing["edge"], int):
                     for measurement in self.data:
                         DataPreprocessor.crop_edge(measurement, self.dict_preprocessing["edge"],
                                                    self.dict_preprocessing["edge"])
-                elif type(self.dict_preprocessing["edge"]) == tuple:
+                elif isinstance(self.dict_preprocessing["edge"], tuple):
                     for measurement in self.data:
                         DataPreprocessor.crop_edge(measurement, self.dict_preprocessing["edge"][0],
-                                               self.dict_preprocessing["edge"][1])
+                                                   self.dict_preprocessing["edge"][1])
         except KeyError:
             pass
 
