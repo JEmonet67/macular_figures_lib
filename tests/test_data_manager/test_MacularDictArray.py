@@ -1,5 +1,7 @@
 import os
 import pickle
+import re
+
 import numpy as np
 
 from src.data_manager.MacularDictArray import MacularDictArray
@@ -156,35 +158,33 @@ def test_equal_dict_array():
 
 def test_cleaning_dict_preprocessing():
     # Case of an empty dictionary.
-    dict_preprocessing_default_test = {}
-    assert macular_dict_array_head100.cleaning_dict_preprocessing(dict_preprocessing_default_test) == {}
+    macular_dict_array_test._dict_preprocessing = {}
+    assert macular_dict_array_test.cleaning_dict_preprocessing() == {}
 
     # Case of a dictionary without any preprocess.
-    dict_preprocessing_default_test = {"temporal_centering": False, "binning": False, "derivative": False,
+    macular_dict_array_test._dict_preprocessing = {"temporal_centering": False, "binning": False, "derivative": False,
                                        "edge": False}
-    assert macular_dict_array_head100.cleaning_dict_preprocessing(dict_preprocessing_default_test) == {}
+    assert macular_dict_array_test.cleaning_dict_preprocessing() == {}
 
     # Case of True and False values.
-    dict_preprocessing_default_test = {"temporal_centering": True, "binning": False, "derivative": False, "edge": False}
-    assert macular_dict_array_head100.cleaning_dict_preprocessing(dict_preprocessing_default_test) == {
-        "temporal_centering": True}
+    macular_dict_array_test._dict_preprocessing = {"temporal_centering": True, "binning": False, "derivative": False, "edge": False}
+    assert macular_dict_array_test.cleaning_dict_preprocessing() == {"temporal_centering": True}
 
     # Case of a float.
-    dict_preprocessing_default_test = {"temporal_centering": False, "binning": 0.0016, "derivative": False,
+    macular_dict_array_test._dict_preprocessing = {"temporal_centering": False, "binning": 0.0016, "derivative": False,
                                        "edge": False}
-    assert macular_dict_array_head100.cleaning_dict_preprocessing(dict_preprocessing_default_test) == {
-        "binning": 0.0016}
+    assert macular_dict_array_test.cleaning_dict_preprocessing() == {"binning": 0.0016}
 
     # Case of a dictionary
-    dict_preprocessing_default_test = {"temporal_centering": False, "binning": False,
+    macular_dict_array_test._dict_preprocessing = {"temporal_centering": False, "binning": False,
                                        "derivative": {"VSDI": 3, "FiringRate_GanglionGainControl": 1}, "edge": False}
-    assert macular_dict_array_head100.cleaning_dict_preprocessing(dict_preprocessing_default_test) == {
-        "derivative": {"VSDI": 3, "FiringRate_GanglionGainControl": 1}}
+    assert macular_dict_array_test.cleaning_dict_preprocessing() == {"derivative": {
+        "VSDI": 3, "FiringRate_GanglionGainControl": 1}}
 
     # Case of a tuple.
-    dict_preprocessing_default_test = {"temporal_centering": False, "binning": False, "derivative": False,
+    macular_dict_array_test._dict_preprocessing = {"temporal_centering": False, "binning": False, "derivative": False,
                                        "edge": (5, 0)}
-    assert macular_dict_array_head100.cleaning_dict_preprocessing(dict_preprocessing_default_test) == {"edge": (5, 0)}
+    assert macular_dict_array_test.cleaning_dict_preprocessing() == {"edge": (5, 0)}
 
 
 def test_checking_pre_existing_file():
@@ -619,7 +619,8 @@ def test_setup_spatial_index():
     assert np.array_equal(macular_dict_array_test.index["spatial_y"], index_head100["spatial_y"])
 
 
-
+# TODO Refaire le test en mettant tout en même temps pour tester la fonction entière.
+#  Faire aussi le test avec tout sur False et dictionnaire vide.
 def test_setup_data_dict_array_preprocessing():
     # Import of the initial MacularDictArray without any preprocessing.
     with open(path_pyb_file_head3000, "rb") as file:

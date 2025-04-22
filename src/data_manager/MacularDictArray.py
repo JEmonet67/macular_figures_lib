@@ -176,7 +176,6 @@ class MacularDictArray:
 
         dict_simulation_copy = dict_simulation.copy()
         dict_preprocessing_copy = dict_preprocessing.copy()
-        dict_preprocessing_copy = self.cleaning_dict_preprocessing(dict_preprocessing_copy)
 
         if "path_pyb" not in dict_simulation_copy:
             dict_simulation_copy["path_pyb"] = dict_simulation_copy["path_csv"].replace("csv", "pyb")
@@ -390,8 +389,7 @@ class MacularDictArray:
 
         return equality
 
-    @staticmethod
-    def cleaning_dict_preprocessing(dict_preprocessing):
+    def cleaning_dict_preprocessing(self):
         """Cleans the preprocessing dictionary by removing all keys associated with a value of False.
 
         The purpose of this cleanup is to take into account that preprocesses missing from the preprocess dictionary are
@@ -407,14 +405,13 @@ class MacularDictArray:
         dict_preprocessing_cleaned : dict
             Preprocessing dictionary with no keys associated with False values.
         """
-        dict_preprocessing_cleaned = dict_preprocessing.copy()
+        dict_preprocessing_cleaned = self.dict_preprocessing.copy()
 
-        for preprocess in dict_preprocessing:
-            if not dict_preprocessing[preprocess]:
+        for preprocess in self.dict_preprocessing:
+            if not self.dict_preprocessing[preprocess]:
                 del dict_preprocessing_cleaned[preprocess]
 
         return dict_preprocessing_cleaned
-
 
     def checking_pre_existing_file(self, dict_simulation, dict_preprocessing):
         """Checks that a pyb file corresponding to the file path in the
@@ -522,6 +519,8 @@ class MacularDictArray:
             Dictionary for configuring the various processes to be implemented on the simulation data.
         """
         self._dict_preprocessing = dict_preprocessing
+        self._dict_preprocessing = self.cleaning_dict_preprocessing()
+
         self.setup_data_dict_array_preprocessing()
 
     def update_from_file(self, path_pyb):
