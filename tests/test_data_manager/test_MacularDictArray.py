@@ -227,6 +227,14 @@ def test_checking_difference_file_json(monkeypatch):
                                                                   dict_preprocessing_default)
     assert not error
 
+    # Case of incorrect user input.
+    monkeypatch.setattr('builtins.input', lambda _: "No")
+    try:
+        macular_dict_array_test.checking_difference_file_json(dict_simulation_head100, dict_preprocessing_default)
+        assert False
+    except ValueError:
+        assert True
+
     # Cases where the path_pyb differs.
     dict_simulation_head100_30dps_copy = dict_simulation_head100_30dps.copy()
     dict_simulation_head100_30dps_copy["path_pyb"] = "../data_test/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb"
@@ -263,13 +271,6 @@ def test_checking_difference_file_json(monkeypatch):
                                                                   dict_preprocessing_default)
     assert error
     assert MacularDictArray.equal(macular_dict_array_test, macular_dict_array_head100)
-
-    # Case of incorrect user input.
-    monkeypatch.setattr('builtins.input', lambda _: "No")
-    try:
-        MacularDictArray(dict_simulation_head100, dict_preprocessing_default)
-    except ValueError:
-        assert True
 
 
 def test_dict_simulation_getter():
@@ -711,7 +712,7 @@ def test_make_multiple_macular_dict_array():
         os.remove(f"{path_data_test}/{name_file_head100}.pyb")
     except FileNotFoundError:
         pass
-    path_pyb_file_head100_15dps = f"{path_data_test}/RC_RM_dSGpCP0028_barSpeed15dps_head100_0f"
+    path_pyb_file_head100_15dps = f"../data_test/data_manager/RC_RM_dSGpCP0028_barSpeed15dps_head100_0f"
     try:
         os.remove(f"{path_pyb_file_head100_15dps}.pyb")
     except FileNotFoundError:
