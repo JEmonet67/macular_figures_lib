@@ -605,13 +605,14 @@ class MacularDictArray:
             Current chunk number.
         """
         dataframe_chunk_processor = DataframeChunkProcessor()
+        dataframe_helpers = DataframeHelpers()
 
         # Transient computing
         transient = self.transient_computing()
         # Shaping of the dataframe fragment.
         dataframe_chunk = dataframe_chunk.set_index("Time")
-        dataframe_chunk = MacularDictArrayConstructor.crop_dataframe(dataframe_chunk, transient,
-                                                                     self.dict_simulation["end"])
+        dataframe_chunk = dataframe_helpers.crop_dataframe_rows(dataframe_chunk, transient,
+                                                                self.dict_simulation["end"])
 
         list_num, list_measurements = dataframe_chunk_processor.get_list_num_measurements(self.path_csv)
 
@@ -675,7 +676,7 @@ class MacularDictArray:
             Name of the axis for which the index is to be calculated. The two possible values are ‘x’ and ‘y’.
         """
         self.index[f"spatial_{name_axis}"] = np.array([i_cell * self.dict_simulation["dx"] for i_cell in
-                                                  range(self.dict_simulation[f"n_cells_{name_axis}"])])
+                                                       range(self.dict_simulation[f"n_cells_{name_axis}"])])
 
     def setup_data_dict_array_preprocessing(self):
         """Implementation of all the procedures for transforming the data indicated in the dictionary of
