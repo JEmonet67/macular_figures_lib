@@ -1,5 +1,6 @@
 import re
 
+import numpy as np
 import pandas as pd
 
 from src.data_manager.MacularDictArray import MacularDictArray
@@ -77,11 +78,15 @@ class MacularAnalysisDataframes:
 
         # Create and clean the multiple_dicts_analysis attributes.
         self.multiple_dicts_analysis = multiple_dicts_analysis
-        self.multiple_dicts_analysis = self.cleaning_multiple_dicts_analysis()
+        self.multiple_dicts_analysis = self.cleaning_multiple_dicts_features(multiple_dicts_analysis)
 
-        # Add multiple_dicts_simulations and multiple_dicts_preprocessings attributes.
-        self.multiple_dicts_simulations = multiple_dicts_simulations
-        self.multiple_dicts_preprocessings = multiple_dicts_preprocessings
+        # Create and clean the multiple_dicts_simulations attributes.
+        self._multiple_dicts_simulations = multiple_dicts_simulations
+        self._multiple_dicts_simulations = self.cleaning_multiple_dicts_features(multiple_dicts_simulations)
+
+        # Create and clean the multiple_dicts_preprocessings attributes.
+        self._multiple_dicts_preprocessings = multiple_dicts_preprocessings
+        self._multiple_dicts_preprocessings = self.cleaning_multiple_dicts_features(multiple_dicts_preprocessings)
 
 
     @property
@@ -145,27 +150,42 @@ class MacularAnalysisDataframes:
         raise AttributeError("The attribute multiple_dicts_simulations can't be modified.")
 
 
-    def cleaning_multiple_dicts_analysis(self):
+
+    @staticmethod
+    def cleaning_multiple_dicts_features(multiple_dicts_features):
         """Cleans the analysis dictionary by removing all keys associated with a value of False.
 
         The purpose of this cleanup is to take into account that analysis missing from the analysis dictionary are
         equivalent to analysis that are present but with a value set to False.
+
+        Parameters
+        ----------
+        multiple_dicts_features : dict of dict
+            Dictionary associating features dictionaries with dictionnaries of parameters.
+
+            These dictionaries can be illustrated by the dictionaries multiple_dicts_analysis or
+            multiple_dicts_simulations. In the first case, the features are dataframes, each of which can have different
+            analysis parameters. In the second case, the features are the different conditions of the MacularDictArray,
+            each of which has different simulation parameters.
 
         Returns
         ----------
         multiple_dicts_analysis_cleaned : dict of dict
             Multiple analysis dictionary with no keys associated with False values.
         """
-        multiple_dicts_analysis_cleaned = self.multiple_dicts_analysis.copy()
+        # Deep copy of the multiple_dicts_features.
+        multiple_dicts_features_cleaned = {feature: multiple_dicts_features[feature].copy() for feature in
+                                           multiple_dicts_features}
 
-        for dataframe in self.multiple_dicts_analysis:
-            # Removal of false analyses.
-            for analysis in self.multiple_dicts_analysis[dataframe]:
-                if not self.multiple_dicts_analysis[dataframe][analysis]:
-                    del multiple_dicts_analysis_cleaned[dataframe][analysis]
+        for dataframe in multiple_dicts_features:
+            # Removal of false features.
+            for feature in multiple_dicts_features[dataframe]:
+                if not multiple_dicts_features[dataframe][feature]:
+                    del multiple_dicts_features_cleaned[dataframe][feature]
 
-            # Removed empty dataframe analysis dictionaries.
-            if not self.multiple_dicts_analysis[dataframe]:
-                del multiple_dicts_analysis_cleaned[dataframe]
+            # Removed empty features dictionaries.
+            if not multiple_dicts_features_cleaned[dataframe]:
+                del multiple_dicts_features_cleaned[dataframe]
 
-        return multiple_dicts_analysis_cleaned
+        return multiple_dicts_features_cleaned
+

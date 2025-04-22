@@ -892,13 +892,13 @@ class MacularDictArray:
             if condition != "global":
                 # Loading simulation dictionary parameters shared between simulations.
                 try:
-                    dict_simulation = multiple_dicts_simulations["global"]
+                    dict_simulation = multiple_dicts_simulations["global"].copy()
                 except KeyError:
                     dict_simulation = {}
 
                 # Loading preprocessing dictionary parameters shared between simulations.
                 try:
-                    dict_preprocessing = multiple_dicts_preprocessings["global"]
+                    dict_preprocessing = multiple_dicts_preprocessings["global"].copy()
                 except KeyError:
                     dict_preprocessing = {}
 
