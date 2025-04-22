@@ -7,7 +7,8 @@ import pandas as pd
 
 from src.data_manager.CoordinateManager import CoordinateManager
 from src.data_manager.DataPreprocessor import DataPreprocessor
-from src.data_manager.MacularDictArrayConstructor import MacularDictArrayConstructor
+from src.data_manager.DataframeHelpers import DataframeHelpers
+from src.data_manager.DataframeChunkProcessor import DataframeChunkProcessor
 
 
 class MacularDictArray:
@@ -562,7 +563,7 @@ class MacularDictArray:
         self.setup_spatial_index("y")
         self.extract_data_index_from_macular_csv()
         self.concatenate_data_index_dict_array()
-        MacularDictArrayConstructor.dict_measurements_array_rotation(self.data, (0, 1))
+        DataframeChunkProcessor.dict_measurements_array_rotation(self.data, (0, 1))
 
     def extract_data_index_from_macular_csv(self):
         """Function allowing the extraction of the data and index contained in a Macular csv.
@@ -593,7 +594,7 @@ class MacularDictArray:
         size_chunk) is added to the list and then filled with the data from the chunk dataframe. Finally, the index of
         the chunk dataframe is added to the empty list associated with the ‘temporal’ key of the index attribute.
 
-        All these operations are carried out using the MacularDictArrayConstructor class.
+        All these operations are carried out using the DataframeChunkProcessor class.
 
         Parameters
         ----------
@@ -603,7 +604,7 @@ class MacularDictArray:
         i_chunk : int
             Current chunk number.
         """
-        dict_array_constructor = MacularDictArrayConstructor()
+        dataframe_chunk_processor = DataframeChunkProcessor()
 
         # Transient computing
         transient = self.transient_computing()
@@ -612,15 +613,15 @@ class MacularDictArray:
         dataframe_chunk = MacularDictArrayConstructor.crop_dataframe(dataframe_chunk, transient,
                                                                      self.dict_simulation["end"])
 
-        list_num, list_measurements = dict_array_constructor.get_list_num_measurements(self.path_csv)
+        list_num, list_measurements = dataframe_chunk_processor.get_list_num_measurements(self.path_csv)
 
         # Implementation of data and index arrays.
         if self._data == {}:
-            self._data = MacularDictArrayConstructor.init_dict_measurements_array(list_measurements)
-        MacularDictArrayConstructor.extend_dict_measurements_array(
+            self._data = DataframeChunkProcessor.init_dict_measurements_array(list_measurements)
+        DataframeChunkProcessor.extend_dict_measurements_array(
             self.data, self.dict_simulation["n_cells_x"], self.dict_simulation["n_cells_y"],
             dataframe_chunk.shape[0])
-        MacularDictArrayConstructor.fill_dict_measurements_array_chunk(
+        DataframeChunkProcessor.fill_dict_measurements_array_chunk(
             dataframe_chunk, self.data, list_measurements, list_num,
             (self.dict_simulation["n_cells_x"], self.dict_simulation["n_cells_y"]), i_chunk)
         print("Done!")
@@ -830,10 +831,11 @@ class MacularDictArray:
         Parameters
         ----------
         multiple_dicts_simulations : dict of dict
-            Dictionary associating simulation condition names with simulation dictionaries. The dictionary may
-            also contain a ‘global’ key containing parameters shared between all
-            simulations. The simulation dictionary cannot be empty or contains only a ‘global’ key. There must be
-            at least one difference, such as the pyb file name.
+            Dictionary associating simulation condition names with simulation dictionaries.
+
+            The dictionary may  also contain a ‘global’ key containing parameters shared between all simulations. The
+            simulation dictionary cannot be empty or contains only a ‘global’ key. There must be at least one
+            difference, such as the pyb file name.
 
             Example :
             {
