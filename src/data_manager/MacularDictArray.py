@@ -571,7 +571,6 @@ class MacularDictArray:
         """Saving the MacularDictArray in a pyb (python binary) file whose path and name correspond to that
         present in the attribute of the simulation dictionary.
         """
-        print(1)
         with open(f"{self.path_pyb}", "wb") as pyb_file:
             pickle.dump(self, pyb_file)
 
