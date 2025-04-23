@@ -76,12 +76,9 @@ def test_init():
 
 def test_dict_paths_pyb_getter():
     assert macular_analysis_dataframes_barSpeed_head100.dict_paths_pyb == {
-        "barSpeed6dps": "/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/data_manager/"
-                        "RC_RM_dSGpCP0026_barSpeed6dps_head100_copy_0f.pyb",
-        "barSpeed15dps": "/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/data_manager/"
-                         "RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb",
-        "barSpeed30dps": "/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/data_manager/"
-                         "RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb"}
+        "barSpeed6dps": f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_copy_0f.pyb",
+        "barSpeed15dps": f"{path_data_test}/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb",
+        "barSpeed30dps": f"{path_data_test}/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb"}
 
 
 def test_dict_paths_pyb_setter():
