@@ -123,7 +123,7 @@ class MacularAnalysisDataframes:
     def multiple_dicts_analysis(self, multiple_dicts_analysis):
         """Setter for the multiple_dicts_analysis attribute.
         """
-        self._multiple_dicts_analysis = multiple_dicts_analysis
+        self._multiple_dicts_analysis = self.cleaning_multiple_dicts_features(multiple_dicts_analysis)
 
     @property
     def multiple_dicts_preprocessings(self):
