@@ -159,32 +159,32 @@ def test_equal_dict_array():
 def test_cleaning_dict_preprocessing():
     # Case of an empty dictionary.
     macular_dict_array_test._dict_preprocessing = {}
-    assert macular_dict_array_test.cleaning_dict_preprocessing() == {}
+    assert macular_dict_array_test.cleaning_dict_preprocessing(macular_dict_array_test.dict_preprocessing) == {}
 
     # Case of a dictionary without any preprocess.
     macular_dict_array_test._dict_preprocessing = {"temporal_centering": False, "binning": False, "derivative": False,
                                        "edge": False}
-    assert macular_dict_array_test.cleaning_dict_preprocessing() == {}
+    assert macular_dict_array_test.cleaning_dict_preprocessing(macular_dict_array_test.dict_preprocessing) == {}
 
     # Case of True and False values.
     macular_dict_array_test._dict_preprocessing = {"temporal_centering": True, "binning": False, "derivative": False, "edge": False}
-    assert macular_dict_array_test.cleaning_dict_preprocessing() == {"temporal_centering": True}
+    assert macular_dict_array_test.cleaning_dict_preprocessing(macular_dict_array_test.dict_preprocessing) == {"temporal_centering": True}
 
     # Case of a float.
     macular_dict_array_test._dict_preprocessing = {"temporal_centering": False, "binning": 0.0016, "derivative": False,
                                        "edge": False}
-    assert macular_dict_array_test.cleaning_dict_preprocessing() == {"binning": 0.0016}
+    assert macular_dict_array_test.cleaning_dict_preprocessing(macular_dict_array_test.dict_preprocessing) == {"binning": 0.0016}
 
     # Case of a dictionary
     macular_dict_array_test._dict_preprocessing = {"temporal_centering": False, "binning": False,
                                        "derivative": {"VSDI": 3, "FiringRate_GanglionGainControl": 1}, "edge": False}
-    assert macular_dict_array_test.cleaning_dict_preprocessing() == {"derivative": {
+    assert macular_dict_array_test.cleaning_dict_preprocessing(macular_dict_array_test.dict_preprocessing) == {"derivative": {
         "VSDI": 3, "FiringRate_GanglionGainControl": 1}}
 
     # Case of a tuple.
     macular_dict_array_test._dict_preprocessing = {"temporal_centering": False, "binning": False, "derivative": False,
                                        "edge": (5, 0)}
-    assert macular_dict_array_test.cleaning_dict_preprocessing() == {"edge": (5, 0)}
+    assert macular_dict_array_test.cleaning_dict_preprocessing(macular_dict_array_test.dict_preprocessing) == {"edge": (5, 0)}
 
 
 def test_checking_pre_existing_file():
