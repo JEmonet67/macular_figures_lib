@@ -627,8 +627,6 @@ def test_setup_spatial_index():
     assert np.array_equal(macular_dict_array_test.index["spatial_y"], index_head100["spatial_y"])
 
 
-# TODO Refaire le test en mettant tout en même temps pour tester la fonction entière.
-#  Faire aussi le test avec tout sur False et dictionnaire vide.
 def test_setup_data_dict_array_preprocessing():
     # Import of the initial MacularDictArray without any preprocessing.
     with open(path_pyb_file_head3000, "rb") as file:
@@ -639,9 +637,14 @@ def test_setup_data_dict_array_preprocessing():
         macular_dict_array_default_head3000 = pickle.load(file)
 
     # Modification of the preprocessing dictionary.
-    macular_dict_array_test.dict_preprocessing["binning"] = 0.0016
     macular_dict_array_test.dict_preprocessing["temporal_centering"] = True
+    macular_dict_array_test.dict_preprocessing["spatial_x_centering"] = True
+    macular_dict_array_test.dict_preprocessing["spatial_y_centering"] = True
+    macular_dict_array_test.dict_preprocessing["binning"] = 0.0016
     macular_dict_array_test.dict_preprocessing["VSDI"] = True
+    macular_dict_array_test.dict_preprocessing["derivative"] = {"VSDI": 31, "FiringRate_GanglionGainControl": 31}
+    macular_dict_array_test.dict_preprocessing["ms"] = True
+    macular_dict_array_test.dict_preprocessing["edge"] = (5, 0)
 
     # Use setup data dict array preprocessing to test it.
     macular_dict_array_test.setup_data_dict_array_preprocessing()
@@ -650,27 +653,15 @@ def test_setup_data_dict_array_preprocessing():
     assert MacularDictArray.equal_dict_array(macular_dict_array_default_head3000.data, macular_dict_array_test.data)
     assert MacularDictArray.equal_dict_array(macular_dict_array_default_head3000.index, macular_dict_array_test.index)
 
-    # Case of the use of millisecond indexes in the preprocessing dictionary.
-    macular_dict_array_test.dict_preprocessing["ms"] = True
-    macular_dict_array_test.setup_data_dict_array_preprocessing()
-    assert np.array_equal(macular_dict_array_test.index["temporal_ms"],
-                          macular_dict_array_test.index["temporal"] * 1000)
-    for index_ms, index_s in zip(macular_dict_array_test.index["temporal_centered_ms"],
-                                 macular_dict_array_test.index["temporal_centered"]):
-        assert np.array_equal(index_s * 1000, index_ms)
+    # Modification of the preprocessing dictionary to make it empty.
+    macular_dict_array_test.dict_preprocessing = {}
 
-    # Case of the use of millisecond indexes in the preprocessing dictionary.
-    with open(f"{path_data_test}/index_spatial_centered.pyb", "rb") as file:
-        index_spatial_centered = pickle.load(file)
-
-    # Case with spatial index centred in x and y.
-    macular_dict_array_test.dict_preprocessing["spatial_x_centering"] = True
-    macular_dict_array_test.dict_preprocessing["spatial_y_centering"] = True
+    # Use setup data dict array preprocessing to test it with empty preprocessing dictionary.
     macular_dict_array_test.setup_data_dict_array_preprocessing()
-    assert np.array_equal(macular_dict_array_test.index["spatial_x_centered"],
-                          index_spatial_centered["spatial_x_centered"])
-    assert np.array_equal(macular_dict_array_test.index["spatial_y_centered"],
-                          index_spatial_centered["spatial_y_centered"])
+
+    # Checking equality between indexes and data with empty preprocessing dictionary..
+    assert MacularDictArray.equal_dict_array(macular_dict_array_head3000.data, macular_dict_array_test.data)
+    assert MacularDictArray.equal_dict_array(macular_dict_array_head3000.index, macular_dict_array_test.index)
 
 
 def test_copy():
