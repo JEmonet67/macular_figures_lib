@@ -813,12 +813,14 @@ class MacularDictArray:
             if self.dict_preprocessing["edge"]:
                 if isinstance(self.dict_preprocessing["edge"], int):
                     for measurement in self.data:
-                        DataPreprocessor.crop_edge(measurement, self.dict_preprocessing["edge"],
-                                                   self.dict_preprocessing["edge"])
+                        self.data[measurement] = DataPreprocessor.crop_edge(self.data[measurement],
+                                                                            self.dict_preprocessing["edge"],
+                                                                            self.dict_preprocessing["edge"])
                 elif isinstance(self.dict_preprocessing["edge"], tuple):
                     for measurement in self.data:
-                        DataPreprocessor.crop_edge(measurement, self.dict_preprocessing["edge"][0],
-                                                   self.dict_preprocessing["edge"][1])
+                        self.data[measurement] = DataPreprocessor.crop_edge(self.data[measurement],
+                                                                            self.dict_preprocessing["edge"][0],
+                                                                            self.dict_preprocessing["edge"][1])
         except KeyError:
             pass
 
