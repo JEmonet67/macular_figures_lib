@@ -109,6 +109,18 @@ class MacularDictArray:
         of the x-axis of the grid cell.
         - ‘spatial_y_centered’ in degrees (default key) which is the indexes for the y-axis  centered on the middle cell
         of the y-axis of the grid cell.
+        - 'temporal_ms' is the temporal index in milliseconds.
+        - 'spatial_x_mm_retina' is the spatial x-axis index in millimeters of retina.
+        - 'spatial_y_mm_retina' is the spatial y-axis index in millimeters of retina.
+        - 'spatial_x_mm_cortex' is the spatial x-axis index in millimeters of cortex.
+        - 'spatial_y_mm_cortex' is the spatial y-axis index in millimeters of cortex.
+        - 'temporal_centered_ms' is the centered temporal index in milliseconds.
+        - 'spatial_x_centered_mm_retina' is the centered spatial x-axis index in millimeters of retina.
+        - 'spatial_y_centered_mm_retina' is the centered spatial y-axis index in millimeters of retina.
+        - 'spatial_x_centered_mm_cortex' is the centered spatial x-axis index in millimeters of cortex.
+        - 'spatial_y_centered_mm_cortex' is the centered spatial y-axis index in millimeters of cortex.
+
+        It is possible to add any new index based on conversion of temporal or spatial indexes.
 
     transient_reg : re.Pattern
         Regular expression to extract the value of the number of transient frames in the Macular simulation path if
@@ -154,10 +166,10 @@ class MacularDictArray:
             Dictionary for configuring the various processes to be implemented on the simulation data.
 
             The different keys in the processing dictionary are:
-            - ‘temporal_centering’ to center the time index of each cell (in second) on the moment when the bar reaches
-            the center of their receptor field. Two possible values: True and False.
+            - ‘temporal_centering’ to center the time index of each cell on the moment when the bar reaches the
+            center of their receptor field. Two possible values: True and False.
             - 'spatial_x_centering' to center the x-axis index on the center of the grid cell length. Two possible
-            values: True  and False.
+            values: True and False.
             - 'spatial_y_centering' to center the y-axis index on the center of the grid cell width. Two possible
             values: True and False.
             - ‘binning’ to average the data of the measurements over a time interval that is entered as
@@ -168,7 +180,12 @@ class MacularDictArray:
             to integrate over a larger interval. Otherwise, an instantaneous derivative will be obtained. The
             ‘derivative’ key is associated with a dictionary that must contain the measurements to be processed as keys
             and the size of the derivative interval as a value.
-            - 'ms' to add a temporal index expressed in milliseconds. Two possible values: True and False.
+            - 'temporal_index_ms' to add a temporal index expressed in milliseconds. The value is the ratio to convert,
+            so 1000.
+            - 'spatial_index_mm_retina' to add a spatial index expressed in mm for retina. The value is the ratio to
+            convert degrees in millimetres of retina.
+            - 'spatial_index_mm_cortex' to add a spatial index expressed in mm for cortex. The value is the ratio to
+            convert degrees in millimetres of cortex.
             - 'edge' to crop the edges of arrays of all measurements in MacularDictArray. The value can be a
             tuple to crop differently in x and y: (x_edge, y_edge) or an int to crop everywhere the same.
         """
@@ -730,9 +747,22 @@ class MacularDictArray:
         to integrate over a larger interval. Otherwise, an instantaneous derivative will be obtained. The
         ‘derivative’ key is associated with a dictionary that must contain the measurements to be processed as keys
         and the size of the derivative interval as a value.
-        - 'ms' to add a temporal index expressed in milliseconds. Two possible values: True and False.
+        - 'temporal_index_ms' to add a temporal index expressed in milliseconds. The value is the ratio to convert,
+        so 1000.
+        - 'spatial_index_mm_retina' to add a spatial index expressed in mm for retina. The value is the ratio to convert
+        degrees in millimetres of retina.
+        - 'spatial_index_mm_cortex' to add a spatial index expressed in mm for cortex. The value is the ratio to convert
+        degrees in millimetres of cortex.
         - 'edge' to crop the edges of arrays of all measurements in MacularDictArray. The value can be a
-        tuple to crop differently in x and y: (x_edge, y_edge) or an int to crop everywhere the same.
+        tuple to crop differently in x and y: (x_edge, y_edge) or an int to crop everywhere the same. The x_edge and the
+        y_edge of the tuple can also be tuples to crop asymmetrically.
+
+        It is possible to add any new index based on spatial or temporal indexes. To do this, simply add a key with the
+        prefix ‘spatial_index’ or ‘temporal_index’ followed by the suffix that will be used and added to the end of the
+        index name. For example, ‘temporal_index_ms’ adds a new index ‘temporal_ms’. All temporal indexes will be used
+        to create as many new indexes. Thus, if ‘temporal_centering’ is active, this will create a
+        ‘temporal_centered_ms’ index. For this reason, unit conversion processing must always be performed last
+        in order to process all possible new spatial or temporal measurements before.
         """
         print("Preprocessing : ", end="")
 
@@ -775,6 +805,17 @@ class MacularDictArray:
         except KeyError:
             pass
 
+        # Computation of the array of data derivatives.
+        try:
+            if self.dict_preprocessing["derivative"]:
+                print("Derivating...", end="")
+                for measurement in self.dict_preprocessing["derivative"]:
+                    self.data[f"{measurement}_derivative"] = DataPreprocessor.derivative_computing_3d_array(
+                        self.data[measurement], self.index["temporal"],
+                        self.dict_preprocessing["derivative"][measurement])
+        except KeyError:
+            pass
+
         # Temporal centering of index array.
         try:
             if self.dict_preprocessing["temporal_centering"]:
@@ -790,7 +831,7 @@ class MacularDictArray:
             if self.dict_preprocessing["spatial_x_centering"]:
                 print("Spatial x centering...", end="")
                 self.index[f"spatial_x_centered"] = DataPreprocessor.spatial_centering(
-                    self.index["spatial_x"], self.dict_simulation["n_cells_x"], self.dict_simulation["dx"])
+                    self.index["spatial_x"], self.dict_simulation["n_cells_x"])
         except KeyError:
             pass
 
@@ -799,36 +840,18 @@ class MacularDictArray:
             if self.dict_preprocessing["spatial_y_centering"]:
                 print("Spatial y centering...", end="")
                 self.index[f"spatial_y_centered"] = DataPreprocessor.spatial_centering(
-                    self.index["spatial_y"], self.dict_simulation["n_cells_y"], self.dict_simulation["dx"])
+                    self.index["spatial_y"], self.dict_simulation["n_cells_y"])
         except KeyError:
             pass
 
-        # Computation of the array of data derivatives.
-        try:
-            if self.dict_preprocessing["derivative"]:
-                print("Derivating...", end="")
-                for measurement in self.dict_preprocessing["derivative"]:
-                    self.data[f"{measurement}_derivative"] = DataPreprocessor.derivative_computing_3d_array(
-                        self.data[measurement], self.index["temporal"],
-                        self.dict_preprocessing["derivative"][measurement])
-        except KeyError:
-            pass
-
-        # Computation of indexes in milliseconds
-        try:
-            if self.dict_preprocessing["ms"]:
-                indexes = list(self.index.keys())
-                for name_index in indexes:
-                    if isinstance(self.index[name_index], list):
-                        self.index[f"{name_index}_ms"] = []
-                        for i_index in range(len(self.index[name_index])):
-                            index_ms = self.index[name_index][i_index].copy() * 1000
-                            self.index[f"{name_index}_ms"] += [index_ms]
-                    else:
-                        self.index[f"{name_index}_ms"] = self.index[name_index] * 1000
-        except KeyError:
-            pass
-
+        # All indexes units conversion
+        index_copy = self.index.copy()
+        for preprocess in self.dict_preprocessing:
+            if "index" in preprocess:
+                type_index = preprocess.split("_")[0]
+                suffix_index = preprocess.replace(f"{type_index}_index_", "")
+                self._index.update(DataPreprocessor.conversion_specific_arrays_unit_dict_array(
+                    index_copy, type_index, suffix_index, self.dict_preprocessing[preprocess]))
 
         print("Done!")
 

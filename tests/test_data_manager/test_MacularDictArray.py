@@ -643,8 +643,10 @@ def test_setup_data_dict_array_preprocessing():
     macular_dict_array_test.dict_preprocessing["binning"] = 0.0016
     macular_dict_array_test.dict_preprocessing["VSDI"] = True
     macular_dict_array_test.dict_preprocessing["derivative"] = {"VSDI": 31, "FiringRate_GanglionGainControl": 31}
-    macular_dict_array_test.dict_preprocessing["ms"] = True
     macular_dict_array_test.dict_preprocessing["edge"] = (5, 0)
+    macular_dict_array_test.dict_preprocessing["temporal_index_ms"] = 1000
+    macular_dict_array_test.dict_preprocessing["spatial_index_mm_retina"] = 0.3
+    macular_dict_array_test.dict_preprocessing["spatial_index_mm_cortex"] = 3
 
     # Use setup data dict array preprocessing to test it.
     macular_dict_array_test.setup_data_dict_array_preprocessing()

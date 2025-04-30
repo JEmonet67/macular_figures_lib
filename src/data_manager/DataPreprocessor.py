@@ -88,11 +88,16 @@ class DataPreprocessor:
         for time_center in list_time_center:
             list_index_centered.append(index - time_center)
 
-        return list_index_centered
+        return np.array(list_index_centered)
 
     @staticmethod
-    def spatial_centering(index, n_cells, dx):
-        return index - int(n_cells/2)*dx
+    def spatial_centering(index, n_cells):
+        # Odd n_cells.
+        if n_cells // 2:
+            return index - index[int(n_cells/2)]
+        # Even n_cells.
+        else:
+            return index - (index[int(n_cells / 2)] + index[int(n_cells / 2) - 1]) / 2
 
     @staticmethod
     def derivative_computing_3d_array(array, index, n=1):
@@ -123,3 +128,18 @@ class DataPreprocessor:
     def crop_edge(array, x_edge, y_edge):
         """Function to crop parts of an array."""
         return array[y_edge:array.shape[0]-y_edge, x_edge:array.shape[1]-x_edge, :]
+
+    @staticmethod
+    def conversion_specific_arrays_unit_dict_array(dict_array, pattern, suffix_array, ratio):
+        """
+        Function that converts all arrays in a dictionary whose names contain a given pattern.
+
+        The conversion is done by multiplying each array by a ratio. The converted arrays are stored in new key-value
+        pairs in the dictionary, where the key is followed by a suffix indicating the type of conversion performed.
+        """
+        dict_array_new_units = dict_array.copy()
+        for name_array in dict_array_new_units.copy():
+            if pattern in name_array:
+                dict_array_new_units[f"{name_array}_{suffix_array}"] = dict_array_new_units[name_array] * ratio
+
+        return dict_array_new_units
