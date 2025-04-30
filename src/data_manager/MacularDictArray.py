@@ -749,6 +749,24 @@ class MacularDictArray:
         except KeyError:
             pass
 
+        # Crop of x and y edges
+        try:
+            if self.dict_preprocessing["edge"]:
+                edge = self.dict_preprocessing["edge"]
+                if isinstance(edge, int):
+                    for measurement in self.data:
+                        self.data[measurement] = DataPreprocessor.crop_edge(self.data[measurement], edge, edge)
+                    self.index["spatial_x"] = self.index["spatial_x"][edge: -edge]
+                    self.index["spatial_y"] = self.index["spatial_y"][edge: -edge]
+
+                elif isinstance(edge, tuple):
+                    for measurement in self.data:
+                        self.data[measurement] = DataPreprocessor.crop_edge(self.data[measurement], edge[0], edge[1])
+                    self.index["spatial_x"] = self.index["spatial_x"][edge[0]: len(self.index["spatial_x"])-edge[0]]
+                    self.index["spatial_y"] = self.index["spatial_y"][edge[1]: len(self.index["spatial_x"])-edge[1]]
+        except KeyError:
+            pass
+
         # Computation of the array of data VSDI.
         try:
             if self.dict_preprocessing["VSDI"]:
@@ -811,21 +829,6 @@ class MacularDictArray:
         except KeyError:
             pass
 
-        # Crop of x and y edges
-        try:
-            if self.dict_preprocessing["edge"]:
-                if isinstance(self.dict_preprocessing["edge"], int):
-                    for measurement in self.data:
-                        self.data[measurement] = DataPreprocessor.crop_edge(self.data[measurement],
-                                                                            self.dict_preprocessing["edge"],
-                                                                            self.dict_preprocessing["edge"])
-                elif isinstance(self.dict_preprocessing["edge"], tuple):
-                    for measurement in self.data:
-                        self.data[measurement] = DataPreprocessor.crop_edge(self.data[measurement],
-                                                                            self.dict_preprocessing["edge"][0],
-                                                                            self.dict_preprocessing["edge"][1])
-        except KeyError:
-            pass
 
         print("Done!")
 
