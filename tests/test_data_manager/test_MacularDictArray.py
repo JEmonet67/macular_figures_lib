@@ -5,6 +5,7 @@ import re
 import numpy as np
 
 from src.data_manager.MacularDictArray import MacularDictArray
+from src.data_manager.DataPreprocessor import DataPreprocessor
 
 # Get data for test from relative path.
 path_data_test = os.path.normpath(f"{os.getcwd()}/../data_test/data_manager/")
@@ -42,6 +43,12 @@ with open(f"{path_pyb_file_head100_VSDI}", "rb") as file_VSDI:
 path_pyb_file_head100_centered = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_centered_0f.pyb"
 with open(f"{path_pyb_file_head100_centered}", "rb") as file_centered:
     macular_dict_array_head100_centered = pickle.load(file_centered)
+
+path_pyb_file_head3000_default = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_default_head3000_0f.pyb"
+# Import of the default MacularDictArray to be compared with preprocessing.
+with open(path_pyb_file_head3000_default, "rb") as file_default:
+    macular_dict_array_default_head3000 = pickle.load(file_default)
+
 
 # Dictionaries generation.
 name_file_head100 = "RC_RM_dSGpCP0026_barSpeed6dps_head100_0f"
@@ -632,10 +639,6 @@ def test_setup_data_dict_array_preprocessing():
     with open(path_pyb_file_head3000, "rb") as file:
         macular_dict_array_test = pickle.load(file)
 
-    # Import of the default MacularDictArray to be compared with preprocessing.
-    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_default_head3000_0f.pyb", "rb") as file:
-        macular_dict_array_default_head3000 = pickle.load(file)
-
     # Modification of the preprocessing dictionary.
     macular_dict_array_test.dict_preprocessing["temporal_centering"] = True
     macular_dict_array_test.dict_preprocessing["spatial_x_centering"] = True
@@ -664,6 +667,119 @@ def test_setup_data_dict_array_preprocessing():
     # Checking equality between indexes and data with empty preprocessing dictionary..
     assert MacularDictArray.equal_dict_array(macular_dict_array_head3000.data, macular_dict_array_test.data)
     assert MacularDictArray.equal_dict_array(macular_dict_array_head3000.index, macular_dict_array_test.index)
+
+
+def test_binning_preprocess():
+    # Initialisation of the MacularDictArray for tests with the values of the reduced control MacularDictArray.
+    with open(path_pyb_file_head100, "rb") as file_test:
+        macular_dict_array_test = pickle.load(file_test)
+
+    # Addition and calculation of binning in the macular dict array test.
+    macular_dict_array_test.dict_preprocessing["binning"] = 0.0016
+    macular_dict_array_test.binning_preprocess()
+
+    # Verification of the correct working of the binning calculation function.
+    assert MacularDictArray.equal(macular_dict_array_test, macular_dict_array_head100_binning)
+
+
+def test_edge_cropping_preprocess():
+    # Loading of a MacularDictArray with a edge cropping on FiringRate_GanglionGainControl with n=3.
+    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_cropEdge_0f.pyb", "rb") as file_cropEdge:
+        macular_dict_array_head100_cropEdge = pickle.load(file_cropEdge)
+
+    # Initialisation of the MacularDictArray for tests with the default MacularDictArray.
+    with open(path_pyb_file_head100, "rb") as file_test:
+        macular_dict_array_test = pickle.load(file_test)
+
+    # Addition and calculation of edge cropping in the macular dict array test.
+    macular_dict_array_test.dict_preprocessing["edge"] = (5, 0)
+    macular_dict_array_test._path_pyb = macular_dict_array_head100_cropEdge.path_pyb
+    macular_dict_array_test.edge_cropping_preprocess()
+
+    # Case of edge cropping in the macular dict array test, different for x and y-axis.
+    assert MacularDictArray.equal(macular_dict_array_test, macular_dict_array_head100_cropEdge)
+
+    print(macular_dict_array_test.data["FiringRate_GanglionGainControl"].shape)
+    print(macular_dict_array_test.index["spatial_x"].shape)
+    print(macular_dict_array_test.index["spatial_y"].shape)
+
+    # Case of symmetrical edge cropping in the macular dict array test.
+    macular_dict_array_test.dict_preprocessing["edge"] = 2
+    macular_dict_array_test.edge_cropping_preprocess()
+    assert macular_dict_array_test.data["FiringRate_GanglionGainControl"].shape == (11, 69, 99)
+    assert macular_dict_array_test.index["spatial_x"].shape[0] == 69
+    assert macular_dict_array_test.index["spatial_y"].shape[0] == 11
+
+    # Case of asymmetrical edge cropping in the macular dict array test, different for x and y-axis.
+    macular_dict_array_test.dict_preprocessing["edge"] = ((1, 3), 1)
+    macular_dict_array_test.edge_cropping_preprocess()
+    assert macular_dict_array_test.data["FiringRate_GanglionGainControl"].shape == (9, 65, 99)
+    assert macular_dict_array_test.index["spatial_x"].shape[0] == 65
+    assert macular_dict_array_test.index["spatial_y"].shape[0] == 9
+
+
+def test_derivating_preprocess():
+    # Loading of a MacularDictArray with a derivative on FiringRate_GanglionGainControl with n=3.
+    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_dFRGang3_0f.pyb", "rb") as file_dFRGang3:
+        macular_dict_array_head100_dFRGang3 = pickle.load(file_dFRGang3)
+
+    # Initialisation of the MacularDictArray for tests with the default MacularDictArray.
+    with open(path_pyb_file_head100, "rb") as file_test:
+        macular_dict_array_test = pickle.load(file_test)
+
+    # Addition and calculation of derivatives in the macular dict array test.
+    macular_dict_array_test.dict_preprocessing["derivative"] = {"FiringRate_GanglionGainControl": 3}
+    macular_dict_array_test._path_pyb = macular_dict_array_head100_dFRGang3.path_pyb
+    macular_dict_array_test.derivating_preprocess()
+
+    # Verification of the correct working of the derivative calculation function.
+    assert MacularDictArray.equal(macular_dict_array_test, macular_dict_array_head100_dFRGang3)
+
+
+def test_temporal_centering_preprocess():
+    # Initialisation of the MacularDictArray for tests with the default MacularDictArray.
+    with open(path_pyb_file_head100, "rb") as file_test:
+        macular_dict_array_test = pickle.load(file_test)
+
+    # Addition and calculation of binning in the macular dict array test.
+    macular_dict_array_test.dict_preprocessing["temporal_centering"] = True
+    macular_dict_array_test._path_pyb = macular_dict_array_head100_centered.path_pyb
+    macular_dict_array_test.temporal_centering_preprocess()
+
+    # Verification of the correct working of the binning calculation function.
+    assert MacularDictArray.equal(macular_dict_array_test, macular_dict_array_head100_centered)
+
+
+def test_make_all_indexes_units_conversion_preprocess():
+    # Loading of a MacularDictArray with units conversion (mm retina, mm cortex and ms).
+    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_unitsConversion_0f.pyb", "rb") as file_unitsConversion:
+        macular_dict_array_head100_unitsConversion = pickle.load(file_unitsConversion)
+
+    # Initialisation of the MacularDictArray for tests with the default MacularDictArray.
+    with open(path_pyb_file_head100, "rb") as file_test:
+        macular_dict_array_test = pickle.load(file_test)
+
+    # Addition of units conversion and centering in the macular dict array test.
+    macular_dict_array_test._dict_preprocessing = {
+    "temporal_centering": True,
+    "spatial_x_centering": True,
+    "spatial_y_centering": True,
+    "temporal_index_ms": 1000,
+    "spatial_index_mm_retina": 0.3,
+    "spatial_index_mm_cortex": 3
+    }
+    macular_dict_array_test._path_pyb = macular_dict_array_head100_unitsConversion.path_pyb
+    macular_dict_array_test.temporal_centering_preprocess()
+    macular_dict_array_test.index["spatial_x_centered"] = DataPreprocessor.spatial_centering(
+        macular_dict_array_test.index["spatial_x"], macular_dict_array_test.dict_simulation["n_cells_x"])
+    macular_dict_array_test.index["spatial_y_centered"] = DataPreprocessor.spatial_centering(
+        macular_dict_array_test.index["spatial_y"], macular_dict_array_test.dict_simulation["n_cells_y"])
+
+    # Calculation of units conversion in the macular dict array test.
+    macular_dict_array_test.make_all_indexes_units_conversion_preprocess()
+
+    # Verification of the correct working of units conversion calculation function.
+    assert MacularDictArray.equal(macular_dict_array_test, macular_dict_array_head100_unitsConversion)
 
 
 def test_copy():
