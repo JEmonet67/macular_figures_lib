@@ -125,9 +125,9 @@ class DataPreprocessor:
         return df_dxdt
 
     @staticmethod
-    def crop_edge(array, x_edge, y_edge):
+    def crop_edge(array, x_left_edge, x_right_edge, y_bottom_edge, y_top_edge):
         """Function to crop parts of an array."""
-        return array[y_edge:array.shape[0]-y_edge, x_edge:array.shape[1]-x_edge, :]
+        return array[y_bottom_edge:array.shape[0]-y_top_edge, x_left_edge:array.shape[1]-x_right_edge, :]
 
     @staticmethod
     def conversion_specific_arrays_unit_dict_array(dict_array, pattern, suffix_array, ratio):

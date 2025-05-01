@@ -50,6 +50,11 @@ class MacularDictArray:
     Example :
     "RC_RM_dSGpCP0026_barSpeed6dps_0f"
 
+    The MacularDictArray class has been designed to allow users to add their own processes to prepare data for analysis.
+    To do this, simply add a new key:value pair to the preprocessing dictionary and then create a new function that
+    performs the process and will be called in the setup_data_dict_array_preprocessing function. The user must also pay
+    attention to where this process is placed in the order of processes executed.
+
     Attributes
     ----------
     path_csv : str
@@ -180,14 +185,15 @@ class MacularDictArray:
             to integrate over a larger interval. Otherwise, an instantaneous derivative will be obtained. The
             ‘derivative’ key is associated with a dictionary that must contain the measurements to be processed as keys
             and the size of the derivative interval as a value.
+            - 'edge' to crop the edges of arrays of all measurements in MacularDictArray. The value can be a
+            tuple to crop differently in x and y: (x_edge, y_edge) or an int to crop everywhere the same. The x_edge
+            and the y_edge of the tuple can also be tuples to crop asymmetrically.
             - 'temporal_index_ms' to add a temporal index expressed in milliseconds. The value is the ratio to convert,
             so 1000.
             - 'spatial_index_mm_retina' to add a spatial index expressed in mm for retina. The value is the ratio to
             convert degrees in millimetres of retina.
             - 'spatial_index_mm_cortex' to add a spatial index expressed in mm for cortex. The value is the ratio to
             convert degrees in millimetres of cortex.
-            - 'edge' to crop the edges of arrays of all measurements in MacularDictArray. The value can be a
-            tuple to crop differently in x and y: (x_edge, y_edge) or an int to crop everywhere the same.
         """
         self._transient_reg = re.compile(".*/[A-Za-z]{1,2}_[A-Za-z]{1,3}_[A-Za-z]{6}[0-9]{4}_.*_([0-9]{0,4}f?)")
 
@@ -828,23 +834,33 @@ class MacularDictArray:
             self.data[measurement] = DataPreprocessor.binning_data_array(self.data[measurement], bin_size,
                                                                          n_bin)
 
-        # Crop of x and y edges
-        try:
-            if self.dict_preprocessing["edge"]:
-                edge = self.dict_preprocessing["edge"]
-                if isinstance(edge, int):
-                    for measurement in self.data:
-                        self.data[measurement] = DataPreprocessor.crop_edge(self.data[measurement], edge, edge)
-                    self.index["spatial_x"] = self.index["spatial_x"][edge: -edge]
-                    self.index["spatial_y"] = self.index["spatial_y"][edge: -edge]
+    def edge_cropping_preprocess(self):
+        """Function to remove the edges of the cell area from the MacularDictArray.
 
-                elif isinstance(edge, tuple):
-                    for measurement in self.data:
-                        self.data[measurement] = DataPreprocessor.crop_edge(self.data[measurement], edge[0], edge[1])
-                    self.index["spatial_x"] = self.index["spatial_x"][edge[0]: len(self.index["spatial_x"])-edge[0]]
-                    self.index["spatial_y"] = self.index["spatial_y"][edge[1]: len(self.index["spatial_x"])-edge[1]]
-        except KeyError:
-            pass
+        The crop is performed according to the ‘edge’ key in the preprocessing dictionary. If this key is associated
+        to an int, the value of the int will be used to crop all sides equally. If the value is a tuple, cropping will
+        be performed differently for the x and y axes. If the value is a tuple of tuples, then cropping will also be
+        performed asymmetrically within the x or y axes.
+        """
+        edge = self.dict_preprocessing["edge"]
+        if isinstance(edge, int):
+            dict_edges = {"X_left": edge, "X_right": edge, "Y_bottom": edge, "Y_top": edge}
+        elif isinstance(edge, tuple):
+            if isinstance(edge[0], int) and isinstance(edge[1], int):
+                dict_edges = {"X_left": edge[0], "X_right": edge[0], "Y_bottom": edge[1], "Y_top": edge[1]}
+            elif isinstance(edge[0], tuple) and isinstance(edge[1], int):
+                dict_edges = {"X_left": edge[0][0], "X_right": edge[0][1], "Y_bottom": edge[1], "Y_top": edge[1]}
+            elif isinstance(edge[0], int) and isinstance(edge[1], tuple):
+                dict_edges = {"X_left": edge[0], "X_right": edge[0], "Y_bottom": edge[1][0], "Y_top": edge[1][1]}
+            elif isinstance(edge[0], tuple) and isinstance(edge[1], tuple):
+                dict_edges = {"X_left": edge[0][0], "X_right": edge[0][1], "Y_bottom": edge[1][0], "Y_top": edge[1][1]}
+
+        for measurement in self.data:
+            self.data[measurement] = DataPreprocessor.crop_edge(self.data[measurement],
+                                                                dict_edges["X_left"], dict_edges["X_right"],
+                                                                dict_edges["Y_bottom"], dict_edges["Y_top"])
+        self.index["spatial_x"] = self.index["spatial_x"][dict_edges["X_left"]: len(self.index["spatial_x"]) - dict_edges["X_right"]]
+        self.index["spatial_y"] = self.index["spatial_y"][dict_edges["Y_bottom"]: len(self.index["spatial_y"]) - dict_edges["Y_top"]]
 
 
     def derivating_preprocess(self):
