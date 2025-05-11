@@ -1,4 +1,5 @@
 import re
+import copy
 
 import numpy as np
 import pandas as pd
@@ -191,7 +192,7 @@ class MacularAnalysisDataframes:
         Parameters
         ----------
         multi_macular_dict_array : dict of MacularDictArray
-            Returns a dictionary associating specific conditions with MacularDictArray.
+            Dictionary associating specific conditions with MacularDictArray.
 
         name_index : str
             Name of the MacularDictArray index from which the index with the maximum size must be extracted. The names
@@ -208,7 +209,7 @@ class MacularAnalysisDataframes:
             dict_array = multi_macular_dict_array[name_dict_array]
             if dict_array.index[name_index].shape[0] > maximal:
                 maximal = dict_array.index[name_index].shape[0]
-                index = dict_array.index[name_index]
+                index = dict_array.index[name_index].round(5)
 
         return index
 
@@ -290,7 +291,7 @@ class MacularAnalysisDataframes:
 
         Sorting is performed on the list of conditions for the various MacularDictArray. Three types of sorting are used
         here. The first ‘default’ sort is in alphabetical order. The second sort is performed according to a pre-sorted
-        list of each condition, which is entered in the multiple analysis dictionary. Finally, the last sort is
+        list of each condition, which is entered in the multiple analysis dictionaries. Finally, the last sort is
         performed on the names of conditions that must follow a specific format: ‘NameValueUnit’.
 
         In the case of multiple conditions, each NameValueUnit must also be separated from the others by an underscore.
@@ -370,8 +371,7 @@ class MacularAnalysisDataframes:
             Multiple analysis dictionary with no keys associated with False values.
         """
         # Deep copy of the multiple_dicts_features.
-        multiple_dicts_features_cleaned = {feature: multiple_dicts_features[feature].copy() for feature in
-                                           multiple_dicts_features}
+        multiple_dicts_features_cleaned = copy.deepcopy(multiple_dicts_features)
 
         for dataframe in multiple_dicts_features:
             # Removal of false features.

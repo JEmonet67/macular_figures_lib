@@ -8,20 +8,20 @@ from src.data_manager.MacularDictArray import MacularDictArray
 # Get data for test from relative path.
 path_data_test = os.path.normpath(f"{os.getcwd()}/../data_test/data_manager/")
 
-# Import of a default MacularAnalysisDataframes based on reduced MacularDictArray (100 first rows).
+# Import of a MacularAnalysisDataframes based on reduced MacularDictArray (100 first rows).
 with open(f"{path_data_test}/initialized_macular_analysis_dataframe.pyb", "rb") as file:
-    macular_analysis_dataframes_barSpeed_head100 = pickle.load(file)
+    macular_analysis_dataframes_head100 = pickle.load(file)
 
 # Import of a reduced MacularAnalysisDataframes for tests.
 with open(f"{path_data_test}/initialized_macular_analysis_dataframe.pyb", "rb") as file:
     macular_analysis_dataframes_test = pickle.load(file)
 
-# Import a default multiple reduced macular dict array of bar speed condition.
-with open(f"{path_data_test}/multiple_macula_dict_array_barSpeed_head100.pyb", "rb") as file:
-    multi_macular_dict_array_barSpeed_head100 = pickle.load(file)
+# Import a multiple reduced macular dict array of bar speed condition.
+with open(f"{path_data_test}/multiple_macular_dict_array_head100.pyb", "rb") as file:
+    multi_macular_dict_array_head100 = pickle.load(file)
 
 # Import a multiple reduced macular dict array of bar speed condition for tests.
-with open(f"{path_data_test}/multiple_macula_dict_array_barSpeed_head100.pyb", "rb") as file:
+with open(f"{path_data_test}/multiple_macular_dict_array_head100.pyb", "rb") as file:
     multi_macular_dict_array_test = pickle.load(file)
 
 multiple_dicts_simulations_barSpeed_head100 = {
@@ -50,16 +50,20 @@ multiple_dicts_simulations_barSpeed_head100 = {
         "speed": 30
     }
 }
+multiple_dicts_simulations_head100_nopyb = copy.deepcopy(multiple_dicts_simulations_head100)
+del multiple_dicts_simulations_head100_nopyb["barSpeed6dps"]["path_pyb"]
+del multiple_dicts_simulations_head100_nopyb["barSpeed15dps"]["path_pyb"]
+del multiple_dicts_simulations_head100_nopyb["barSpeed30dps"]["path_pyb"]
 
-multiple_dicts_preprocessings_barSpeed_head100 = {
+multiple_dicts_preprocessings_head100 = {
     "global": {},
     "barSpeed6dps": {},
     "barSpeed15dps": {},
     "barSpeed30dps": {}
 }
 
-multiple_dicts_analysis_barSpeed_head100 = {
-    "Conditions": {},
+multiple_dicts_analysis_head100 = {
+    "Conditions": {"sorting": "NameValueUnit"},
     "X": {},
     "Y": {},
     "Time": {}
@@ -75,7 +79,7 @@ def test_init():
 
 
 def test_dict_paths_pyb_getter():
-    assert macular_analysis_dataframes_barSpeed_head100.dict_paths_pyb == {
+    assert macular_analysis_dataframes_head100.dict_paths_pyb == {
         "barSpeed6dps": f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_copy_0f.pyb",
         "barSpeed15dps": f"{path_data_test}/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb",
         "barSpeed30dps": f"{path_data_test}/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb"}
@@ -88,30 +92,31 @@ def test_dict_paths_pyb_setter():
 
 def test_dict_analysis_dataframes_getter():
     # Import d'un dictionnaire d'analyses de dataframes d'exemple.
-    with open(f"{path_data_test}/dict_analysis_dataframes_barSpeed_head100.pyb", "rb") as file:
-        dict_analysis_dataframes_barSpeed_head100 = pickle.load(file)
+    with open(f"{path_data_test}/dict_analysis_dataframes_head100.pyb", "rb") as file:
+        dict_analysis_dataframes_head100 = pickle.load(file)
 
     # Comparison of the example dictionary with that of the setter.
-    for dataframe_name in macular_analysis_dataframes_barSpeed_head100.dict_analysis_dataframes:
-        if dataframe_name == "Conditions":
-            assert macular_analysis_dataframes_barSpeed_head100.dict_analysis_dataframes[dataframe_name].equals(
-                dict_analysis_dataframes_barSpeed_head100[dataframe_name])
+    for name_dataframe in macular_analysis_dataframes_head100.dict_analysis_dataframes:
+        if name_dataframe == "Conditions":
+            assert macular_analysis_dataframes_head100.dict_analysis_dataframes[name_dataframe].equals(
+                dict_analysis_dataframes_head100[name_dataframe])
         else:
-            for condition in macular_analysis_dataframes_barSpeed_head100.dict_analysis_dataframes[dataframe_name]:
-                assert (macular_analysis_dataframes_barSpeed_head100.dict_analysis_dataframes[dataframe_name][condition]
-                        .equals(dict_analysis_dataframes_barSpeed_head100[dataframe_name][condition]))
+            for condition in macular_analysis_dataframes_head100.dict_analysis_dataframes[name_dataframe]:
+                assert (macular_analysis_dataframes_head100.dict_analysis_dataframes[name_dataframe][condition]
+                        .equals(dict_analysis_dataframes_head100[name_dataframe][condition]))
 
 
 def test_dict_analysis_dataframes_setter():
-    old_dict_analysis_dataframes = macular_analysis_dataframes_test.dict_analysis_dataframes.copy()
+    old_dict_analysis_dataframes = copy.deepcopy(macular_analysis_dataframes_test.dict_analysis_dataframes)
     macular_analysis_dataframes_test.dict_analysis_dataframes = {}
     assert macular_analysis_dataframes_test.dict_analysis_dataframes != old_dict_analysis_dataframes
     assert macular_analysis_dataframes_test.dict_analysis_dataframes == {}
 
 
 def test_multiple_dicts_analysis_getter():
-    assert (macular_analysis_dataframes_barSpeed_head100.multiple_dicts_analysis
-            == {'Conditions': {}, 'Time': {}, 'X': {}, 'Y': {}})
+    assert (macular_analysis_dataframes_head100.multiple_dicts_analysis
+            == {'Conditions': {"sorting": "NameValueUnit"}, "X": {"test": "test"}, "Y": {"test": "test"},
+                "Time": {"test": "test"}})
 
 
 def test_multiple_dicts_analysis_setter():
@@ -121,7 +126,7 @@ def test_multiple_dicts_analysis_setter():
 
 
 def test_multiple_dicts_preprocessings_getter():
-    assert (macular_analysis_dataframes_barSpeed_head100.multiple_dicts_preprocessings
+    assert (macular_analysis_dataframes_head100.multiple_dicts_preprocessings
             == {})
 
 
@@ -139,8 +144,8 @@ def test_multiple_dicts_preprocessings_setter():
 
 
 def test_multiple_dicts_simulations_getter():
-    assert (macular_analysis_dataframes_barSpeed_head100.multiple_dicts_simulations
-            == multiple_dicts_simulations_barSpeed_head100)
+    assert (macular_analysis_dataframes_head100.multiple_dicts_simulations
+            == multiple_dicts_simulations_head100_nopyb)
 
 
 def test_multiple_dicts_simulations_setter():
@@ -153,11 +158,11 @@ def test_multiple_dicts_simulations_setter():
 
     # Verification that the value of multiple_dicts_simulations has not changed.
     assert (macular_analysis_dataframes_test.multiple_dicts_simulations
-            == multiple_dicts_simulations_barSpeed_head100)
+            == multiple_dicts_simulations_head100_nopyb)
 
 
 def test_condition_reg_getter():
-    assert macular_analysis_dataframes_barSpeed_head100.condition_reg == re.compile(
+    assert macular_analysis_dataframes_head100.condition_reg == re.compile(
         "(^[A-Za-z]+)(-?[0-9]{1,4},?[0-9]{0,4})([A-Za-z]+$)")
 
 
@@ -173,7 +178,7 @@ def test_condition_reg_setter():
 def test_get_maximal_index_multi_macular_dict_array():
     # Creation of a multi_macular_dict_array with spatio-temporal indexes varying between each MacularDictArray.
     multi_macular_dict_array_index_modified = MacularDictArray.make_multiple_macular_dict_array(
-        multiple_dicts_simulations_barSpeed_head100, multiple_dicts_preprocessings_barSpeed_head100)
+        multiple_dicts_simulations_head100, multiple_dicts_preprocessings_head100)
     i = 1
     for name_dict_array in multi_macular_dict_array_index_modified:
         dict_array = multi_macular_dict_array_index_modified[name_dict_array]
@@ -196,36 +201,33 @@ def test_get_maximal_index_multi_macular_dict_array():
 
 
 def test_initialize_dict_analysis_dataframes():
-    # Opening a macular analysis dataframe that has already been initialised as an example.
-    with open(f"{path_data_test}/initialized_macular_analysis_dataframe.pyb", "rb") as file:
-        macular_analysis_dataframes_init = pickle.load(file)
-
     # Opening a macular analysis dataframe that has already been created but has yet to be initialised.
     with open(f"{path_data_test}/macular_analysis_dataframes_to_init.pyb", "rb") as file:
         macular_analysis_dataframes_to_init = pickle.load(file)
 
     # Index listing.
-    t_index = multi_macular_dict_array_barSpeed_head100["barSpeed6dps"].index["temporal"]
-    x_index = multi_macular_dict_array_barSpeed_head100["barSpeed6dps"].index["spatial_x"]
-    y_index = multi_macular_dict_array_barSpeed_head100["barSpeed6dps"].index["spatial_y"]
+    t_index = multi_macular_dict_array_head100["barSpeed6dps"].index["temporal"]
+    x_index = multi_macular_dict_array_head100["barSpeed6dps"].index["spatial_x"]
+    y_index = multi_macular_dict_array_head100["barSpeed6dps"].index["spatial_y"]
 
-    # Changed the multiple analysis dictionary to prevent it from being empty.
-    macular_analysis_dataframes_to_init._multiple_dicts_analysis = {"Conditions": {}, "X": {}, "Y": {}, "Time": {}}
+    # Changed the multiple analysis dictionaries to prevent it from being empty.
+    macular_analysis_dataframes_to_init._multiple_dicts_analysis = {"Conditions": {"sorting": "NameValueUnit"}, "X": {},
+                                                                    "Y": {}, "Time": {}}
 
     # Initialisation of Macular analysis dataframes.
     macular_analysis_dataframes_to_init.initialize_dict_analysis_dataframes(x_index, y_index, t_index)
 
     # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_init.dict_analysis_dataframes["Conditions"].equals(
+    assert macular_analysis_dataframes_head100.dict_analysis_dataframes["Conditions"].equals(
         macular_analysis_dataframes_to_init.dict_analysis_dataframes["Conditions"])
 
-    # Verify that the X, Y, and T dataframes for each condition are correct.
-    for condition in macular_analysis_dataframes_init.dict_paths_pyb:
-        assert macular_analysis_dataframes_init.dict_analysis_dataframes["X"][condition].equals(
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_head100.dict_paths_pyb:
+        assert macular_analysis_dataframes_head100.dict_analysis_dataframes["X"][condition].equals(
             macular_analysis_dataframes_to_init.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_init.dict_analysis_dataframes["Y"][condition].equals(
+        assert macular_analysis_dataframes_head100.dict_analysis_dataframes["Y"][condition].equals(
             macular_analysis_dataframes_to_init.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_init.dict_analysis_dataframes["Time"][condition].equals(
+        assert macular_analysis_dataframes_head100.dict_analysis_dataframes["Time"][condition].equals(
             macular_analysis_dataframes_to_init.dict_analysis_dataframes["Time"][condition])
 
 
@@ -236,7 +238,7 @@ def test_initialize_analysis_dataframe():
 
     # Create a spatial dataframe x using the initialize_analysis_dataframe function.
     dataframe = macular_analysis_dataframes_test.initialize_analysis_dataframe(
-        multi_macular_dict_array_barSpeed_head100["barSpeed6dps"].index["spatial_x"], "X")
+        multi_macular_dict_array_head100["barSpeed6dps"].index["spatial_x"], "X")
 
     assert dataframe.equals(spatial_x_dataframe)
 
@@ -258,7 +260,7 @@ def test_dataframe_conditions_sorting():
 
     # Case of sorting based on a list defined in the multiple condition analysis dictionary.
     macular_analysis_dataframes_test.multiple_dicts_analysis["Conditions"]["sorting"] = ["wAmaBip10Hz", "wAmaGang3,8Hz",
-                                                                                        "barSpeed6dps"]
+                                                                                         "barSpeed6dps"]
     assert (macular_analysis_dataframes_test.dataframe_conditions_sorting() ==
             ["wAmaBip10Hz", "wAmaGang3,8Hz", "barSpeed6dps"])
 
@@ -296,21 +298,23 @@ def test_name_value_unit_sorting_conditions():
 
 
 def test_cleaning_multiple_dicts_analysis():
+    # Create empty analysis dataframe dictionaries.
+    multiple_dicts_analysis_empty = {"Conditions": {}, "X": {}, "Y": {}, "Time": {}}
     # Cases of empty analysis dataframe dictionaries.
     assert macular_analysis_dataframes_test.cleaning_multiple_dicts_features(
-        multiple_dicts_analysis_barSpeed_head100) == {}
+        multiple_dicts_analysis_empty) == {}
 
     # Case of analysis dataframe dictionaries with True and False values.
-    multiple_dicts_preprocessings_barSpeed_head100_copy = multiple_dicts_preprocessings_barSpeed_head100.copy()
-    multiple_dicts_preprocessings_barSpeed_head100_copy["global"]["VSDI"] = True
-    multiple_dicts_preprocessings_barSpeed_head100_copy["global"]["centering"] = False
-    multiple_dicts_preprocessings_barSpeed_head100_copy["barSpeed6dps"]["centering"] = False
+    multiple_dicts_preprocessings_head100_copy = copy.deepcopy(multiple_dicts_preprocessings_head100)
+    multiple_dicts_preprocessings_head100_copy["global"]["VSDI"] = True
+    multiple_dicts_preprocessings_head100_copy["global"]["centering"] = False
+    multiple_dicts_preprocessings_head100_copy["barSpeed6dps"]["centering"] = False
     assert macular_analysis_dataframes_test.cleaning_multiple_dicts_features(
-        multiple_dicts_preprocessings_barSpeed_head100_copy) == {"global": {"VSDI": True}}
+        multiple_dicts_preprocessings_head100_copy) == {"global": {"VSDI": True}}
 
     # Case of a dictionary of analysis dataframes containing only True values.
     assert macular_analysis_dataframes_test.cleaning_multiple_dicts_features(
-        multiple_dicts_simulations_barSpeed_head100) == multiple_dicts_simulations_barSpeed_head100
+        multiple_dicts_simulations_head100) == multiple_dicts_simulations_head100
 
 
 def test_setup_conditions_values_to_condition_dataframe():
@@ -323,7 +327,7 @@ def test_setup_conditions_values_to_condition_dataframe():
         empty_dataframe = pickle.load(file)
 
     # Adaptation of a Macular Analysis Dataframe to set up your conditions dataframe.
-    macular_analysis_dataframes_test._dict_analysis_dataframes = {"Conditions": empty_dataframe.copy()}
+    macular_analysis_dataframes_test._dict_analysis_dataframes = {"Conditions": copy.deepcopy(empty_dataframe)}
     macular_analysis_dataframes_test.setup_conditions_values_to_condition_dataframe()
 
     # Test of setting up the conditions dataframe.
@@ -343,4 +347,6 @@ def test_setup_conditions_values_to_condition_dataframe():
     macular_analysis_dataframes_test.initialize_dict_analysis_dataframes()
 
     # Test of setting up a complex conditions dataframe.
-    assert setup_complex_conditions_dataframe.equals(macular_analysis_dataframes_test._dict_analysis_dataframes["Conditions"])
+    assert setup_complex_conditions_dataframe.equals(macular_analysis_dataframes_test
+                                                     ._dict_analysis_dataframes["Conditions"])
+

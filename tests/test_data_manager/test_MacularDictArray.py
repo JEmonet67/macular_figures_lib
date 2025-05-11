@@ -40,7 +40,7 @@ with open(f"{path_pyb_file_head100_VSDI}", "rb") as file_VSDI:
     macular_dict_array_head100_VSDI = pickle.load(file_VSDI)
 
 # Import of a reduced MacularDictArray control with only the 100 first rows and centered.
-path_pyb_file_head100_centered = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_centered_0f.pyb"
+path_pyb_file_head100_centered = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_temporalCentered_0f.pyb"
 with open(f"{path_pyb_file_head100_centered}", "rb") as file_centered:
     macular_dict_array_head100_centered = pickle.load(file_centered)
 
@@ -728,7 +728,7 @@ def test_derivating_preprocess():
         macular_dict_array_test = pickle.load(file_test)
 
     # Addition and calculation of derivatives in the macular dict array test.
-    macular_dict_array_test.dict_preprocessing["derivative"] = {"FiringRate_GanglionGainControl": 3}
+    macular_dict_array_test.dict_preprocessing["derivative"] = {"FiringRate_GanglionGainControl": 31}
     macular_dict_array_test._path_pyb = macular_dict_array_head100_dFRGang3.path_pyb
     macular_dict_array_test.derivating_preprocess()
 
@@ -752,7 +752,8 @@ def test_temporal_centering_preprocess():
 
 def test_make_all_indexes_units_conversion_preprocess():
     # Loading of a MacularDictArray with units conversion (mm retina, mm cortex and ms).
-    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_unitsConversion_0f.pyb", "rb") as file_unitsConversion:
+    with (open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_unitsConversion_0f.pyb", "rb") as
+          file_unitsConversion):
         macular_dict_array_head100_unitsConversion = pickle.load(file_unitsConversion)
 
     # Initialisation of the MacularDictArray for tests with the default MacularDictArray.

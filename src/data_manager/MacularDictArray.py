@@ -16,8 +16,8 @@ class MacularDictArray:
     """Data container of a Macular simulation.
 
     The creation of a MacularDictArray requires the presence of a csv file containing the measurements of a Macular
-    simulation. It also requires knowledge of some of the parameters of the Macular simulation. The measurement
-    contained in the csv are extracted, transformed into a numpy array and separated by pair of output and cell type.
+    simulation. It also requires knowledge of some of the parameters of the Macular simulation. The measurements
+    contained in the csv are parsed into a numpy arrays and separated by pair of output and cell type.
     These measurements also undergo a rotation to correct the difference in rotation between Macular and numpy. The
     temporal index is also accessed and stored.
 
@@ -730,7 +730,7 @@ class MacularDictArray:
             Name of the axis for which the index is to be calculated. The two possible values are ‘x’ and ‘y’.
         """
         self.index[f"spatial_{name_axis}"] = np.array([i_cell * self.dict_simulation["dx"] for i_cell in
-                                                       range(self.dict_simulation[f"n_cells_{name_axis}"])])
+                                                       range(self.dict_simulation[f"n_cells_{name_axis}"])]).round(5)
 
     def setup_data_dict_array_preprocessing(self):
         """Implementation of all the procedures for transforming the data indicated in the dictionary of
