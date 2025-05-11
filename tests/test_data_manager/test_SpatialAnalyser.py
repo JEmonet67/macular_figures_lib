@@ -1,0 +1,29 @@
+import os
+import pickle
+
+import numpy as np
+
+from src.data_manager.SpatialAnalyser import SpatialAnalyser
+
+# Get data for test from relative path.
+path_data_test = os.path.normpath(f"{os.getcwd()}/../data_test/data_manager/")
+
+path_pyb_file_default = f"{path_data_test}/RC_RM_dSGpCP0033_barSpeed30dps_default_0f.pyb"
+# Import of the default MacularDictArray to be compared with preprocessing.
+with open(path_pyb_file_default, "rb") as file_default:
+    macular_dict_array_default = pickle.load(file_default)
+
+
+def test_activation_time_computing():
+    # Import a 2D array of valid VSDI activation times.
+    with open(f"{path_data_test}/activation_time_VSDI_array.pyb", "rb") as file:
+        activation_time_array_correct = pickle.load(file)
+
+    spatial_analyser = SpatialAnalyser()
+
+    # Creation of a 2D test activation time array.
+    activation_time_array = spatial_analyser.activation_time_computing(macular_dict_array_default.data["VSDI"],
+                                               macular_dict_array_default.index["temporal"],
+                                               0.001)
+
+    assert np.array_equal(activation_time_array, activation_time_array_correct)
