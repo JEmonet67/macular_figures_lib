@@ -265,7 +265,7 @@ class MacularAnalysisDataframes:
                     t_index, name_dataframe) for condition in self.dict_paths_pyb.keys()}
 
     @staticmethod
-    def initialize_analysis_dataframe(index, name_index):
+    def initialize_analysis_dataframe(columns, name_columns):
         """Create an empty analysis dataframe with only a named index.
 
         Parameters
@@ -281,8 +281,8 @@ class MacularAnalysisDataframes:
         analysis_dataframe : pd.DataFrame
             Returns an initialised, empty analysis dataframe with a named index.
         """
-        analysis_dataframe = pd.DataFrame(index=index)
-        analysis_dataframe.index.name = name_index
+        analysis_dataframe = pd.DataFrame(columns=columns)
+        analysis_dataframe.columns.name = name_columns
 
         return analysis_dataframe
 
@@ -394,10 +394,10 @@ class MacularAnalysisDataframes:
         present on each line. If a condition does not already exist among the columns, it is added. However, if it
         already exists, the value of the current MacularDictArray row is filled with its value.
         """
-        for conditions in self.dict_analysis_dataframes["Conditions"].index:
+        for conditions in self.dict_analysis_dataframes["Conditions"].columns:
             for condition in conditions.split("_"):
                 name, value, unit = self.condition_reg.findall(condition)[0]
-                if f"{name} ({unit})" not in self.dict_analysis_dataframes["Conditions"].columns:
-                    self.dict_analysis_dataframes["Conditions"].loc[:, f"{name} ({unit})"] = ""
-                self.dict_analysis_dataframes["Conditions"].loc[conditions, f"{name} ({unit})"] = float(
+                if f"{name} ({unit})" not in self.dict_analysis_dataframes["Conditions"].index:
+                    self.dict_analysis_dataframes["Conditions"].loc[f"{name} ({unit})"] = ""
+                self.dict_analysis_dataframes["Conditions"].loc[f"{name} ({unit})", conditions] = float(
                     value.replace(",", "."))
