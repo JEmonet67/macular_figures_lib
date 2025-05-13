@@ -384,10 +384,10 @@ def test_setup_multiple_dicts_analysis():
                                                                      'index': 'temporal'}}}},
         'X': {
             'activation_time': {'barSpeed30dps': {all_measurements: {'threshold': 0.001, 'y': 7,
-                                                                       'index': 'temporal'}},
-                                  all_conditions: {'VSDI': {'threshold': 0.001, 'y': 7, 'index': 'temporal_ms'},
-                                                   all_measurements: {'threshold': 0.01, 'y': 7,
-                                                                      'index': 'temporal_ms'}}}},
+                                                                     'index': 'temporal'}},
+                                all_conditions: {'VSDI': {'threshold': 0.001, 'y': 7, 'index': 'temporal_ms'},
+                                                 all_measurements: {'threshold': 0.01, 'y': 7,
+                                                                    'index': 'temporal_ms'}}}},
         'Y': {'test': 'test'},
         'Time': {'test': 'test'}}
 
@@ -399,8 +399,8 @@ def test_setup_multiple_dicts_analysis():
                                                  'barSpeed30dps': [all_measurements]}}},
         'X': {
             'activation_time': {'conditions': [all_conditions, 'barSpeed30dps'],
-                                  'measurements': {'barSpeed30dps': [all_measurements],
-                                                   all_conditions: [all_measurements, 'VSDI']}}},
+                                'measurements': {'barSpeed30dps': [all_measurements],
+                                                 all_conditions: [all_measurements, 'VSDI']}}},
         'Y': {},
         'Time': {}}
 
@@ -422,8 +422,8 @@ def test_setup_multiple_dicts_analysis():
 
     # Execute the setup_multiple_dicts_analysis function to be tested.
     multiple_dicts_analysis_substituted, dict_sort_order = (macular_analysis_dataframes_default_empty.
-                                                            setup_multiple_dicts_analysis(
-                                                                multi_macular_dict_array_default))
+    setup_multiple_dicts_analysis(
+        multi_macular_dict_array_default))
 
     # Verification of the validity of the substituted multiple analysis dictionaries and the sort order dictionary.
     assert multiple_dicts_analysis_substituted == multiple_dicts_analysis_substituted_correct
@@ -487,7 +487,7 @@ def test_substituting_all_alias_in_multiple_analysis_dictionaries():
 
     # Execute the substituting_all_alias_in_multiple_analysis_dictionaries function to be tested.
     multiple_dicts_analysis_substitued = (macular_analysis_dataframes_test.
-                               substituting_all_alias_in_multiple_analysis_dictionaries(
+    substituting_all_alias_in_multiple_analysis_dictionaries(
         dict_analysis_test_default, levels_multiple_dictionaries_default))
 
     assert multiple_dicts_analysis_substitued == multiple_dicts_analysis_substitued_correct
@@ -503,9 +503,9 @@ def test_substituting_all_alias_in_analysis_dictionary():
                                                                               "index": "temporal_index"}},
         "barSpeed15dps:barSpeed30dps:barSpeed6dps": {"VSDI": {"threshold": 0.001, "y": 10, "index": "temporal_index"}}
     },
-    "test1": 1,
-    "test2": {"all_conditions": 2},
-    "test3": {"all_conditions": {"all_measurements": 3}}
+        "test1": 1,
+        "test2": {"all_conditions": 2},
+        "test3": {"all_conditions": {"all_measurements": 3}}
     }
 
     # Creation of character strings with all conditions of the MacularAnalysisDataframe.
@@ -530,9 +530,9 @@ def test_substituting_all_alias_in_analysis_dictionary():
         "barSpeed6dps:barSpeed30dps": {"BipolarResponse_BipolarGainControl": {"threshold": 0.005, "y": 7,
                                                                               "index": "temporal_index"}}
     },
-    "test1": 1,
-    "test2": {all_conditions: 2},
-    "test3": {all_conditions: {all_measurements: 3}}
+        "test1": 1,
+        "test2": {all_conditions: 2},
+        "test3": {all_conditions: {all_measurements: 3}}
     }
 
     # Substitution of aliases with the substituting_analysis_dictionary_all_alias function.
@@ -599,10 +599,10 @@ def test_creating_sort_order_from_dict_analysis():
     dict_analysis = {
         all_conditions: {all_measurements: {"threshold": 0.01, "y": 7, "index": "temporal_index"}},
         "barSpeed1dps": {all_measurements: {"threshold": 0.005, "y": 7, "index": "temporal_index"},
-                          "VSDI": {"threshold": 0.001, "y": 7, "index": "temporal_index"},
-                        "Activity": {"threshold": 0.001, "y": 7, "index": "temporal_index"}},
+                         "VSDI": {"threshold": 0.001, "y": 7, "index": "temporal_index"},
+                         "Activity": {"threshold": 0.001, "y": 7, "index": "temporal_index"}},
         "barSpeed3dps": {all_measurements_minus_one: {"threshold": 0.005, "y": 7,
-                                                                      "index": "temporal_index"},
+                                                      "index": "temporal_index"},
                          "Activity": {"threshold": 0.001, "y": 7, "index": "temporal_index"}
                          }
     }
@@ -678,7 +678,7 @@ def test_make_analysis():
     # Initialisation of a dictionary for a complex analysis.
     dict_analysis_default_complex = {"X": {"activation_time": {
         all_conditions: {all_measurements: {"threshold": 0.01, "y": 7, "index": "temporal_ms"},
-                           "VSDI": {"threshold": 0.001, "y": 7, "index": "temporal_ms"}},
+                         "VSDI": {"threshold": 0.001, "y": 7, "index": "temporal_ms"}},
         "barSpeed30dps": {all_measurements: {"threshold": 0.001, "y": 7, "index": "temporal"}},
         "barSpeed27dps": {"BipolarResponse_BipolarGainControl": {"threshold": 0.005, "y": 7, "index": "temporal"}}}}}
 
@@ -789,8 +789,8 @@ def test_activation_time_analyzing():
         parameters_analysis_dict_y)
 
     # Create correct activation time array Y to compare.
-    activation_time_array_correct_y = np.array([282.2, 285.4, 282.2, 280.6, 279,  277.4, 277.4, 277.4, 277.4, 277.4,
-                                                279,  280.6, 282.2, 285.4, 282.2])
+    activation_time_array_correct_y = np.array([282.2, 285.4, 282.2, 280.6, 279, 277.4, 277.4, 277.4, 277.4, 277.4,
+                                                279, 280.6, 282.2, 285.4, 282.2])
 
     # Verification of the validity of the spatial array Y of the activation time.
     assert np.array_equal(activation_time_array_y, activation_time_array_correct_y)

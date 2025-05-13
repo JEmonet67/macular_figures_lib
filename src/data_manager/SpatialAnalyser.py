@@ -38,7 +38,7 @@ class SpatialAnalyser:
                 # Cases where an activation time exists.
                 try:
                     activation_time_index = np.argwhere(data_array_test_threshold[j][i])[0][0]
-                    activation_time_array[j][i] = round(index_array[activation_time_index],3)
+                    activation_time_array[j][i] = round(index_array[activation_time_index], 3)
                 # Cases where no activation time was found.
                 except IndexError:
                     activation_time_array[j][i] = np.nan
