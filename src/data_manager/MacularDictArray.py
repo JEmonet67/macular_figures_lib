@@ -654,13 +654,12 @@ class MacularDictArray:
             Current chunk number.
         """
         dataframe_chunk_processor = DataframeChunkProcessor()
-        dataframe_helpers = DataframeHelpers()
 
         # Transient computing
         transient = self.transient_computing()
         # Shaping of the dataframe fragment.
         dataframe_chunk = dataframe_chunk.set_index("Time")
-        dataframe_chunk = dataframe_helpers.crop_dataframe_rows(dataframe_chunk, transient,
+        dataframe_chunk = DataframeHelpers.crop_dataframe_rows(dataframe_chunk, transient,
                                                                 self.dict_simulation["end"])
 
         list_num, list_measurements = dataframe_chunk_processor.get_list_num_measurements(self.path_csv)

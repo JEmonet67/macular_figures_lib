@@ -19,11 +19,9 @@ def test_activation_time_computing():
     with open(f"{path_data_test}/activation_time_VSDI_array.pyb", "rb") as file:
         activation_time_array_correct = pickle.load(file)
 
-    spatial_analyser = SpatialAnalyser()
-
-    # Creation of a 2D test activation time array.
-    activation_time_array = spatial_analyser.activation_time_computing(macular_dict_array_default.data["VSDI"],
-                                               macular_dict_array_default.index["temporal"],
-                                               0.001)
+    # Creation of a 2D activation time array for test.
+    activation_time_array = SpatialAnalyser.activation_time_computing(macular_dict_array_default.data["VSDI"],
+                                                                      macular_dict_array_default.index["temporal"],
+                                                                      0.001)
 
     assert np.array_equal(activation_time_array, activation_time_array_correct)

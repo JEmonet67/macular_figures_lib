@@ -893,10 +893,8 @@ class MacularAnalysisDataframes:
         activation_time_1d_array : np.array
             1D array of activation times along a single spatial axis.
         """
-        spatial_analyser = SpatialAnalyser()
-
         # Calculation of the 2D array of activation times.
-        activation_time_2d_array = spatial_analyser.activation_time_computing(data,
+        activation_time_2d_array = SpatialAnalyser.activation_time_computing(data,
                                                                               index[parameters_analysis_dict["index"]],
                                                                               parameters_analysis_dict["threshold"])
 
