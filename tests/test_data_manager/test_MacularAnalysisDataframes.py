@@ -794,3 +794,28 @@ def test_activation_time_analyzing():
 
     # Verification of the validity of the spatial array Y of the activation time.
     assert np.array_equal(activation_time_array_y, activation_time_array_correct_y)
+
+
+def test_latency_analyzing():
+    # Create analysis dictionary for latency case on X dimension dataframe.
+    parameters_analysis_dict_x = {"threshold": 0.001, "y": 7, "index": "temporal_centered_ms", "axis": "horizontal",
+                                  "flag": "threshold0,001_y7"}
+
+    # Create new latency array for spatial dataframe of the X dimension.
+    latency_array_x = MacularAnalysisDataframes.latency_analyzing(
+        multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
+        multi_macular_dict_array_default["barSpeed30dps"].index,
+        parameters_analysis_dict_x)
+
+    # Set correct latency array X to compare.
+    latency_array_x_correct = np.array([3.13, 3.63, 0.93, -0.17, -2.87, -5.57, -8.27, -10.97, -13.67, -16.37, -19.07,
+                                        -20.17, -22.87, -25.57, -26.67, -27.77, -30.47, -31.57, -32.67, -33.77, -34.87,
+                                        -35.97, -37.07, -36.57, -37.67, -38.77, -38.27, -39.37, -40.47, -39.97, -41.07,
+                                        -40.57, -40.07, -41.17, -40.67, -41.77, -41.27, -40.77, -41.87, -41.37, -42.47,
+                                        -41.97, -41.47, -42.57, -42.07, -41.57, -42.67, -42.17, -41.67, -41.17, -42.27,
+                                        -41.77, -42.87, -42.37, -41.87, -42.97, -42.47, -41.97, -43.07, -42.57, -42.07,
+                                        -43.17, -42.67, -43.77, -43.27, -42.77, -43.87, -43.37, -44.47, -45.57, -45.07,
+                                        -46.17, -45.67])
+
+    # Verification of the validity of the spatial array X of the latency.
+    assert np.array_equal(latency_array_x, latency_array_x_correct)

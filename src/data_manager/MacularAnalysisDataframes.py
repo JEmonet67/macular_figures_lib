@@ -674,12 +674,12 @@ class MacularAnalysisDataframes:
             Dictionary containing ordered lists of condition groups and measurements for all analyses and dimensions of
             multiple analysis dictionaries.
         """
-        # Réalisation de toutes les analyses présentes dans le dictionnaire d'analyse en cours.
+        # Performs all analyses listed in the current analysis dictionary.
         for analysis in multiple_dicts_analysis_unidimensional:
             if analysis == "activation_time":
                 analysis_function = self.activation_time_analyzing
             elif analysis == "latency":
-                pass
+                analysis_function = self.latency_analyzing
             elif analysis == "time_to_peak":
                 pass
             elif analysis == "delay_to_peak":
@@ -905,3 +905,59 @@ class MacularAnalysisDataframes:
             activation_time_1d_array = activation_time_2d_array[parameters_analysis_dict["y"], :]
 
         return activation_time_1d_array
+
+    @staticmethod
+    def latency_analyzing(data, index, parameters_analysis_dict):
+        """Function that analyses latency based on a single spatial dimension.
+
+        The latency is calculated in the 3D array and a centered index of a measurement of a condition. It is obtained
+        in the form of a 2D array from which only the desired X or Y position can be taken to obtain a 1D array based
+        on a single spatial dimension.
+
+        To use the centered index, the user have to specify the name of the time index in the analysis parameter
+        dictionary associated with the ‘index’ key. For example: “index”: ‘temporal_centered’. This index will consist
+        of several indexes in the form of a list, as each spatial position will be associated with a different reference
+        time. In the most basic case, this time is the moment when the moving object is at the center of the cell
+        receptive field.
+
+        Parameters
+        ----------
+        data : np.array
+            3D array containing the values of a measurement for a given condition.
+
+        index : dict of np.array
+            Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
+
+        parameters_analysis_dict : dict
+            Dictionary of parameters to be used for latency analysis. It must contain the threshold,
+            the name of the index to be taken from the dictionary (allows switching from the s index to the ms index),
+            and the x or y position to be analysed.
+
+        Returns
+        ----------
+        activation_time_1d_array : np.array
+            1D array of latency along a single spatial axis.
+        """
+        # Calculation of the 2D array of activation times.
+        latency_2d_array = SpatialAnalyser.latency_computing(data,
+                                                              index[parameters_analysis_dict["index"]],
+                                                              parameters_analysis_dict["threshold"],
+                                                              parameters_analysis_dict["axis"])
+
+        # Extracting a single spatial dimension from the latency array.
+        if "x" in parameters_analysis_dict:
+            latency_1d_array = latency_2d_array[:, parameters_analysis_dict["x"]]
+        elif "y" in parameters_analysis_dict:
+            latency_1d_array = latency_2d_array[parameters_analysis_dict["y"], :]
+
+        return latency_1d_array
+
+    @staticmethod
+    def time_to_peak_analyzing(data, index, parameters_analysis_dict):
+        pass
+
+    @staticmethod
+    def delay_to_peak_analyzing(data, index, parameters_analysis_dict):
+        pass
+
+

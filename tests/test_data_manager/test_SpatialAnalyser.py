@@ -25,3 +25,27 @@ def test_activation_time_computing():
                                                                       0.001)
 
     assert np.array_equal(activation_time_array, activation_time_array_correct)
+
+
+def test_latency_computing():
+    # Import a 2D array of valid VSDI horizontal latency.
+    with open(f"{path_data_test}/horizontal_latency_VSDI_array.pyb", "rb") as file:
+        horizontal_latency_array_correct = pickle.load(file)
+
+    # Creation of a 2D horizontal latency array for test.
+    horizontal_latency_array = SpatialAnalyser.latency_computing(macular_dict_array_default.data["VSDI"],
+                                                                 macular_dict_array_default.index["temporal_centered"],
+                                                                 0.001, "horizontal")
+
+    assert np.array_equal(horizontal_latency_array, horizontal_latency_array_correct)
+
+    # Import a 2D array of valid VSDI vertical latency.
+    with open(f"{path_data_test}/vertical_latency_VSDI_array.pyb", "rb") as file:
+        vertical_latency_array_correct = pickle.load(file)
+
+    # Creation of a 2D vertical latency array for test.
+    vertical_latency_array = SpatialAnalyser.latency_computing(macular_dict_array_default.data["VSDI"],
+                                                               macular_dict_array_default.index["temporal_centered"],
+                                                               0.001, "vertical")
+
+    assert np.array_equal(vertical_latency_array, vertical_latency_array_correct)
