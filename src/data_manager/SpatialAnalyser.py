@@ -33,15 +33,15 @@ class SpatialAnalyser:
         data_array_test_threshold = (data_array > threshold)
 
         # Loops at each horizontal and vertical position of the 3D array.
-        for i in range(data_array.shape[0]):
-            for j in range(data_array.shape[1]):
+        for i in range(data_array.shape[1]):
+            for j in range(data_array.shape[0]):
                 # Cases where an activation time exists.
                 try:
-                    activation_time_index = np.argwhere(data_array_test_threshold[i][j])[0][0]
-                    activation_time_array[i][j] = index_array[activation_time_index]
+                    activation_time_index = np.argwhere(data_array_test_threshold[j][i])[0][0]
+                    activation_time_array[j][i] = round(index_array[activation_time_index],3)
                 # Cases where no activation time was found.
                 except IndexError:
-                    activation_time_array[i][j] = np.nan
+                    activation_time_array[j][i] = np.nan
 
         return activation_time_array
 
