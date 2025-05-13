@@ -91,6 +91,35 @@ class SpatialAnalyser:
 
         return latency_array
 
+    @staticmethod
+    def time_to_peak_computing(data_array, index_array):
+        """Calculation of the time to peak from which the response is maximal.
 
+        Parameters
+        ----------
+        data_array : np.array
+            3D array containing activity data.
 
+        index_array : list of np.array
+            One-dimensional array containing the time index to be used.
 
+        Returns
+        ----------
+        time_to_peak_array : np.array()
+            2D array containing the time to peak of the 3D array given as input.
+        """
+        # Initialises a 2D array with the same size as the spatial dimensions of the data array.
+        time_to_peak_array = np.empty((data_array.shape[0], data_array.shape[1]))
+
+        # Loops at each horizontal and vertical position of the 3D array.
+        for i in range(data_array.shape[1]):
+            for j in range(data_array.shape[0]):
+                # Cases where a peak exists.
+                try:
+                    time_to_peak_index = data_array[j][i].argmax()
+                    time_to_peak_array[j][i] = round(index_array[time_to_peak_index], 3)
+                # Cases where no peak was found.
+                except IndexError:
+                    time_to_peak_array[j][i] = np.nan
+
+        return time_to_peak_array

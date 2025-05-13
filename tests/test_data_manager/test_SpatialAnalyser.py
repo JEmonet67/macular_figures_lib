@@ -49,3 +49,15 @@ def test_latency_computing():
                                                                0.001, "vertical")
 
     assert np.array_equal(vertical_latency_array, vertical_latency_array_correct)
+
+
+def test_time_to_peak_computing():
+    # Import a 2D array of valid VSDI time to peak.
+    with open(f"{path_data_test}/time_to_peak_VSDI_array.pyb", "rb") as file:
+        time_to_peak_array_correct = pickle.load(file)
+
+    # Creation of a 2D time to peak array for test.
+    time_to_peak_array = SpatialAnalyser.time_to_peak_computing(macular_dict_array_default.data["VSDI"],
+                                                                 macular_dict_array_default.index["temporal_ms"])
+
+    assert np.array_equal(time_to_peak_array, time_to_peak_array_correct)

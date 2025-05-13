@@ -681,7 +681,7 @@ class MacularAnalysisDataframes:
             elif analysis == "latency":
                 analysis_function = self.latency_analyzing
             elif analysis == "time_to_peak":
-                pass
+                analysis_function = self.time_to_peak_analyzing
             elif analysis == "delay_to_peak":
                 pass
 
@@ -954,7 +954,41 @@ class MacularAnalysisDataframes:
 
     @staticmethod
     def time_to_peak_analyzing(data, index, parameters_analysis_dict):
-        pass
+        """Function that analyses time to peak based on a single spatial dimension.
+
+        The time to peak is calculated in the 3D array and the index of a measurement of a condition. It is obtained
+        in the form of a 2D array from which only the desired X or Y position can be taken to obtain a 1D array based
+        on a single spatial dimension.
+
+        Parameters
+        ----------
+        data : np.array
+            3D array containing the values of a measurement for a given condition.
+
+        index : dict of np.array
+            Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
+
+        parameters_analysis_dict : dict
+            Dictionary of parameters to be used for time to peak analysis. It must contain the name of the index to be
+            taken from the dictionary (allows switching from the s index to the ms index), and the x or y position to be
+            analysed.
+
+        Returns
+        ----------
+        time_to_peak_1d_array : np.array
+            1D array of time to peak along a single spatial axis.
+        """
+        # Calculation of the 2D array of activation times.
+        time_to_peak_2d_array = SpatialAnalyser.time_to_peak_computing(data,
+                                                              index[parameters_analysis_dict["index"]])
+
+        # Extracting a single spatial dimension from the latency array.
+        if "x" in parameters_analysis_dict:
+            time_to_peak_1d_array = time_to_peak_2d_array[:, parameters_analysis_dict["x"]]
+        elif "y" in parameters_analysis_dict:
+            time_to_peak_1d_array = time_to_peak_2d_array[parameters_analysis_dict["y"], :]
+
+        return time_to_peak_1d_array
 
     @staticmethod
     def delay_to_peak_analyzing(data, index, parameters_analysis_dict):
