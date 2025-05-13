@@ -74,6 +74,48 @@ class CoordinateManager:
         return list_time_bar_center
 
     @staticmethod
+    def edge_to_dict_edge(edge):
+        """Function to parse the values of the edges to be cropped and place them in a dictionary.
+
+        Parsing works for a case with a simple int, a case with tuples of int, or more complex cases with tuples of
+        tuples to further specify the cropping to be done for each edge.
+
+        Parameters
+        ----------
+        edge : int or tuple
+            Size of each edge to be cropped.
+
+            It is possible that the size is the same for all edges, in which case edge is an int. It is also possible
+            that the size is a simple tuple if there is asymmetry in the edges to be cut on the horizontal and vertical
+            axes. Finally, each of these tuples can themselves be tuples in the case where the two horizontal or
+            vertical edges are cut asymmetrically.
+
+        Returns
+        ----------
+        dict_edges : dict
+            Dictionary containing the cropped size for each edge of the spatial space (X_left, X_right, Y_bottom and
+            Y_top)
+        """
+        # Completely symmetrical edge case.
+        if isinstance(edge, int):
+            dict_edges = {"X_left": edge, "X_right": edge, "Y_bottom": edge, "Y_top": edge}
+        elif isinstance(edge, tuple):
+            # Partially symmetrical edge case, horizontal relative to vertical.
+            if isinstance(edge[0], int) and isinstance(edge[1], int):
+                dict_edges = {"X_left": edge[0], "X_right": edge[0], "Y_bottom": edge[1], "Y_top": edge[1]}
+            # Partially symmetrical vertical and asymmetrical horizontal edge case.
+            elif isinstance(edge[0], tuple) and isinstance(edge[1], int):
+                dict_edges = {"X_left": edge[0][0], "X_right": edge[0][1], "Y_bottom": edge[1], "Y_top": edge[1]}
+            # Partially symmetrical horizontal and asymmetrical vertical edge case.
+            elif isinstance(edge[0], int) and isinstance(edge[1], tuple):
+                dict_edges = {"X_left": edge[0], "X_right": edge[0], "Y_bottom": edge[1][0], "Y_top": edge[1][1]}
+            # Completely asymmetrical edge case.
+            elif isinstance(edge[0], tuple) and isinstance(edge[1], tuple):
+                dict_edges = {"X_left": edge[0][0], "X_right": edge[0][1], "Y_bottom": edge[1][0], "Y_top": edge[1][1]}
+
+        return dict_edges
+
+    @staticmethod
     def convert_coord_macular_to_coord_numpy(dict_coord_macular, n_cells):
         """Function to transform the coordinate of a cell in the Macular coordinate system to that of Numpy.
 
