@@ -746,8 +746,22 @@ def test_temporal_centering_preprocess():
     macular_dict_array_test._path_pyb = macular_dict_array_head100_centered.path_pyb
     macular_dict_array_test.temporal_centering_preprocess()
 
-    # Verification of the correct working of the binning calculation function.
+    # Verification of the correct working of the centering calculation function.
     assert MacularDictArray.equal(macular_dict_array_test, macular_dict_array_head100_centered)
+
+    # Checking centering taking into account horizontal edge cropping.
+    macular_dict_array_test.dict_preprocessing["edge"] = ((5, 5), 2)
+    macular_dict_array_test.temporal_centering_preprocess()
+    assert np.array_equal(macular_dict_array_test.index["temporal_centered"],
+                          macular_dict_array_head100_centered.index["temporal_centered"][5: 78])
+
+    # Checking centering taking into account vertical edge cropping.
+    macular_dict_array_test.dict_preprocessing["edge"] = ((5, 5), 2)
+    macular_dict_array_test.dict_simulation["axis"] = "vertical"
+    macular_dict_array_test.temporal_centering_preprocess()
+    assert np.array_equal(macular_dict_array_test.index["temporal_centered"][:, 0],
+                          [-0.13083, -0.16833, -0.20583, -0.24333, -0.28083,
+                           -0.31833, -0.35583, -0.39333, -0.43083, -0.46833, -0.50583])
 
 
 def test_make_all_indexes_units_conversion_preprocess():

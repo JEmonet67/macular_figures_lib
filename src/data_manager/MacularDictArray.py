@@ -874,8 +874,29 @@ class MacularDictArray:
         Time centering is performed according to the ‘temporal_centering’ key in the preprocessing dictionary. The
         centering computing produces a two-dimensional array of centred times for each cell on the object's movement
         axis.
+
+        If edges have been cropped from the current MacularDictArray, it is necessary to crop these edges also these
+        edges in the list of arrival times in the bar in the centre of the receiver fields. All cropping values to be
+        applied to each edge of the spatial area are added to a dictionary containing the keys: X_left, X_right,
+        Y_bottom and Y_top.
         """
+        # List of arrival times of the bar on all cells of the MacularDictArray before any cropping.
         list_time_bar_center = CoordinateManager.get_list_time_motion_center(self.dict_simulation)
+
+        # Cases where the edges of the MacularDictArray space area have been cropped.
+        try:
+            dict_edges = CoordinateManager.edge_to_dict_edge(self.dict_preprocessing["edge"])
+            if self.dict_simulation["axis"] == "horizontal":
+                list_time_bar_center = list_time_bar_center[dict_edges["X_left"]:
+                                                            len(list_time_bar_center) - dict_edges["X_right"]]
+            elif self.dict_simulation["axis"] == "vertical":
+                list_time_bar_center = list_time_bar_center[dict_edges["Y_bottom"]:
+                                                            len(list_time_bar_center) - dict_edges["Y_top"]]
+        # Case without edges cropped.
+        except KeyError:
+            pass
+
+        # Centering the time index within its assigned index.
         self.index[f"temporal_centered"] = DataPreprocessor.temporal_centering(
             self.index["temporal"], list_time_bar_center)
 

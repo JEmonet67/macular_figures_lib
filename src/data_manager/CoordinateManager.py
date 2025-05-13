@@ -67,7 +67,7 @@ class CoordinateManager:
 
         # Computing the arrival times of the bar in the centre of the cell receptor field.
         list_time_bar_center = [
-            np.round(((np.round(x_col * dict_simulation["dx"], 5) +
+           round(((round(x_col * dict_simulation["dx"], 5) +
                        dict_simulation["size_bar"] / 2) / dict_simulation["speed"]), 5)
             for x_col in range(0, last_cell)]
 
