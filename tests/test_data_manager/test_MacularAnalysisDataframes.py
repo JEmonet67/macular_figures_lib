@@ -13,31 +13,31 @@ from src.data_manager.MacularDictArray import MacularDictArray
 path_data_test = os.path.normpath(f"{os.getcwd()}/../data_test/data_manager/")
 
 # Import of a MacularAnalysisDataframes based on reduced MacularDictArray (100 first rows).
-with open(f"{path_data_test}/initialized_macular_analysis_dataframe.pyb", "rb") as file:
+with open(f"{path_data_test}/MacularAnalysisDataframes/initialized_macular_analysis_dataframe.pyb", "rb") as file:
     macular_analysis_dataframes_head100 = pickle.load(file)
 
 # Import of a reduced MacularAnalysisDataframes for tests.
-with open(f"{path_data_test}/initialized_macular_analysis_dataframe.pyb", "rb") as file:
+with open(f"{path_data_test}/MacularAnalysisDataframes/initialized_macular_analysis_dataframe.pyb", "rb") as file:
     macular_analysis_dataframes_test = pickle.load(file)
 
 # Import a multiple reduced macular dict array of bar speed condition.
-with open(f"{path_data_test}/multiple_macular_dict_array_head100.pyb", "rb") as file:
+with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_array_head100.pyb", "rb") as file:
     multi_macular_dict_array_head100 = pickle.load(file)
 
 # Import a multiple reduced macular dict array of bar speed condition for tests.
-with open(f"{path_data_test}/multiple_macular_dict_array_head100.pyb", "rb") as file:
+with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_array_head100.pyb", "rb") as file:
     multi_macular_dict_array_test = pickle.load(file)
 
 # Import a default multiple macular dict array of bar speed condition with multiple preprocess.
-with open(f"{path_data_test}/multiple_macular_dict_array_default.pyb", "rb") as file:
+with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_array_default.pyb", "rb") as file:
     multi_macular_dict_array_default = pickle.load(file)
 
 # Import the list of conditions/measures from the default multi macular dict array.
-with open(f"{path_data_test}/levels_multiple_dictionaries_default.pyb", "rb") as file:
+with open(f"{path_data_test}/MacularAnalysisDataframes/levels_multiple_dictionaries_default.pyb", "rb") as file:
     levels_multiple_dictionaries_default = pickle.load(file)
 
 # Import default macular analysis dataframes of bar speed condition with activation time common group analysis.
-with open(f"{path_data_test}/activation_time_common_group_analysis.pyb", "rb") as file:
+with open(f"{path_data_test}/MacularAnalysisDataframes/activation_time_common_group_analysis.pyb", "rb") as file:
     activation_time_common_group_analysis = pickle.load(file)
 
 multiple_dicts_simulations_head100 = {
@@ -108,7 +108,7 @@ def test_dict_paths_pyb_setter():
 
 def test_dict_analysis_dataframes_getter():
     # Import d'un dictionnaire d'analyses de dataframes d'exemple.
-    with open(f"{path_data_test}/dict_analysis_dataframes_head100.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularAnalysisDataframes/dict_analysis_dataframes_head100.pyb", "rb") as file:
         dict_analysis_dataframes_head100 = pickle.load(file)
 
     # Comparison of the example dictionary with that of the setter.
@@ -218,7 +218,7 @@ def test_get_maximal_index_multi_macular_dict_array():
 
 def test_initialize_dict_analysis_dataframes():
     # Opening a macular analysis dataframe that has already been created but has yet to be initialised.
-    with open(f"{path_data_test}/macular_analysis_dataframes_to_init.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframes_to_init.pyb", "rb") as file:
         macular_analysis_dataframes_to_init = pickle.load(file)
 
     # Index listing.
@@ -249,7 +249,7 @@ def test_initialize_dict_analysis_dataframes():
 
 def test_initialize_analysis_dataframe():
     # Open a example dataframe from the spatial dataframe x.
-    with open(f"{path_data_test}/empty_spatial_x_dataframe.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularAnalysisDataframes/empty_spatial_x_dataframe.pyb", "rb") as file:
         spatial_x_dataframe = pickle.load(file)
 
     # Create a spatial dataframe x using the initialize_analysis_dataframe function.
@@ -335,11 +335,11 @@ def test_cleaning_multiple_dicts_analysis():
 
 def test_setup_conditions_values_to_condition_dataframe():
     # Opening a dataframe of conditions that have already been set up.
-    with open(f"{path_data_test}/setup_condition_dataframe.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularAnalysisDataframes/setup_condition_dataframe.pyb", "rb") as file:
         setup_conditions_dataframe = pickle.load(file)
 
     # Opening a dataframe of conditions in setup.
-    with open(f"{path_data_test}/empty_condition_dataframe.pyb", "rb") as file:
+    with open(f"{path_data_test}/SpatialAnalyser/empty_condition_dataframe.pyb", "rb") as file:
         empty_dataframe = pickle.load(file)
 
     # Adaptation of a Macular Analysis Dataframe to set up your conditions dataframe.
@@ -350,7 +350,7 @@ def test_setup_conditions_values_to_condition_dataframe():
     assert setup_conditions_dataframe.equals(macular_analysis_dataframes_test._dict_analysis_dataframes["Conditions"])
 
     # Opening a dataframe of complex conditions that have already been set up.
-    with open(f"{path_data_test}/setup_complex_condition_dataframe.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularAnalysisDataframes/setup_complex_condition_dataframe.pyb", "rb") as file:
         setup_complex_conditions_dataframe = pickle.load(file)
 
     # Preparation of a macular analysis dataframe for complex conditions.
@@ -369,7 +369,7 @@ def test_setup_conditions_values_to_condition_dataframe():
 
 def test_setup_multiple_dicts_analysis():
     # Import an empty default macular analysis dataframes of bar speed condition.
-    with open(f"{path_data_test}/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
         macular_analysis_dataframes_default_empty = pickle.load(file)
 
     # Define strings containing all conditions and measures.
@@ -629,7 +629,7 @@ def test_make_spatial_dataframes_analysis():
 
 def test_get_levels_of_multi_macular_dict_array():
     # Import a test multiple reduced macular dict array of bar speed condition.
-    with open(f"{path_data_test}/multiple_macular_dict_array_head100.pyb", "rb") as file_variousLevel:
+    with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_array_head100.pyb", "rb") as file_variousLevel:
         multi_macular_dict_array_head100_variousLevel = pickle.load(file_variousLevel)
 
     # Modification of multi_macular_dict_array so that one of the MacularDictArray has one less measurement.
@@ -664,11 +664,12 @@ def test_get_levels_of_multi_macular_dict_array():
 
 def test_make_analysis():
     # Import a default macular analysis dataframes of bar speed condition with one complex analysis done.
-    with open(f"{path_data_test}/macular_analysis_dataframe_default_complex_make_analysis.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularAnalysisDataframes/"
+              f"macular_analysis_dataframe_default_complex_make_analysis.pyb", "rb") as file:
         macular_analysis_dataframes_default_complex_make_analysis = pickle.load(file)
 
     # Import an empty default macular analysis dataframes of bar speed condition.
-    with open(f"{path_data_test}/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
         macular_analysis_dataframes_default_empty = pickle.load(file)
 
     # Define strings containing all conditions and measures.
@@ -727,7 +728,7 @@ def test_common_analysis_group_parser():
 
 def test_make_common_group_analysis():
     # Import an empty default macular analysis dataframes of bar speed condition.
-    with open(f"{path_data_test}/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
         macular_analysis_dataframes_default_empty = pickle.load(file)
 
     # Setup parameters for common group analysis.

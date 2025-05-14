@@ -19,8 +19,13 @@ with open(path_pyb_file_head100, "rb") as file_head100:
 with open(path_pyb_file_head100, "rb") as file_test:
     macular_dict_array_test = pickle.load(file_test)
 
+# Import of simplified MacularDictArray filled with 1 value.
+path_pyb_file_head100_npones = f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head100_npOnes_0f.pyb"
+with open(path_pyb_file_head100_npones, "rb") as file:
+    macular_dict_array_head100_npones = pickle.load(file)
+
 # Import of a reduced MacularDictArray control with only the 3000 first rows.
-path_pyb_file_head3000 = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head3000_copy_0f.pyb"
+path_pyb_file_head3000 = f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_copy_0f.pyb"
 with open(path_pyb_file_head3000, "rb") as file_head3000:
     macular_dict_array_head3000 = pickle.load(file_head3000)
 
@@ -44,7 +49,7 @@ path_pyb_file_head100_centered = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dp
 with open(f"{path_pyb_file_head100_centered}", "rb") as file_centered:
     macular_dict_array_head100_centered = pickle.load(file_centered)
 
-path_pyb_file_head3000_default = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_default_head3000_0f.pyb"
+path_pyb_file_head3000_default = f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_default_head3000_0f.pyb"
 # Import of the default MacularDictArray to be compared with preprocessing.
 with open(path_pyb_file_head3000_default, "rb") as file_default:
     macular_dict_array_default_head3000 = pickle.load(file_default)
@@ -369,22 +374,12 @@ def test_path_pyb_setter():
 
 
 def test_data_getter():
-    # Import of MacularDictArray to be compared.
-    path_pyb_file_head100_npones = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_npOnes_0f"
-    with open(f"{path_pyb_file_head100_npones}.pyb", "rb") as file:
-        macular_dict_array_head100_npones = pickle.load(file)
-
     # Use data getter and test it
     for output in macular_dict_array_head100_npones.data:
         assert np.array_equal(macular_dict_array_head100_npones.data[output], np.ones((15, 83, 99)))
 
 
 def test_data_setter():
-    # Import of MacularDictArray to be modified.
-    path_pyb_file_head100_npones = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_npOnes_0f"
-    with open(f"{path_pyb_file_head100_npones}.pyb", "rb") as file:
-        macular_dict_array_head100_npones = pickle.load(file)
-
     # Attempt to modify the data attribute
     try:
         macular_dict_array_head100_npones.data = []
@@ -398,12 +393,7 @@ def test_data_setter():
 
 
 def test_index_getter():
-    # Import of MacularDictArray to be compared.
-    path_pyb_file_head100_npones = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_npOnes_0f"
-    with open(f"{path_pyb_file_head100_npones}.pyb", "rb") as file:
-        macular_dict_array_head100_npones = pickle.load(file)
-
-    with open(f"{path_data_test}/index.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/index.pyb", "rb") as file:
         index_head100 = pickle.load(file)
 
     # Use index getter and test it
@@ -414,18 +404,13 @@ def test_index_getter():
 
 
 def test_index_setter():
-    # Import of MacularDictArray to be modified.
-    path_pyb_file_head100_npones = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_npOnes_0f"
-    with open(f"{path_pyb_file_head100_npones}.pyb", "rb") as file:
-        macular_dict_array_head100_npones = pickle.load(file)
-
     # Attempt to modify the index attribute
     try:
         macular_dict_array_head100_npones.data = {}
         assert False
     except AttributeError:
         assert True
-    with open(f"{path_data_test}/index.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/index.pyb", "rb") as file:
         index_head100 = pickle.load(file)
 
     # Verification that the index attribute has not been modified
@@ -444,13 +429,8 @@ def test_transient_reg_setter():
 
 
 def test_repr():
-    # Import of MacularDictArray to be displayed.
-    path_pyb_file_head100_npones = f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_npOnes_0f"
-    with open(f"{path_pyb_file_head100_npones}.pyb", "rb") as file:
-        macular_dict_array_head100_npones = pickle.load(file)
-
     # Import of the control display.
-    with open(f"{path_data_test}/repr.txt", "r") as file:
+    with open(f"{path_data_test}/MacularDictArray/repr.txt", "r") as file:
         display_head100_npones = "".join(file.readlines())[:-1]
 
     assert display_head100_npones == macular_dict_array_head100_npones.__repr__()
@@ -506,7 +486,7 @@ def test_save():
 
 def test_setup_data_index_dict_array():
     # Import of the initial MacularDictArray with empty data and index to be filled.
-    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head3000_no_data_no_index_0f.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_no_data_no_index_0f.pyb", "rb") as file:
         macular_dict_array_test = pickle.load(file)
 
     print(macular_dict_array_test)
@@ -523,11 +503,12 @@ def test_setup_data_index_dict_array():
 
 def test_extract_data_index_from_macular_csv():
     # Import of the initial MacularDictArray with empty data and index to be filled.
-    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head3000_no_data_no_index_0f.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_no_data_no_index_0f.pyb", "rb") as file:
         macular_dict_array_test = pickle.load(file)
 
     # Import of the control MacularDictArray for comparison.
-    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head3000_extractedDataIndex_0f.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_extractedDataIndex_0f.pyb",
+              "rb") as file:
         macular_dict_array_head3000_extracted = pickle.load(file)
 
     # Use extract data index from macular csv to test it.
@@ -550,11 +531,11 @@ def test_extract_data_index_from_macular_csv():
 
 def test_dataframe_chunk_processing():
     # Import of the initial MacularDictArray with empty data and index to be filled.
-    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head3000_no_data_no_index_0f.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_no_data_no_index_0f.pyb", "rb") as file:
         macular_dict_array_test = pickle.load(file)
 
     # Import of the first dataframe chunk to be processed.
-    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_first_chunk_0f.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_first_chunk_0f.pyb", "rb") as file:
         dataframe_chunk = pickle.load(file)
 
     # Use dataframe chunk processing to test it.
@@ -599,11 +580,11 @@ def test_transient_extraction():
 
 def test_concatenate_data_index_dict_array():
     # Import of the initial MacularDictArray with empty data and index to be filled.
-    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head3000_extractedDataIndex_0f.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_extractedDataIndex_0f.pyb", "rb") as file:
         macular_dict_array_test = pickle.load(file)
 
     # Import of the control MacularDictArray for comparison.
-    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head3000_concatenated_0f.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_concatenated_0f.pyb", "rb") as file:
         macular_dict_array_head3000_concatenated = pickle.load(file)
 
     # Use concatenate data index dict array to test it.
@@ -618,7 +599,7 @@ def test_concatenate_data_index_dict_array():
 
 def test_setup_spatial_index():
     # Import of the index to be compared.
-    with open(f"{path_data_test}/index.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/index.pyb", "rb") as file:
         index_head100 = pickle.load(file)
 
     # Case of the spatial index of the x-axis.
@@ -684,7 +665,8 @@ def test_binning_preprocess():
 
 def test_edge_cropping_preprocess():
     # Loading of a MacularDictArray with a edge cropping on FiringRate_GanglionGainControl with n=3.
-    with open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_cropEdge_0f.pyb", "rb") as file_cropEdge:
+    with (open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head100_cropEdge_0f.pyb", "rb") as
+          file_cropEdge):
         macular_dict_array_head100_cropEdge = pickle.load(file_cropEdge)
 
     # Initialisation of the MacularDictArray for tests with the default MacularDictArray.
@@ -766,8 +748,8 @@ def test_temporal_centering_preprocess():
 
 def test_make_all_indexes_units_conversion_preprocess():
     # Loading of a MacularDictArray with units conversion (mm retina, mm cortex and ms).
-    with (open(f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_unitsConversion_0f.pyb", "rb") as
-          file_unitsConversion):
+    with (open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head100_unitsConversion_0f.pyb", "rb")
+          as file_unitsConversion):
         macular_dict_array_head100_unitsConversion = pickle.load(file_unitsConversion)
 
     # Initialisation of the MacularDictArray for tests with the default MacularDictArray.

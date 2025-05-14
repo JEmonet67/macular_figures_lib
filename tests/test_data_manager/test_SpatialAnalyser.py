@@ -8,7 +8,7 @@ from src.data_manager.SpatialAnalyser import SpatialAnalyser
 # Get data for test from relative path.
 path_data_test = os.path.normpath(f"{os.getcwd()}/../data_test/data_manager/")
 
-path_pyb_file_default = f"{path_data_test}/RC_RM_dSGpCP0033_barSpeed30dps_default_0f.pyb"
+path_pyb_file_default = f"{path_data_test}/SpatialAnalyser/RC_RM_dSGpCP0033_barSpeed30dps_default_0f.pyb"
 # Import of the default MacularDictArray to be compared with preprocessing.
 with open(path_pyb_file_default, "rb") as file_default:
     macular_dict_array_default = pickle.load(file_default)
@@ -16,7 +16,7 @@ with open(path_pyb_file_default, "rb") as file_default:
 
 def test_activation_time_computing():
     # Import a 2D array of valid VSDI activation times.
-    with open(f"{path_data_test}/activation_time_VSDI_array.pyb", "rb") as file:
+    with open(f"{path_data_test}/SpatialAnalyser/activation_time_VSDI_array.pyb", "rb") as file:
         activation_time_array_correct = pickle.load(file)
 
     # Creation of a 2D activation time array for test.
@@ -29,7 +29,7 @@ def test_activation_time_computing():
 
 def test_latency_computing():
     # Import a 2D array of valid VSDI horizontal latency.
-    with open(f"{path_data_test}/horizontal_latency_VSDI_array.pyb", "rb") as file:
+    with open(f"{path_data_test}/SpatialAnalyser/horizontal_latency_VSDI_array.pyb", "rb") as file:
         horizontal_latency_array_correct = pickle.load(file)
 
     # Creation of a 2D horizontal latency array for test.
@@ -40,7 +40,7 @@ def test_latency_computing():
     assert np.array_equal(horizontal_latency_array, horizontal_latency_array_correct)
 
     # Import a 2D array of valid VSDI vertical latency.
-    with open(f"{path_data_test}/vertical_latency_VSDI_array.pyb", "rb") as file:
+    with open(f"{path_data_test}/SpatialAnalyser/vertical_latency_VSDI_array.pyb", "rb") as file:
         vertical_latency_array_correct = pickle.load(file)
 
     # Creation of a 2D vertical latency array for test.
@@ -53,7 +53,7 @@ def test_latency_computing():
 
 def test_time_to_peak_computing():
     # Import a 2D array of valid VSDI time to peak.
-    with open(f"{path_data_test}/time_to_peak_VSDI_array.pyb", "rb") as file:
+    with open(f"{path_data_test}/SpatialAnalyser/time_to_peak_VSDI_array.pyb", "rb") as file:
         time_to_peak_array_correct = pickle.load(file)
 
     # Creation of a 2D time to peak array for test.
