@@ -682,8 +682,10 @@ class MacularAnalysisDataframes:
                 analysis_function = self.latency_analyzing
             elif analysis == "time_to_peak":
                 analysis_function = self.time_to_peak_analyzing
-            elif analysis == "delay_to_peak":
+            elif analysis == "peak_delay":
                 analysis_function = self.peak_delay_analyzing
+            elif analysis == "peak_amplitude":
+                analysis_function = self.peak_amplitude_analyzing()
 
             self.make_analysis(analysis_function, multi_macular_dict_array, multiple_dicts_analysis_unidimensional,
                                dimension, analysis, dict_sort_order)
