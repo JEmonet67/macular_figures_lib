@@ -770,20 +770,20 @@ class MacularAnalysisDataframes:
         for grouped_conditions in dict_sort_order[dimension][analysis]["conditions"]:
             for grouped_measurements in dict_sort_order[dimension][analysis]["measurements"][grouped_conditions]:
                 # Extract the list of condition/measurements pairs to be analysed with the same analysis parameters.
-                common_analysis_group_list = self.common_analysis_group_parser(grouped_conditions, grouped_measurements)
+                common_analysis_group_generator = self.common_analysis_group_parser(grouped_conditions,
+                                                                                    grouped_measurements)
                 # Analysis of conditions/measurements for a common analysis group sharing the same analysis parameters.
-                self.make_common_group_analysis(analysis_function, multi_macular_dict_array, common_analysis_group_list,
-                                                dimension, analysis, multiple_dicts_analysis_unidimensional[analysis]
+                self.make_common_group_analysis(analysis_function, multi_macular_dict_array,
+                                                common_analysis_group_generator, dimension, analysis,
+                                                multiple_dicts_analysis_unidimensional[analysis]
                                                 [grouped_conditions][grouped_measurements])
 
         # TODO Faire de cette fonction une propriété pour chaque fonction d'analyses ?
-        # TODO Ici soit je parse pour structurer en une collection ou structure de données les groupes d'analyses avant de les faire un par un.
-
 
     @staticmethod
     def common_analysis_group_parser(grouped_conditions, grouped_measurements):
-        """Function that transforms the names of conditions and measurements in a group of common analyses into a list
-        of pairs of conditions and measurements that share one or more identical analyses.
+        """Function that transforms the names of conditions and measurements in a group of common analyses into a
+        generator of pairs of conditions and measurements that share one or more identical analyses.
 
         The sets of condition names or measurements in the common analysis group (grouped_conditions and
         grouped_measurements) are separated by ‘:’. To extract each of them, separate them using this symbol.
@@ -797,29 +797,20 @@ class MacularAnalysisDataframes:
 
         grouped_measurements : str
             Names of measurements in a common analysis group.
-
-        Returns
-        ----------
-        common_analysis_group_list : list of tuples
-            List of all tuples pairs of conditions and measurements in a group of common analyses.
         """
-        common_analysis_group_list = []
-
         # Loop on the conditions and measurements of the common analysis group.
         for condition in grouped_conditions.split(":"):
             for measurement in grouped_measurements.split(":"):
-                # Added pair condition, measurement in progress.
-                common_analysis_group_list += [(condition, measurement)]
+                # New pair condition, measurement for analysis in generator.
+                yield condition, measurement
 
-        return common_analysis_group_list
-
-    def make_common_group_analysis(self, analysis_function, multi_macular_dict_array, common_analysis_group_list,
+    def make_common_group_analysis(self, analysis_function, multi_macular_dict_array, common_analysis_group_generator,
                                    dimension, analysis, parameters_analysis_dict):
         """Function that performs a given analysis within a common group of analyses
 
         A common analysis group is a bunch of conditions and measurements that share one or more identical analyses
-        with the same parameters. This group can be represented by a list of pairs of conditions and measurements on
-        which to perform these same analyses.
+        with the same parameters. This group can be represented by a generator of pairs of conditions and measurements
+        on which to perform these same analyses.
 
         Each analysis is stored in the dataframe of the dimension given as input (Conditions, X, Y, Time) in the row
         named by its name and that of the measurement on which it is made, for example: ‘Activation_time_VSDI’. It
@@ -837,8 +828,8 @@ class MacularAnalysisDataframes:
         multi_macular_dict_array : dict of MacularDictArray
             Dictionary associating specific conditions with MacularDictArray.
 
-        common_analysis_group_list : list of tuples
-            List of all tuples pairs of conditions and measurements in a group of common analyses.
+        common_analysis_group_generator : list of tuples
+            Generator of all tuples pairs of conditions and measurements in a group of common analyses.
 
         dimension : str
             Dimension of the MacularAnalysisDataframes in which the result of the current analysis is stored.
@@ -859,7 +850,7 @@ class MacularAnalysisDataframes:
             str_parameters_analysis = ""
 
         # Loop of conditions and measurements of the common analysis group.
-        for condition, measurement in common_analysis_group_list:
+        for condition, measurement in common_analysis_group_generator:
             # Defines the name of the line where the current analysis is stored.
             dataframe_row = f"{analysis}_{measurement}{str_parameters_analysis}"
             # Conducting an analysis of a given condition and measurement.

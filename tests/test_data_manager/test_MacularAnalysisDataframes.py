@@ -628,7 +628,8 @@ def test_make_spatial_dataframes_analysis():
 
 def test_get_levels_of_multi_macular_dict_array():
     # Import a test multiple reduced macular dict array of bar speed condition.
-    with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_array_head100.pyb", "rb") as file_variousLevel:
+    with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_array_head100.pyb",
+              "rb") as file_variousLevel:
         multi_macular_dict_array_head100_variousLevel = pickle.load(file_variousLevel)
 
     # Modification of multi_macular_dict_array so that one of the MacularDictArray has one less measurement.
@@ -714,15 +715,19 @@ def test_common_analysis_group_parser():
     grouped_measurements = "FiringRate_GanglionGainControl:BipolarResponse_BipolarGainControl:VSDI"
 
     # Pairs of conditions and measurements in a common analysis group with 2 conditions and 3 measures.
-    common_analysis_group_list_correct = [("barSpeed6dps_ampGang5Hz", "FiringRate_GanglionGainControl"),
-                                          ("barSpeed6dps_ampGang5Hz", "BipolarResponse_BipolarGainControl"),
-                                          ("barSpeed6dps_ampGang5Hz", "VSDI"),
-                                          ("barSpeed30dps", "FiringRate_GanglionGainControl"),
-                                          ("barSpeed30dps", "BipolarResponse_BipolarGainControl"),
-                                          ("barSpeed30dps", "VSDI")]
+    common_analysis_group_generator_correct = (analysis_pair for analysis_pair in
+                                               [("barSpeed6dps_ampGang5Hz", "FiringRate_GanglionGainControl"),
+                                                ("barSpeed6dps_ampGang5Hz", "BipolarResponse_BipolarGainControl"),
+                                                ("barSpeed6dps_ampGang5Hz", "VSDI"),
+                                                ("barSpeed30dps", "FiringRate_GanglionGainControl"),
+                                                ("barSpeed30dps", "BipolarResponse_BipolarGainControl"),
+                                                ("barSpeed30dps", "VSDI")])
+    common_analysis_group_generator = macular_analysis_dataframes_test.common_analysis_group_parser(
+        grouped_conditions, grouped_measurements)
 
-    assert (macular_analysis_dataframes_test.common_analysis_group_parser(grouped_conditions, grouped_measurements) ==
-            common_analysis_group_list_correct)
+    for analysis_pair, analysis_pair_correct in zip(common_analysis_group_generator,
+                                                    common_analysis_group_generator_correct):
+        assert analysis_pair == analysis_pair_correct
 
 
 def test_make_common_group_analysis():
@@ -731,13 +736,14 @@ def test_make_common_group_analysis():
         macular_analysis_dataframes_default_empty = pickle.load(file)
 
     # Setup parameters for common group analysis.
-    common_analysis_group_list = [("barSpeed27dps", "FiringRate_GanglionGainControl"), ("barSpeed30dps", "VSDI")]
+    common_analysis_group_generator = (analysis_pair for analysis_pair in
+                                       [("barSpeed27dps", "FiringRate_GanglionGainControl"), ("barSpeed30dps", "VSDI")])
     parameters_analysis_dict = {"threshold": 0.001, "y": 7, "index": "temporal_ms", "flag": "threshold0,001_y7"}
 
     # Make one common group analysis.
     macular_analysis_dataframes_default_empty.make_common_group_analysis(
         MacularAnalysisDataframes.activation_time_analyzing,
-        multi_macular_dict_array_default, common_analysis_group_list,
+        multi_macular_dict_array_default, common_analysis_group_generator,
         "X", "activation_time", parameters_analysis_dict)
 
     # Verify that the conditions dataframe is correct.
