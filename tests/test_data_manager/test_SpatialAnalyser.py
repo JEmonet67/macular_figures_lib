@@ -58,7 +58,7 @@ def test_time_to_peak_computing():
 
     # Creation of a 2D time to peak array for test.
     time_to_peak_array = SpatialAnalyser.time_to_peak_computing(macular_dict_array_default.data["VSDI"],
-                                                                 macular_dict_array_default.index["temporal_ms"])
+                                                                macular_dict_array_default.index["temporal_ms"])
 
     assert np.array_equal(time_to_peak_array, time_to_peak_array_correct)
 

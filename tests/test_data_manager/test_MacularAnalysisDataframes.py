@@ -7,7 +7,6 @@ import numpy as np
 
 from src.data_manager.MacularDictArray import MacularDictArray
 from src.data_manager.MacularAnalysisDataframes import MacularAnalysisDataframes
-from src.data_manager.MacularDictArray import MacularDictArray
 
 # Get data for test from relative path.
 path_data_test = os.path.normpath(f"{os.getcwd()}/../data_test/data_manager/")
@@ -826,13 +825,13 @@ def test_time_to_peak_analyzing():
     # Create analysis dictionary for case on X dimension dataframe.
     parameters_analysis_dict_x = {"y": 7, "index": "temporal_ms"}
 
-    # Create new activation time array for spatial dataframe of the X dimension.
+    # Create new time to peak array for spatial dataframe of the X dimension.
     activation_time_array_x = MacularAnalysisDataframes.time_to_peak_analyzing(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_x)
 
-    # Extract correct activation time array X to compare.
+    # Extract correct time to peak array X to compare.
     time_to_peak_array_correct_x = [189.4, 197.4, 203.8, 211.8, 218.2, 227.8, 234.2, 242.2, 248.6, 256.6, 264.6,
                                     271.0, 279.0, 285.4, 295.0, 299.8, 309.4, 315.8, 323.8, 331.8, 338.2, 346.2,
                                     352.6, 362.2, 368.6, 376.6, 383.0, 391.0, 399.0, 407.0, 413.4, 421.4, 429.4,
@@ -841,23 +840,23 @@ def test_time_to_peak_analyzing():
                                     600.6, 610.2, 616.6, 624.6, 631.0, 639.0, 647.0, 653.4, 661.4, 667.8, 677.4,
                                     682.2, 690.2, 696.6, 703.0, 709.4, 714.2, 720.6]
 
-    # Verification of the validity of the spatial array X of the activation time.
+    # Verification of the validity of the spatial array X of the time to peak.
     assert np.array_equal(activation_time_array_x, time_to_peak_array_correct_x)
 
     # Create analysis dictionary for case on Y dimension dataframe.
     parameters_analysis_dict_y = {"x": 36, "index": "temporal_ms"}
 
-    # Create new activation time array for spatial dataframe of the Y dimension.
+    # Create new time to peak array for spatial dataframe of the Y dimension.
     activation_time_array_y = MacularAnalysisDataframes.time_to_peak_analyzing(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_y)
 
-    # Extract correct activation time array Y to compare.
+    # Extract correct time to peak array Y to compare.
     time_to_peak_array_correct_y = [506.2, 499.8, 498.2, 498.2, 493.4, 469.4, 459.8, 459.8, 459.8, 467.8, 491.8, 498.2,
                                     498.2, 499.8, 506.2]
 
-    # Verification of the validity of the spatial array Y of the activation time.
+    # Verification of the validity of the spatial array Y of the time to peak.
     assert np.array_equal(activation_time_array_y, time_to_peak_array_correct_y)
 
 

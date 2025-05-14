@@ -929,16 +929,16 @@ class MacularAnalysisDataframes:
             Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
 
         parameters_analysis_dict : dict
-            Dictionary of parameters to be used for latency analysis. It must contain the threshold,
-            the name of the index to be taken from the dictionary (allows switching from the s index to the ms index),
-            and the x or y position to be analysed.
+            Dictionary of parameters to be used for latency analysis. It must contain the threshold, the axis of the
+            object's movement, the name of the index to be taken from the dictionary (allows switching from the s index
+            to the ms index), and the x or y position to be analysed.
 
         Returns
         ----------
         activation_time_1d_array : np.array
             1D array of latency along a single spatial axis.
         """
-        # Calculation of the 2D array of activation times.
+        # Calculation of the 2D array of latency.
         latency_2d_array = SpatialAnalyser.latency_computing(data,
                                                               index[parameters_analysis_dict["index"]],
                                                               parameters_analysis_dict["threshold"],
@@ -978,11 +978,11 @@ class MacularAnalysisDataframes:
         time_to_peak_1d_array : np.array
             1D array of time to peak along a single spatial axis.
         """
-        # Calculation of the 2D array of activation times.
+        # Calculation of the 2D array of time to peak.
         time_to_peak_2d_array = SpatialAnalyser.time_to_peak_computing(data,
                                                               index[parameters_analysis_dict["index"]])
 
-        # Extracting a single spatial dimension from the latency array.
+        # Extracting a single spatial dimension from the time to peak array.
         if "x" in parameters_analysis_dict:
             time_to_peak_1d_array = time_to_peak_2d_array[:, parameters_analysis_dict["x"]]
         elif "y" in parameters_analysis_dict:

@@ -26,7 +26,7 @@ class SpatialAnalyser:
         activation_time_array : np.array()
             2D array containing the activation times of the 3D array given as input.
         """
-        # Loops at each horizontal and vertical position of the 3D array.
+        # Initialises a 2D array with the same size as the spatial dimensions of the data array.
         activation_time_array = np.empty((data_array.shape[0], data_array.shape[1]))
 
         # Set up a filter based on the activation threshold.
@@ -68,7 +68,7 @@ class SpatialAnalyser:
         activation_time_array : np.array()
             2D array containing the activation times of the 3D array given as input.
         """
-        # Loops at each horizontal and vertical position of the 3D array.
+        # Initialises a 2D array with the same size as the spatial dimensions of the data array.
         latency_array = np.empty((data_array.shape[0], data_array.shape[1]))
 
         # Set up a filter based on the activation threshold.
