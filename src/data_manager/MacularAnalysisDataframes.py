@@ -683,7 +683,7 @@ class MacularAnalysisDataframes:
             elif analysis == "time_to_peak":
                 analysis_function = self.time_to_peak_analyzing
             elif analysis == "delay_to_peak":
-                pass
+                analysis_function = self.peak_delay_analyzing
 
             self.make_analysis(analysis_function, multi_macular_dict_array, multiple_dicts_analysis_unidimensional,
                                dimension, analysis, dict_sort_order)
@@ -991,7 +991,46 @@ class MacularAnalysisDataframes:
         return time_to_peak_1d_array
 
     @staticmethod
-    def delay_to_peak_analyzing(data, index, parameters_analysis_dict):
-        pass
+    def peak_delay_analyzing(data, index, parameters_analysis_dict):
+        """Function that analyses delay to peak based on a single spatial dimension.
 
+        The delay to peak is calculated in the 3D array and a centered index of a measurement of a condition. It is
+        obtained in the form of a 2D array from which only the desired X or Y position can be taken to obtain a 1D array
+        based on a single spatial dimension.
 
+        To use the centered index, the user have to specify the name of the time index in the analysis parameter
+        dictionary associated with the ‘index’ key. For example: “index”: ‘temporal_centered’. This index will consist
+        of several indexes in the form of a list, as each spatial position will be associated with a different reference
+        time. In the most basic case, this time is the moment when the moving object is at the center of the cell
+        receptive field.
+
+        Parameters
+        ----------
+        data : np.array
+            3D array containing the values of a measurement for a given condition.
+
+        index : dict of np.array
+            Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
+
+        parameters_analysis_dict : dict
+            Dictionary of parameters to be used for delay to peak analysis. It must contain the threshold, the axis of
+            the object's movement, the name of the index to be taken from the dictionary (allows switching from the s
+            index to the ms index), and the x or y position to be analysed.
+
+        Returns
+        ----------
+        activation_time_1d_array : np.array
+            1D array of delay to peak along a single spatial axis.
+        """
+        # Calculation of the 2D array of delay_to_peak.
+        delay_to_peak_2d_array = SpatialAnalyser.peak_delay_computing(data,
+                                                                      index[parameters_analysis_dict["index"]],
+                                                                      parameters_analysis_dict["axis"])
+
+        # Extracting a single spatial dimension from the delay_to_peak array.
+        if "x" in parameters_analysis_dict:
+            delay_to_peak_1d_array = delay_to_peak_2d_array[:, parameters_analysis_dict["x"]]
+        elif "y" in parameters_analysis_dict:
+            delay_to_peak_1d_array = delay_to_peak_2d_array[parameters_analysis_dict["y"], :]
+
+        return delay_to_peak_1d_array

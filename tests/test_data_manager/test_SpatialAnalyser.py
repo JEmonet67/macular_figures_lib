@@ -61,3 +61,27 @@ def test_time_to_peak_computing():
                                                                  macular_dict_array_default.index["temporal_ms"])
 
     assert np.array_equal(time_to_peak_array, time_to_peak_array_correct)
+
+
+def test_peak_delay_computing():
+    # Import a 2D array of valid VSDI horizontal peak delay.
+    with open(f"{path_data_test}/SpatialAnalyser/horizontal_peak_delay_VSDI_array.pyb", "rb") as file:
+        horizontal_peak_delay_array_correct = pickle.load(file)
+
+    # Creation of a 2D horizontal peak delay array for test.
+    horizontal_peak_delay_array = SpatialAnalyser.peak_delay_computing(
+        macular_dict_array_default.data["VSDI"],
+        macular_dict_array_default.index["temporal_centered_ms"],
+        "horizontal")
+
+    assert np.array_equal(horizontal_peak_delay_array, horizontal_peak_delay_array_correct)
+
+    # Import a 2D array of valid VSDI vertical latency.
+    with open(f"{path_data_test}/SpatialAnalyser/vertical_peak_delay_VSDI_array.pyb", "rb") as file:
+        vertical_peak_delay_array_correct = pickle.load(file)
+
+    # Creation of a 2D vertical latency array for test.
+    vertical_peak_delay_array = SpatialAnalyser.peak_delay_computing(
+        macular_dict_array_default.data["VSDI"], macular_dict_array_default.index["temporal_centered"], "vertical")
+
+    assert np.array_equal(vertical_peak_delay_array, vertical_peak_delay_array_correct)

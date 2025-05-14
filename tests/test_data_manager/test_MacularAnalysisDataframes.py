@@ -858,3 +858,44 @@ def test_time_to_peak_analyzing():
 
     # Verification of the validity of the spatial array Y of the activation time.
     assert np.array_equal(activation_time_array_y, time_to_peak_array_correct_y)
+
+
+def test_peak_delay_analyzing():
+    # Create analysis dictionary for case on X dimension dataframe.
+    parameters_analysis_dict_x = {"y": 7, "index": "temporal_centered_ms", "axis": "horizontal"}
+
+    # Create new peak delay array for spatial dataframe of the X dimension.
+    delay_to_peak_array_x = MacularAnalysisDataframes.peak_delay_analyzing(
+        multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
+        multi_macular_dict_array_default["barSpeed30dps"].index,
+        parameters_analysis_dict_x)
+
+    # Extract correct peak delay array X to compare.
+    delay_to_peak_array_correct_x = [140.73, 141.23, 140.13, 140.63, 139.53, 141.63, 140.53, 141.03,
+                                     139.93, 140.43, 140.93, 139.83, 140.33, 139.23, 141.33, 138.63,
+                                     140.73, 139.63, 140.13, 140.63, 139.53, 140.03, 138.93, 141.03,
+                                     139.93, 140.43, 139.33, 139.83, 140.33, 140.83, 139.73, 140.23,
+                                     140.73, 139.63, 140.13, 139.03, 141.13, 140.03, 140.53, 139.43,
+                                     139.93, 140.43, 139.33, 141.43, 138.73, 140.83, 139.73, 140.23,
+                                     139.13, 139.63, 140.13, 140.63, 141.13, 140.03, 140.53, 139.43,
+                                     141.53, 140.43, 140.93, 139.83, 140.33, 140.83, 139.73, 140.23,
+                                     139.13, 141.23, 138.53, 139.03, 137.93, 136.83, 135.73, 133.03, 131.93]
+
+    # Verification of the validity of the spatial array X of the peak delay.
+    assert np.array_equal(delay_to_peak_array_x, delay_to_peak_array_correct_x)
+
+    # Create analysis dictionary for case on Y dimension dataframe.
+    parameters_analysis_dict_y = {"x": 36, "index": "temporal_centered_ms", "axis": "vertical"}
+
+    # Create new peak delay array for spatial dataframe of the Y dimension.
+    delay_to_peak_array_y = MacularAnalysisDataframes.peak_delay_analyzing(
+        multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
+        multi_macular_dict_array_default["barSpeed30dps"].index,
+        parameters_analysis_dict_y)
+
+    # Extract correct peak delay array Y to compare.
+    delay_to_peak_array_correct_y = [457.53, 443.63, 434.53, 427.03, 414.73, 383.23, 366.13, 358.63, 351.13, 351.63,
+                                     368.13, 367.03, 359.53, 353.63, 352.53]
+
+    # Verification of the validity of the spatial array Y of the peak delay.
+    assert np.array_equal(delay_to_peak_array_y, delay_to_peak_array_correct_y)
