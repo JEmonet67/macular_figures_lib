@@ -826,7 +826,7 @@ def test_time_to_peak_analyzing():
     parameters_analysis_dict_x = {"y": 7, "index": "temporal_ms"}
 
     # Create new time to peak array for spatial dataframe of the X dimension.
-    activation_time_array_x = MacularAnalysisDataframes.time_to_peak_analyzing(
+    time_to_peak_array_x = MacularAnalysisDataframes.time_to_peak_analyzing(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_x)
@@ -841,13 +841,13 @@ def test_time_to_peak_analyzing():
                                     682.2, 690.2, 696.6, 703.0, 709.4, 714.2, 720.6]
 
     # Verification of the validity of the spatial array X of the time to peak.
-    assert np.array_equal(activation_time_array_x, time_to_peak_array_correct_x)
+    assert np.array_equal(time_to_peak_array_x, time_to_peak_array_correct_x)
 
     # Create analysis dictionary for case on Y dimension dataframe.
     parameters_analysis_dict_y = {"x": 36, "index": "temporal_ms"}
 
     # Create new time to peak array for spatial dataframe of the Y dimension.
-    activation_time_array_y = MacularAnalysisDataframes.time_to_peak_analyzing(
+    time_to_peak_array_y = MacularAnalysisDataframes.time_to_peak_analyzing(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_y)
@@ -857,7 +857,7 @@ def test_time_to_peak_analyzing():
                                     498.2, 499.8, 506.2]
 
     # Verification of the validity of the spatial array Y of the time to peak.
-    assert np.array_equal(activation_time_array_y, time_to_peak_array_correct_y)
+    assert np.array_equal(time_to_peak_array_y, time_to_peak_array_correct_y)
 
 
 def test_peak_delay_analyzing():
@@ -899,3 +899,41 @@ def test_peak_delay_analyzing():
 
     # Verification of the validity of the spatial array Y of the peak delay.
     assert np.array_equal(delay_to_peak_array_y, delay_to_peak_array_correct_y)
+
+
+def test_peak_amplitude_analyzing():
+    # Create analysis dictionary for case on X dimension dataframe.
+    parameters_analysis_dict_x = {"y": 7}
+
+    # Create new amplitude array for spatial dataframe of the X dimension.
+    amplitude_array_x = MacularAnalysisDataframes.peak_amplitude_analyzing(
+        multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
+        multi_macular_dict_array_default["barSpeed30dps"].index,
+        parameters_analysis_dict_x)
+
+    # Extract correct amplitude array X to compare.
+    amplitude_array_correct_x = [0.041, 0.041, 0.042, 0.04, 0.043, 0.039, 0.043, 0.039, 0.042, 0.039, 0.041, 0.04,
+                                 0.04, 0.041, 0.039, 0.042, 0.038, 0.041, 0.038, 0.041, 0.039, 0.04, 0.04, 0.039,
+                                 0.041, 0.038, 0.041, 0.038, 0.041, 0.039, 0.04, 0.04, 0.039, 0.041, 0.038, 0.041,
+                                 0.038, 0.041, 0.038, 0.041, 0.039, 0.04, 0.04, 0.039, 0.041, 0.038, 0.041, 0.038,
+                                 0.041, 0.039, 0.04, 0.04, 0.039, 0.041, 0.038, 0.042, 0.038, 0.042, 0.039, 0.041,
+                                 0.04, 0.04, 0.041, 0.039, 0.043, 0.04, 0.044, 0.04, 0.044, 0.041, 0.043, 0.043, 0.042]
+
+    # Verification of the validity of the spatial array X of the amplitude.
+    assert np.array_equal(amplitude_array_x, amplitude_array_correct_x)
+
+    # Create analysis dictionary for case on Y dimension dataframe.
+    parameters_analysis_dict_y = {"x": 36}
+
+    # Create new amplitude array for spatial dataframe of the Y dimension.
+    amplitude_array_y = MacularAnalysisDataframes.peak_amplitude_analyzing(
+        multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
+        multi_macular_dict_array_default["barSpeed30dps"].index,
+        parameters_analysis_dict_y)
+
+    # Extract correct amplitude array Y to compare.
+    amplitude_array_correct_y = [0.014, 0.012, 0.013, 0.014, 0.015, 0.026, 0.036, 0.038, 0.036, 0.027, 0.015, 0.014,
+                                 0.013, 0.012, 0.014]
+
+    # Verification of the validity of the spatial array Y of the amplitude.
+    assert np.array_equal(amplitude_array_y, amplitude_array_correct_y)

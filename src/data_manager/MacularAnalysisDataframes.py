@@ -895,8 +895,8 @@ class MacularAnalysisDataframes:
         """
         # Calculation of the 2D array of activation times.
         activation_time_2d_array = SpatialAnalyser.activation_time_computing(data,
-                                                                              index[parameters_analysis_dict["index"]],
-                                                                              parameters_analysis_dict["threshold"])
+                                                                             index[parameters_analysis_dict["index"]],
+                                                                             parameters_analysis_dict["threshold"])
 
         # Extracting a single spatial dimension from the activation time array.
         if "x" in parameters_analysis_dict:
@@ -939,10 +939,9 @@ class MacularAnalysisDataframes:
             1D array of latency along a single spatial axis.
         """
         # Calculation of the 2D array of latency.
-        latency_2d_array = SpatialAnalyser.latency_computing(data,
-                                                              index[parameters_analysis_dict["index"]],
-                                                              parameters_analysis_dict["threshold"],
-                                                              parameters_analysis_dict["axis"])
+        latency_2d_array = SpatialAnalyser.latency_computing(data, index[parameters_analysis_dict["index"]],
+                                                             parameters_analysis_dict["threshold"],
+                                                             parameters_analysis_dict["axis"])
 
         # Extracting a single spatial dimension from the latency array.
         if "x" in parameters_analysis_dict:
@@ -979,8 +978,7 @@ class MacularAnalysisDataframes:
             1D array of time to peak along a single spatial axis.
         """
         # Calculation of the 2D array of time to peak.
-        time_to_peak_2d_array = SpatialAnalyser.time_to_peak_computing(data,
-                                                              index[parameters_analysis_dict["index"]])
+        time_to_peak_2d_array = SpatialAnalyser.time_to_peak_computing(data, index[parameters_analysis_dict["index"]])
 
         # Extracting a single spatial dimension from the time to peak array.
         if "x" in parameters_analysis_dict:
@@ -1034,3 +1032,39 @@ class MacularAnalysisDataframes:
             delay_to_peak_1d_array = delay_to_peak_2d_array[parameters_analysis_dict["y"], :]
 
         return delay_to_peak_1d_array
+
+    @staticmethod
+    def peak_amplitude_analyzing(data, index, parameters_analysis_dict):
+        """Function that analyses peak amplitude based on a single spatial dimension.
+
+        The amplitude is calculated in the 3D array and the index of a measurement of a condition. It is obtained
+        in the form of a 2D array from which only the desired X or Y position can be taken to obtain a 1D array based
+        on a single spatial dimension.
+
+        Parameters
+        ----------
+        data : np.array
+            3D array containing the values of a measurement for a given condition.
+
+        index : dict of np.array
+            Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
+
+        parameters_analysis_dict : dict
+            Dictionary of parameters to be used for amplitude analysis. It must contain only the x or y position to be
+            analysed.
+
+        Returns
+        ----------
+        amplitude_1d_array : np.array
+            1D array of amplitude along a single spatial axis.
+        """
+        # Calculation of the 2D array of amplitude.
+        amplitude_2d_array = SpatialAnalyser.peak_amplitude_computing(data)
+
+        # Extracting a single spatial dimension from the amplitude array.
+        if "x" in parameters_analysis_dict:
+            amplitude_1d_array = amplitude_2d_array[:, parameters_analysis_dict["x"]]
+        elif "y" in parameters_analysis_dict:
+            amplitude_1d_array = amplitude_2d_array[parameters_analysis_dict["y"], :]
+
+        return amplitude_1d_array

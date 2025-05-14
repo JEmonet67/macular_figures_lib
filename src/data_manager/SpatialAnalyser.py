@@ -210,3 +210,32 @@ class SpatialAnalyser:
                     peak_delay_array[j][i] = np.nan
 
         return peak_delay_array
+
+    @staticmethod
+    def peak_amplitude_computing(data_array):
+        """Calculation of the peak amplitude from the response.
+
+        Parameters
+        ----------
+        data_array : np.array
+            3D array containing activity data.
+
+        Returns
+        ----------
+        amplitude_array : np.array()
+            2D array containing the amplitude of the 3D array given as input.
+        """
+        # Initialises a 2D array with the same size as the spatial dimensions of the data array.
+        amplitude_array = np.empty((data_array.shape[0], data_array.shape[1]))
+
+        # Loops at each horizontal and vertical position of the 3D array.
+        for i in range(data_array.shape[1]):
+            for j in range(data_array.shape[0]):
+                # Cases where a peak exists.
+                try:
+                    amplitude_array[j][i] = data_array[j][i].max().round(3)
+                # Cases where no peak was found.
+                except IndexError:
+                    amplitude_array[j][i] = np.nan
+
+        return amplitude_array
