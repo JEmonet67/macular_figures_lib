@@ -101,8 +101,24 @@ def test_dict_paths_pyb_getter():
 
 
 def test_dict_paths_pyb_setter():
-    macular_analysis_dataframes_test.dict_paths_pyb = {"barSpeed9dps": ""}
-    assert macular_analysis_dataframes_test.dict_paths_pyb == {"barSpeed9dps": ""}
+    # Case of an attempt to modify dict_paths_pyb.
+    try:
+        macular_analysis_dataframes_test.dict_paths_pyb = {"test": "setter"}
+        assert False
+    except AttributeError:
+        assert True
+
+    dict_paths_pyb_initial = {'barSpeed6dps': '/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/'
+                                              'data_manager/RC_RM_dSGpCP0026_barSpeed6dps_head100_copy_0f.pyb',
+                              'barSpeed15dps': '/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/'
+                                               'data_manager/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb',
+                              'barSpeed30dps': '/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/'
+                                               'data_manager/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb'}
+
+    # Verification that the value of dict_paths_pyb has not changed.
+    assert (macular_analysis_dataframes_test.dict_paths_pyb
+            == dict_paths_pyb_initial)
+
 
 
 def test_dict_analysis_dataframes_getter():
@@ -260,7 +276,7 @@ def test_initialize_analysis_dataframe():
 
 def test_dataframe_conditions_sorting():
     # Creation of an ordered example list.
-    macular_analysis_dataframes_test.dict_paths_pyb = {"wAmaGang10Hz": '',
+    macular_analysis_dataframes_test._dict_paths_pyb = {"wAmaGang10Hz": '',
                                                        "wAmaGang3,8Hz": '',
                                                        "barSpeed6dps": ''}
 
@@ -285,7 +301,7 @@ def test_dataframe_conditions_sorting():
             ["barSpeed6dps", "wAmaGang3,8Hz", "wAmaGang10Hz"])
 
     # Case of sorting based on condition names and the ‘NameValueUnit’ format and with complex conditions to sort.
-    macular_analysis_dataframes_test.dict_paths_pyb = {"barSpeed30dps_wAmaBip10Hz_wAmaGang0,1Hz": '',
+    macular_analysis_dataframes_test._dict_paths_pyb = {"barSpeed30dps_wAmaBip10Hz_wAmaGang0,1Hz": '',
                                                        "barSpeed6dps_wAmaBip3Hz": '',
                                                        "barSpeed6dps_wAmaGang0,1Hz": '',
                                                        "barSpeed6dps": ''}
@@ -302,7 +318,7 @@ def test_name_value_unit_sorting_conditions():
                          "barSpeed6dps_wAmaBip10Hz_wAmaGang0,8Hz", "barSpeed30dps_wAmaBip10Hz_wAmaGang0,1Hz"]
 
     # Modification of dict_paths_pyb to add conditions to 3 disordered parameters to be sorted.
-    macular_analysis_dataframes_test.dict_paths_pyb = {"barSpeed30dps_wAmaBip10Hz_wAmaGang0,1Hz": '',
+    macular_analysis_dataframes_test._dict_paths_pyb = {"barSpeed30dps_wAmaBip10Hz_wAmaGang0,1Hz": '',
                                                        "barSpeed6dps_wAmaBip10Hz_wAmaGang0,8Hz": '',
                                                        "barSpeed6dps_wAmaBip3Hz_wAmaGang0,8Hz": '',
                                                        "barSpeed6dps_wAmaBip10Hz_wAmaGang0,1Hz": ''}
@@ -353,7 +369,7 @@ def test_setup_conditions_values_to_condition_dataframe():
         setup_complex_conditions_dataframe = pickle.load(file)
 
     # Preparation of a macular analysis dataframe for complex conditions.
-    macular_analysis_dataframes_test.dict_paths_pyb = {"barSpeed6dps_wAmaGang0,8Hz": '',
+    macular_analysis_dataframes_test._dict_paths_pyb = {"barSpeed6dps_wAmaGang0,8Hz": '',
                                                        "barSpeed6dps_wAmaBip10Hz": '',
                                                        "barSpeed6dps": "",
                                                        "barSpeed30dps": "",

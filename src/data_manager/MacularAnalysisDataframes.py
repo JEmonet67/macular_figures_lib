@@ -90,9 +90,9 @@ class MacularAnalysisDataframes:
         self._multiple_dicts_preprocessings = self.cleaning_multiple_dicts_features(multiple_dicts_preprocessings)
 
         # Create dict_paths_pyb attributes to store each path_pyb associated to its condition.
-        self.dict_paths_pyb = {}
+        self._dict_paths_pyb = {}
         for condition in multi_macular_dict_array:
-            self.dict_paths_pyb[condition] = multi_macular_dict_array[condition].path_pyb
+            self._dict_paths_pyb[condition] = multi_macular_dict_array[condition].path_pyb
             # Delete path_pyb attribute from simulations dictionaries.
             del self._multiple_dicts_simulations[condition]["path_pyb"]
 
@@ -123,7 +123,7 @@ class MacularAnalysisDataframes:
     def dict_paths_pyb(self, dict_paths_pyb):
         """Setter for the dict_paths_pyb attribute.
         """
-        self._dict_paths_pyb = dict_paths_pyb
+        raise AttributeError("The attribute dict_paths_pyb can't be modified.")
 
     @property
     def dict_analysis_dataframes(self):
