@@ -433,6 +433,42 @@ def test_setup_multiple_dicts_analysis():
     assert macular_analysis_dataframes_default_empty.multiple_dicts_analysis["Conditions"] == conditions_dictionary
 
 
+def test_get_levels_of_multi_macular_dict_array():
+    # Import a test multiple reduced macular dict array of bar speed condition.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_array_head100.pyb",
+              "rb") as file_variousLevel:
+        multi_macular_dict_array_head100_variousLevel = pickle.load(file_variousLevel)
+
+    # Modification of multi_macular_dict_array so that one of the MacularDictArray has one less measurement.
+    del multi_macular_dict_array_head100_variousLevel["barSpeed30dps"].data["v_i_CorticalInhibitory"]
+
+    # Modification of multi_macular_dict_array so that one of the MacularDictArray has different measurements.
+    for measurement in multi_macular_dict_array_head100_variousLevel["barSpeed15dps"].data.copy():
+        if measurement == "FiringRate_GanglionGainControl":
+            multi_macular_dict_array_head100_variousLevel["barSpeed15dps"].data["test"] = (
+                multi_macular_dict_array_head100_variousLevel["barSpeed15dps"].data)[measurement]
+        del multi_macular_dict_array_head100_variousLevel["barSpeed15dps"].data[measurement]
+
+    # Character string containing all the measures in the MacularDictArray.
+    all_measurements = ("BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:V_Amacrine:"
+                        "V_BipolarGainControl:V_GanglionGainControl:muVn_CorticalExcitatory:muVn_CorticalInhibitory:"
+                        "v_e_CorticalExcitatory:v_i_CorticalInhibitory")
+
+    # Creation of a dictionary associating conditions in the test MacularDictArray with the measurements it contains.
+    dict_all_measurements = {"barSpeed6dps": all_measurements, "barSpeed15dps": "test",
+                             "barSpeed30dps": ":".join(all_measurements.split(":")[:-1])}
+
+    # Extracting condition names and measures with get_levels_of_multi_macular_dict_array.
+    levels_multiple_dictionaries = macular_analysis_dataframes_head100.get_levels_of_multi_macular_dict_array(
+        multi_macular_dict_array_head100_variousLevel)
+
+    # Verification of the character string of the conditions.
+    assert levels_multiple_dictionaries[0] == 'barSpeed15dps:barSpeed30dps:barSpeed6dps'
+
+    # Verification of the character string dictionary for measurements for each condition.
+    assert levels_multiple_dictionaries[1] == dict_all_measurements
+
+
 def test_substituting_all_alias_in_multiple_analysis_dictionaries():
     # Define strings containing all conditions and measures.
     all_conditions = levels_multiple_dictionaries_default[0]
@@ -626,43 +662,7 @@ def test_make_spatial_dataframes_analysis():
     pass
 
 
-def test_get_levels_of_multi_macular_dict_array():
-    # Import a test multiple reduced macular dict array of bar speed condition.
-    with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_array_head100.pyb",
-              "rb") as file_variousLevel:
-        multi_macular_dict_array_head100_variousLevel = pickle.load(file_variousLevel)
-
-    # Modification of multi_macular_dict_array so that one of the MacularDictArray has one less measurement.
-    del multi_macular_dict_array_head100_variousLevel["barSpeed30dps"].data["v_i_CorticalInhibitory"]
-
-    # Modification of multi_macular_dict_array so that one of the MacularDictArray has different measurements.
-    for measurement in multi_macular_dict_array_head100_variousLevel["barSpeed15dps"].data.copy():
-        if measurement == "FiringRate_GanglionGainControl":
-            multi_macular_dict_array_head100_variousLevel["barSpeed15dps"].data["test"] = (
-                multi_macular_dict_array_head100_variousLevel["barSpeed15dps"].data)[measurement]
-        del multi_macular_dict_array_head100_variousLevel["barSpeed15dps"].data[measurement]
-
-    # Character string containing all the measures in the MacularDictArray.
-    all_measurements = ("BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:V_Amacrine:"
-                        "V_BipolarGainControl:V_GanglionGainControl:muVn_CorticalExcitatory:muVn_CorticalInhibitory:"
-                        "v_e_CorticalExcitatory:v_i_CorticalInhibitory")
-
-    # Creation of a dictionary associating conditions in the test MacularDictArray with the measurements it contains.
-    dict_all_measurements = {"barSpeed6dps": all_measurements, "barSpeed15dps": "test",
-                             "barSpeed30dps": ":".join(all_measurements.split(":")[:-1])}
-
-    # Extracting condition names and measures with get_levels_of_multi_macular_dict_array.
-    levels_multiple_dictionaries = macular_analysis_dataframes_head100.get_levels_of_multi_macular_dict_array(
-        multi_macular_dict_array_head100_variousLevel)
-
-    # Verification of the character string of the conditions.
-    assert levels_multiple_dictionaries[0] == 'barSpeed15dps:barSpeed30dps:barSpeed6dps'
-
-    # Verification of the character string dictionary for measurements for each condition.
-    assert levels_multiple_dictionaries[1] == dict_all_measurements
-
-
-def test_make_analysis():
+def test_analysis():
     # Import a default macular analysis dataframes of bar speed condition with one complex analysis done.
     with open(f"{path_data_test}/MacularAnalysisDataframes/"
               f"macular_analysis_dataframe_default_complex_make_analysis.pyb", "rb") as file:
@@ -690,12 +690,10 @@ def test_make_analysis():
                          'barSpeed30dps': [all_measurements],
                          'barSpeed27dps': ['BipolarResponse_BipolarGainControl']}}}}
 
-    # Use make analysis on empty macular analysis dataframes with the complex default dictionaries.
-    macular_analysis_dataframes_default_empty.make_analysis(MacularAnalysisDataframes.activation_time_analyzing,
-                                                            multi_macular_dict_array_default,
-                                                            dict_analysis_default_complex["X"],
-                                                            "X", "activation_time",
-                                                            dict_sort_order_default_complex)
+    # Use activation time analysis on empty macular analysis dataframes with the complex default dictionaries.
+    MacularAnalysisDataframes.activation_time_analyzing(
+        macular_analysis_dataframes_default_empty, multi_macular_dict_array_default, dict_analysis_default_complex["X"],
+        "X", "activation_time", dict_sort_order_default_complex)
 
     # Verify that the X, Y, and T dataframes for each condition are equal.
     for condition in macular_analysis_dataframes_default_empty.dict_paths_pyb:
@@ -742,7 +740,7 @@ def test_make_common_group_analysis():
 
     # Make one common group analysis.
     macular_analysis_dataframes_default_empty.make_common_group_analysis(
-        MacularAnalysisDataframes.activation_time_analyzing,
+        MacularAnalysisDataframes.activation_time_analyzing.__wrapped__,
         multi_macular_dict_array_default, common_analysis_group_generator,
         "X", "activation_time", parameters_analysis_dict)
 
@@ -773,7 +771,7 @@ def test_activation_time_analyzing():
     parameters_analysis_dict_x = {"threshold": 0.001, "y": 7, "index": "temporal_ms", "flag": "threshold0,001_y7"}
 
     # Create new activation time array for spatial dataframe of the X dimension.
-    activation_time_array_x = MacularAnalysisDataframes.activation_time_analyzing(
+    activation_time_array_x = MacularAnalysisDataframes.activation_time_analyzing.__wrapped__(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_x)
@@ -789,7 +787,7 @@ def test_activation_time_analyzing():
     parameters_analysis_dict_y = {"threshold": 0.001, "x": 36, "index": "temporal_ms", "flag": "threshold0,001_x36"}
 
     # Create new activation time array for spatial dataframe of the Y dimension.
-    activation_time_array_y = MacularAnalysisDataframes.activation_time_analyzing(
+    activation_time_array_y = MacularAnalysisDataframes.activation_time_analyzing.__wrapped__(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_y)
@@ -808,7 +806,7 @@ def test_latency_analyzing():
                                   "flag": "threshold0,001_y7"}
 
     # Create new latency array for spatial dataframe of the X dimension.
-    latency_array_x = MacularAnalysisDataframes.latency_analyzing(
+    latency_array_x = MacularAnalysisDataframes.latency_analyzing.__wrapped__(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_x)
@@ -832,7 +830,7 @@ def test_time_to_peak_analyzing():
     parameters_analysis_dict_x = {"y": 7, "index": "temporal_ms"}
 
     # Create new time to peak array for spatial dataframe of the X dimension.
-    time_to_peak_array_x = MacularAnalysisDataframes.time_to_peak_analyzing(
+    time_to_peak_array_x = MacularAnalysisDataframes.time_to_peak_analyzing.__wrapped__(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_x)
@@ -853,7 +851,7 @@ def test_time_to_peak_analyzing():
     parameters_analysis_dict_y = {"x": 36, "index": "temporal_ms"}
 
     # Create new time to peak array for spatial dataframe of the Y dimension.
-    time_to_peak_array_y = MacularAnalysisDataframes.time_to_peak_analyzing(
+    time_to_peak_array_y = MacularAnalysisDataframes.time_to_peak_analyzing.__wrapped__(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_y)
@@ -871,7 +869,7 @@ def test_peak_delay_analyzing():
     parameters_analysis_dict_x = {"y": 7, "index": "temporal_centered_ms", "axis": "horizontal"}
 
     # Create new peak delay array for spatial dataframe of the X dimension.
-    delay_to_peak_array_x = MacularAnalysisDataframes.peak_delay_analyzing(
+    delay_to_peak_array_x = MacularAnalysisDataframes.peak_delay_analyzing.__wrapped__(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_x)
@@ -894,7 +892,7 @@ def test_peak_delay_analyzing():
     parameters_analysis_dict_y = {"x": 36, "index": "temporal_centered_ms", "axis": "vertical"}
 
     # Create new peak delay array for spatial dataframe of the Y dimension.
-    delay_to_peak_array_y = MacularAnalysisDataframes.peak_delay_analyzing(
+    delay_to_peak_array_y = MacularAnalysisDataframes.peak_delay_analyzing.__wrapped__(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_y)
@@ -912,7 +910,7 @@ def test_peak_amplitude_analyzing():
     parameters_analysis_dict_x = {"y": 7}
 
     # Create new amplitude array for spatial dataframe of the X dimension.
-    amplitude_array_x = MacularAnalysisDataframes.peak_amplitude_analyzing(
+    amplitude_array_x = MacularAnalysisDataframes.peak_amplitude_analyzing.__wrapped__(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_x)
@@ -932,7 +930,7 @@ def test_peak_amplitude_analyzing():
     parameters_analysis_dict_y = {"x": 36}
 
     # Create new amplitude array for spatial dataframe of the Y dimension.
-    amplitude_array_y = MacularAnalysisDataframes.peak_amplitude_analyzing(
+    amplitude_array_y = MacularAnalysisDataframes.peak_amplitude_analyzing.__wrapped__(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
         parameters_analysis_dict_y)
