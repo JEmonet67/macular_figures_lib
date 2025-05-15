@@ -120,6 +120,35 @@ def test_dict_paths_pyb_setter():
             == dict_paths_pyb_initial)
 
 
+def test_levels_multiple_dictionaries_getter():
+    levels_multiple_dictionaries_correct = [
+        'barSpeed15dps:barSpeed30dps:barSpeed6dps',
+        {'barSpeed6dps':
+             'BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:V_Amacrine:V_BipolarGainControl:'
+             'V_GanglionGainControl:muVn_CorticalExcitatory:muVn_CorticalInhibitory:v_e_CorticalExcitatory:'
+             'v_i_CorticalInhibitory',
+         'barSpeed15dps': 'BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:V_Amacrine:'
+                          'V_BipolarGainControl:V_GanglionGainControl:muVn_CorticalExcitatory:muVn_CorticalInhibitory:'
+                          'v_e_CorticalExcitatory:v_i_CorticalInhibitory',
+         'barSpeed30dps': 'BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:V_Amacrine:'
+                          'V_BipolarGainControl:V_GanglionGainControl:muVn_CorticalExcitatory:muVn_CorticalInhibitory:'
+                          'v_e_CorticalExcitatory:v_i_CorticalInhibitory'}]
+
+    assert macular_analysis_dataframes_head100.levels_multiple_dictionaries == levels_multiple_dictionaries_correct
+
+
+def test_levels_multiple_dictionaries_setter():
+    # Case of an attempt to modify levels_multiple_dictionaries.
+    try:
+        macular_analysis_dataframes_test.levels_multiple_dictionaries = {"test": "setter"}
+        assert False
+    except AttributeError:
+        assert True
+
+    # Verification that the value of dict_paths_pyb has not changed.
+    assert (macular_analysis_dataframes_test.levels_multiple_dictionaries
+            == macular_analysis_dataframes_head100.levels_multiple_dictionaries)
+
 
 def test_dict_analysis_dataframes_getter():
     # Import d'un dictionnaire d'analyses de dataframes d'exemple.
@@ -145,9 +174,43 @@ def test_dict_analysis_dataframes_setter():
 
 
 def test_multiple_dicts_analysis_getter():
-    assert (macular_analysis_dataframes_head100.multiple_dicts_analysis
-            == {'Conditions': {"sorting": "NameValueUnit"}, "X": {"test": "test"}, "Y": {"test": "test"},
-                "Time": {"test": "test"}})
+    # Define strings containing all conditions and measures.
+    all_conditions = levels_multiple_dictionaries_default[0]
+    all_measurements = levels_multiple_dictionaries_default[1]["barSpeed30dps"]
+
+    # Creation of the model multiple analysis dictionaries.
+    multiple_dicts_analysis_substitued_correct = {
+        'Conditions': {'maximal_latency': {
+            'barSpeed30dps': {'VSDI': {'param1': 1}, all_measurements: {'param1': 2}},
+            all_conditions: {'VSDI': {'param1': 1}}}},
+        'X': {'activation_time': {
+            'barSpeed30dps': {'VSDI': {'param1': 1},
+                              all_measurements: {'param1': 2}},
+            'barSpeed27dps:barSpeed30dps': {'VSDI': {'param1': 1}}}}
+        }
+
+    # Initialisation of a multiple analysis dictionaries for a complex analysis.
+    dict_analysis_test_default = {
+        "Conditions": {"maximal_latency": {
+            "barSpeed30dps": {"VSDI": {"param1": 1}, "all_measurements": {"param1": 2}},
+            "all_conditions": {"VSDI": {"param1": 1}}
+        }},
+        "X": {"activation_time": {
+            "barSpeed30dps": {"VSDI": {"param1": 1}, "all_measurements": {"param1": 2}},
+            "all_conditions": {"VSDI": {"param1": 1}}
+        }}
+    }
+    # Set default levels multiple dictionaries in test Macular analysis dataframes.
+    macular_analysis_dataframes_test._levels_multiple_dictionaries = levels_multiple_dictionaries_default
+    macular_analysis_dataframes_test._multiple_dicts_analysis = dict_analysis_test_default
+
+    # Case with substitution of the getter.
+    assert (macular_analysis_dataframes_test.multiple_dicts_analysis
+            == multiple_dicts_analysis_substitued_correct)
+
+    # Case without substitution of the getter.
+    assert (macular_analysis_dataframes_test._multiple_dicts_analysis
+            == dict_analysis_test_default)
 
 
 def test_multiple_dicts_analysis_setter():
@@ -281,22 +344,23 @@ def test_dataframe_conditions_sorting():
                                                        "barSpeed6dps": ''}
 
     # Case of default sorting by alphabetical order and KeyError.
+    macular_analysis_dataframes_test._multiple_dicts_analysis["Conditions"] = {}
     assert (macular_analysis_dataframes_test.dataframe_conditions_sorting() ==
             ["barSpeed6dps", "wAmaGang10Hz", "wAmaGang3,8Hz"])
 
     # Case of default sorting by alphabetical order.
-    macular_analysis_dataframes_test.multiple_dicts_analysis["Conditions"] = {"sorting": False}
+    macular_analysis_dataframes_test._multiple_dicts_analysis["Conditions"] = {"sorting": False}
     assert (macular_analysis_dataframes_test.dataframe_conditions_sorting() ==
             ["barSpeed6dps", "wAmaGang10Hz", "wAmaGang3,8Hz"])
 
     # Case of sorting based on a list defined in the multiple condition analysis dictionary.
-    macular_analysis_dataframes_test.multiple_dicts_analysis["Conditions"]["sorting"] = ["wAmaBip10Hz", "wAmaGang3,8Hz",
+    macular_analysis_dataframes_test._multiple_dicts_analysis["Conditions"]["sorting"] = ["wAmaBip10Hz", "wAmaGang3,8Hz",
                                                                                          "barSpeed6dps"]
     assert (macular_analysis_dataframes_test.dataframe_conditions_sorting() ==
             ["wAmaBip10Hz", "wAmaGang3,8Hz", "barSpeed6dps"])
 
     # Case of sorting based on condition names and the ‘NameValueUnit’ format.
-    macular_analysis_dataframes_test.multiple_dicts_analysis["Conditions"]["sorting"] = "NameValueUnit"
+    macular_analysis_dataframes_test._multiple_dicts_analysis["Conditions"]["sorting"] = "NameValueUnit"
     assert (macular_analysis_dataframes_test.dataframe_conditions_sorting() ==
             ["barSpeed6dps", "wAmaGang3,8Hz", "wAmaGang10Hz"])
 
@@ -380,73 +444,6 @@ def test_setup_conditions_values_to_condition_dataframe():
     # Test of setting up a complex conditions dataframe.
     assert setup_complex_conditions_dataframe.equals(macular_analysis_dataframes_test
                                                      ._dict_analysis_dataframes["Conditions"])
-
-
-def test_setup_multiple_dicts_analysis():
-    # Import an empty default macular analysis dataframes of bar speed condition.
-    with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
-        macular_analysis_dataframes_default_empty = pickle.load(file)
-
-    # Define strings containing all conditions and measures.
-    all_conditions = levels_multiple_dictionaries_default[0]
-    all_measurements = levels_multiple_dictionaries_default[1]["barSpeed30dps"]
-
-    # Creation of the model multiple analysis dictionaries.
-    multiple_dicts_analysis_substituted_correct = {
-        'Conditions': {
-            'maximal_latency': {'barSpeed27dps': {'VSDI': {'threshold': 0.001, 'y': 7, 'index': 'temporal_ms'}},
-                                'barSpeed30dps': {all_measurements: {'threshold': 0.001, 'x': 7,
-                                                                     'index': 'temporal'}}}},
-        'X': {
-            'activation_time': {'barSpeed30dps': {all_measurements: {'threshold': 0.001, 'y': 7,
-                                                                     'index': 'temporal'}},
-                                all_conditions: {'VSDI': {'threshold': 0.001, 'y': 7, 'index': 'temporal_ms'},
-                                                 all_measurements: {'threshold': 0.01, 'y': 7,
-                                                                    'index': 'temporal_ms'}}}},
-        'Y': {'test': 'test'},
-        'Time': {'test': 'test'}}
-
-    # Creation of the model sort order dictionary.
-    dict_sort_order_correct = {
-        'Conditions': {
-            'maximal_latency': {'conditions': ['barSpeed27dps', 'barSpeed30dps'],
-                                'measurements': {'barSpeed27dps': ['VSDI'],
-                                                 'barSpeed30dps': [all_measurements]}}},
-        'X': {
-            'activation_time': {'conditions': [all_conditions, 'barSpeed30dps'],
-                                'measurements': {'barSpeed30dps': [all_measurements],
-                                                 all_conditions: [all_measurements, 'VSDI']}}},
-        'Y': {},
-        'Time': {}}
-
-    # Initialisation of a dictionary for a complex X analysis.
-    spatial_x_dictionary = {"activation_time": {
-        "all_conditions": {"all_measurements": {"threshold": 0.01, "y": 7, "index": "temporal_ms"},
-                           "VSDI": {"threshold": 0.001, "y": 7, "index": "temporal_ms"}},
-        "barSpeed30dps": {"all_measurements": {"threshold": 0.001, "y": 7, "index": "temporal"}}}}
-
-    # Initialisation of a dictionary for a complex conditions analysis.
-    conditions_dictionary = {"maximal_latency": {
-        "barSpeed27dps": {"VSDI": {"threshold": 0.001, "y": 7, "index": "temporal_ms"}},
-        "barSpeed30dps": {"all_measurements": {"threshold": 0.001, "x": 7, "index": "temporal"}}}}
-
-    # Put dictionaries for analysing X and conditions in the empty default macular analysis dataframes.
-    macular_analysis_dataframes_default_empty.multiple_dicts_analysis["X"] = copy.deepcopy(spatial_x_dictionary)
-    macular_analysis_dataframes_default_empty.multiple_dicts_analysis["Conditions"] = copy.deepcopy(
-        conditions_dictionary)
-
-    # Execute the setup_multiple_dicts_analysis function to be tested.
-    multiple_dicts_analysis_substituted, dict_sort_order = (macular_analysis_dataframes_default_empty.
-    setup_multiple_dicts_analysis(
-        multi_macular_dict_array_default))
-
-    # Verification of the validity of the substituted multiple analysis dictionaries and the sort order dictionary.
-    assert multiple_dicts_analysis_substituted == multiple_dicts_analysis_substituted_correct
-    assert dict_sort_order == dict_sort_order_correct
-
-    # Checking that the multiple analysis dictionaries has not been modified in the macular analysis dataframes.
-    assert macular_analysis_dataframes_default_empty.multiple_dicts_analysis["X"] == spatial_x_dictionary
-    assert macular_analysis_dataframes_default_empty.multiple_dicts_analysis["Conditions"] == conditions_dictionary
 
 
 def test_get_levels_of_multi_macular_dict_array():
@@ -536,10 +533,13 @@ def test_substituting_all_alias_in_multiple_analysis_dictionaries():
         }}
     }
 
+    # Set default levels multiple dictionaries in test Macular analysis dataframes.
+    macular_analysis_dataframes_test._levels_multiple_dictionaries = levels_multiple_dictionaries_default
+
     # Execute the substituting_all_alias_in_multiple_analysis_dictionaries function to be tested.
     multiple_dicts_analysis_substitued = (macular_analysis_dataframes_test.
-    substituting_all_alias_in_multiple_analysis_dictionaries(
-        dict_analysis_test_default, levels_multiple_dictionaries_default))
+                                          substituting_all_alias_in_multiple_analysis_dictionaries(
+        dict_analysis_test_default))
 
     assert multiple_dicts_analysis_substitued == multiple_dicts_analysis_substitued_correct
 
@@ -567,7 +567,7 @@ def test_substituting_all_alias_in_analysis_dictionary():
         all_conditions.split(":")[0]].data]))
 
     # Creation of the structure containing the names of conditions and measures separated by ‘:’.
-    levels_multiple_dictionaries = [all_conditions, {"barSpeed15dps": all_measurements,
+    macular_analysis_dataframes_test._levels_multiple_dictionaries = [all_conditions, {"barSpeed15dps": all_measurements,
                                                      "barSpeed6dps": all_measurements,
                                                      "barSpeed30dps": ":".join(all_measurements.split(":")[:5])}]
 
@@ -588,13 +588,13 @@ def test_substituting_all_alias_in_analysis_dictionary():
 
     # Substitution of aliases with the substituting_analysis_dictionary_all_alias function.
     macular_analysis_dataframes_test.substituting_all_alias_in_analysis_dictionary(
-        dict_analysis_head100, "activation_time", levels_multiple_dictionaries)
+        dict_analysis_head100, "activation_time")
     macular_analysis_dataframes_test.substituting_all_alias_in_analysis_dictionary(
-        dict_analysis_head100, "test1", levels_multiple_dictionaries)
+        dict_analysis_head100, "test1")
     macular_analysis_dataframes_test.substituting_all_alias_in_analysis_dictionary(
-        dict_analysis_head100, "test2", levels_multiple_dictionaries)
+        dict_analysis_head100, "test2")
     macular_analysis_dataframes_test.substituting_all_alias_in_analysis_dictionary(
-        dict_analysis_head100, "test3", levels_multiple_dictionaries)
+        dict_analysis_head100, "test3")
 
     # Verification of correct substitutions.
     assert (dict_analysis_head100 ==
@@ -632,9 +632,12 @@ def test_creating_sort_order_from_multiple_dicts_analysis():
         'Y': {},
         'Time': {}}
 
+    # Preparation of attributes of macular analysis dataframes.
+    macular_analysis_dataframes_test._multiple_dicts_analysis = dict_analysis_test_default
+    macular_analysis_dataframes_test._levels_multiple_dictionaries = levels_multiple_dictionaries_default
+
     # Execute the creating_sort_order_from_multiple_dicts_analysis function to be tested.
-    dict_sort_order = macular_analysis_dataframes_test.creating_sort_order_from_multiple_dicts_analysis(
-        dict_analysis_test_default, levels_multiple_dictionaries_default)
+    dict_sort_order = macular_analysis_dataframes_test.creating_sort_order_from_multiple_dicts_analysis()
 
     # Verification of correct sorting.
     assert dict_sort_order == dict_sort_order_correct
@@ -706,10 +709,13 @@ def test_analysis():
                          'barSpeed30dps': [all_measurements],
                          'barSpeed27dps': ['BipolarResponse_BipolarGainControl']}}}}
 
+    # Set the complex analysis dictionary in the macular analysis dataframes attributes.
+    macular_analysis_dataframes_default_empty._multiple_dicts_analysis["X"] = dict_analysis_default_complex["X"]
+
     # Use activation time analysis on empty macular analysis dataframes with the complex default dictionaries.
-    MacularAnalysisDataframes.activation_time_analyzing(
-        macular_analysis_dataframes_default_empty, multi_macular_dict_array_default, dict_analysis_default_complex["X"],
-        "X", "activation_time", dict_sort_order_default_complex)
+    MacularAnalysisDataframes.activation_time_analyzing(macular_analysis_dataframes_default_empty,
+                                                        multi_macular_dict_array_default,"X",
+                                                        "activation_time", dict_sort_order_default_complex)
 
     # Verify that the X, Y, and T dataframes for each condition are equal.
     for condition in macular_analysis_dataframes_default_empty.dict_paths_pyb:
