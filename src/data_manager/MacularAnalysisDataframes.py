@@ -978,9 +978,9 @@ class MacularAnalysisDataframes:
             Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
 
         parameters_analysis_dict : dict
-            Dictionary of parameters to be used for delay to peak analysis. It must contain the threshold, the axis of
-            the object's movement, the name of the index to be taken from the dictionary (allows switching from the s
-            index to the ms index), and the x or y position to be analysed.
+            Dictionary of parameters to be used for delay to peak analysis. It must contain the axis of the object's
+            movement, the name of the index to be taken from the dictionary (allows switching from the s index to the ms
+            index), and the x or y position to be analysed.
 
         Returns
         ----------

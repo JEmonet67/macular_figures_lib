@@ -32,8 +32,13 @@ with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_arr
     multi_macular_dict_array_default = pickle.load(file)
 
 # Import the list of conditions/measures from the default multi macular dict array.
-with open(f"{path_data_test}/MacularAnalysisDataframes/levels_multiple_dictionaries_default.pyb", "rb") as file:
-    levels_multiple_dictionaries_default = pickle.load(file)
+with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
+    macular_analysis_dataframes_default_empty = pickle.load(file)
+levels_multiple_dictionaries_default = macular_analysis_dataframes_default_empty.levels_multiple_dictionaries
+
+# Define strings containing all conditions and measures.
+all_conditions = levels_multiple_dictionaries_default[0]
+all_measurements = levels_multiple_dictionaries_default[1]["barSpeed30dps"]
 
 # Import default macular analysis dataframes of bar speed condition with activation time common group analysis.
 with open(f"{path_data_test}/MacularAnalysisDataframes/activation_time_common_group_analysis.pyb", "rb") as file:
@@ -174,10 +179,6 @@ def test_dict_analysis_dataframes_setter():
 
 
 def test_multiple_dicts_analysis_getter():
-    # Define strings containing all conditions and measures.
-    all_conditions = levels_multiple_dictionaries_default[0]
-    all_measurements = levels_multiple_dictionaries_default[1]["barSpeed30dps"]
-
     # Creation of the model multiple analysis dictionaries.
     multiple_dicts_analysis_substitued_correct = {
         'Conditions': {'maximal_latency': {
@@ -483,10 +484,6 @@ def test_get_levels_of_multi_macular_dict_array():
 
 
 def test_substituting_all_alias_in_multiple_analysis_dictionaries():
-    # Define strings containing all conditions and measures.
-    all_conditions = levels_multiple_dictionaries_default[0]
-    all_measurements = levels_multiple_dictionaries_default[1]["barSpeed30dps"]
-
     # Creation of the model multiple analysis dictionaries.
     multiple_dicts_analysis_substitued_correct = {
         'Conditions': {'maximal_latency': {
@@ -602,10 +599,6 @@ def test_substituting_all_alias_in_analysis_dictionary():
 
 
 def test_creating_sort_order_from_multiple_dicts_analysis():
-    # Define strings containing all conditions and measures.
-    all_conditions = levels_multiple_dictionaries_default[0]
-    all_measurements = levels_multiple_dictionaries_default[1]["barSpeed30dps"]
-
     # Initialisation of multiple analysis dictionaries for a complex analysis.
     dict_analysis_test_default = {
         "Conditions": {"analysis1": 1, "analysis2": {"barSpeed30dps": 2},
@@ -644,9 +637,7 @@ def test_creating_sort_order_from_multiple_dicts_analysis():
 
 
 def test_creating_sort_order_from_dict_analysis():
-    # Define strings containing all conditions and measures or one less.
-    all_conditions = levels_multiple_dictionaries_default[0]
-    all_measurements = levels_multiple_dictionaries_default[1]["barSpeed30dps"]
+    # Define strings containing one less conditions and measures.
     all_measurements_minus_one = ":".join(all_measurements.split(":")[:-1])
 
     # Initialisation of a dictionary for a complex analysis.
@@ -690,10 +681,6 @@ def test_analysis():
     # Import an empty default macular analysis dataframes of bar speed condition.
     with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
         macular_analysis_dataframes_default_empty = pickle.load(file)
-
-    # Define strings containing all conditions and measures.
-    all_conditions = levels_multiple_dictionaries_default[0]
-    all_measurements = levels_multiple_dictionaries_default[1]["barSpeed30dps"]
 
     # Initialisation of a dictionary for a complex analysis.
     dict_analysis_default_complex = {"X": {"activation_time": {
@@ -745,6 +732,7 @@ def test_common_analysis_group_parser():
     common_analysis_group_generator = macular_analysis_dataframes_test.common_analysis_group_parser(
         grouped_conditions, grouped_measurements)
 
+    # Verification of each pair of conditions and measurements.
     for analysis_pair, analysis_pair_correct in zip(common_analysis_group_generator,
                                                     common_analysis_group_generator_correct):
         assert analysis_pair == analysis_pair_correct
