@@ -45,6 +45,13 @@ class CoordinateManager:
         """Creation of a list containing all the times at which a moving object arrives at each of the cells of the
         horizontal or vertical axis.
 
+        Notes
+        ----------
+        Regarding decimal speed values, we have implemented a correction for a deviation that we observed in our
+        experiments. This deviation can be seen in peak delay values, which is not completely constant along x-axis when
+        it should be. Furthermore, this deviation was only observed in the case of decimal speeds, for example at
+        28.5°/s, but not at 27°/s or 30°/s. In our case, the decimal numbers always had a decimal place of 5.
+
         Parameters
         ----------
         dict_simulation : dict
