@@ -669,7 +669,44 @@ def test_creating_sort_order_from_dict_analysis():
 
 
 def test_make_spatial_dataframes_analysis():
-    pass
+    # Import an empty default macular analysis dataframes of bar speed condition for test.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
+        macular_analysis_dataframes_default_empty = pickle.load(file)
+
+    # Import a default macular analysis dataframes of bar speed condition with the X dimension analysed.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_spatial_X_filled.pyb",
+              "rb") as file:
+        macular_analysis_dataframes_default_spatial_X_filled = pickle.load(file)
+
+    # Set up multiple analysis dictionaries in the macular analysis test dataframes.
+    macular_analysis_dataframes_default_empty._multiple_dicts_analysis["X"] = {
+        "activation_time": {"all_conditions": {"VSDI": {"threshold": 0.001, "index": "temporal_ms", "y": 7}}},
+        "latency": {"all_conditions": {"VSDI": {"threshold": 0.001, "index": "temporal_centered_ms", "y": 7,
+                                                "axis": "horizontal"}}},
+        "time_to_peak": {"all_conditions": {"all_measurements": {"index": "temporal_ms", "y": 7}}},
+        "peak_delay": {"all_conditions": {"all_measurements": {"index": "temporal_centered_ms", "y": 7, "axis": "horizontal"}}},
+        "peak_amplitude": {"all_conditions": {"all_measurements": {"y": 7}}}
+    }
+
+    # Create sort order dictionary for macular analysis test dataframes.
+    dict_sort_order = macular_analysis_dataframes_default_empty.creating_sort_order_from_multiple_dicts_analysis()
+
+    # Use the make spatial dataframes analysis on the macular analysis test dataframes.
+    macular_analysis_dataframes_default_empty.make_spatial_dataframes_analysis(
+        "X", multi_macular_dict_array_default, dict_sort_order)
+
+    # Verify that the conditions dataframe is correct.
+    assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_default_spatial_X_filled.dict_analysis_dataframes["Conditions"])
+
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_default_empty.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["X"][condition].equals(
+            macular_analysis_dataframes_default_spatial_X_filled.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Y"][condition].equals(
+            macular_analysis_dataframes_default_spatial_X_filled.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Time"][condition].equals(
+            macular_analysis_dataframes_default_spatial_X_filled.dict_analysis_dataframes["Time"][condition])
 
 
 def test_analysis():
