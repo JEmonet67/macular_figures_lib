@@ -86,9 +86,6 @@ class MacularAnalysisDataframes:
         multi_macular_dict_array = MacularDictArray.make_multiple_macular_dict_array(multiple_dicts_simulations,
                                                                                      multiple_dicts_preprocessings)
 
-        # Create the conditions/measurements container present in the multiple macular dict array.
-        self._levels_multiple_dictionaries = self.get_levels_of_multi_macular_dict_array(multi_macular_dict_array)
-
         # Create and clean the multiple_dicts_analysis attributes.
         self.multiple_dicts_analysis = multiple_dicts_analysis
         self.multiple_dicts_analysis = self.cleaning_multiple_dicts_features(multiple_dicts_analysis)
@@ -107,6 +104,9 @@ class MacularAnalysisDataframes:
             self._dict_paths_pyb[condition] = multi_macular_dict_array[condition].path_pyb
             # Delete path_pyb attribute from simulations dictionaries.
             del self._multiple_dicts_simulations[condition]["path_pyb"]
+
+        # Create the conditions/measurements container present in the multiple macular dict array.
+        self._levels_multiple_dictionaries = self.get_levels_of_multi_macular_dict_array(multi_macular_dict_array)
 
         # Regular expression to extract the name, value and unit of a condition with "NameValueUnit" format.
         self.condition_reg = re.compile("(^[A-Za-z]+)(-?[0-9]{1,4},?[0-9]{0,4})([A-Za-z]+$)")
