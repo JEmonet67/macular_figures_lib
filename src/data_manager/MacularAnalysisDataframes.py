@@ -60,50 +60,53 @@ class MacularAnalysisDataframes:
 
         Parameters
         ----------
-        multiple_dicts_simulations : dict of dict
-            Dictionary associating simulation dictionaries with multiple conditions
+        multi_macular_dict_array : dict of MacularDictArray
+            Dictionary associating specific conditions with different MacularDictArray.
 
-            The dictionary may  also contain a ‘global’ key containing parameters shared between all simulations. The
-            simulation dictionary cannot be empty or contains only a ‘global’ key. There must be at least one
-            difference, such as the pyb file name. It is possible to enter simulation dictionaries that only contain the
-            path of the pyb file.
-
-        multiple_dicts_preprocessings : dict of dict
-            Dictionary associating preprocessing dictionaries with multiple conditions
-
-            The dictionary may also contain a ‘global’ key containing parameters shared between all preprocessing of
-            MacularDictArray. The preprocessing dictionary can be empty or contains only a ‘global’ key.
+            Each MacularDictArray is defined by a set of data, indexes, a dictionary for configuring the simulation,
+            and another for the pre-processing it has undergone.
 
         multiple_dicts_analysis : dict of dict
-            Dictionary associating the name of the analysis dataframe with the dictionary of analyses to be performed
-            on it.
+            Dictionaries containing all analyses to be performed for each dimension of the MacularAnalysisDataframes.
 
-            The dictionary of analyses to be performed on each dataframe contains the name of the analysis associated
-            with its value, which can be a dictionary if you want a different value for each condition present in the
-            MacularAnalysisDataframe.
+            The dictionary consists of a series of dictionaries included in the previous one, each representing a
+            hierarchical level of the analysis to be performed. The keys of the first dictionary are those of the
+            dimensions of the MacularAnalysisDataframes (‘Conditions’, ‘X’, ‘Y’, ‘Time’). The keys of the second
+            dictionary are those of the analyses to be performed on the given dimension. The keys of the third
+            dictionary are the conditions of the MacularDictArray to be analysed. The keys of the fourth dictionary are
+            the measurements of the MacularDictArray to be analysed. Finally, the last dictionary contains keys
+            associating the parameters of the analysis function with their values. This last dictionary could in certain
+            specific cases be replaced by a single value or a Boolean if the analysis in progress does not require more
+            parameters
+
+            The last two hierarchical levels of the analysis (conditions and measures) represent what are known as
+            common analysis groups. These are all the conditions and measurements for which the same analysis is
+            performed with the same parameters.
+
+            Among the analysis parameters is a specific keyword that can be used for any group of common analyses. This
+            ‘flag’ keyword corresponds to a suffix that will be added to the name of the analysis in its corresponding
+            dataframe in order to differentiate it from other similar analyses. For example, to differentiate two
+            ‘activation_time’ with two different thresholds, two flags can be used: ‘flag’:‘threshold0,1’ and
+            ‘flag’:‘threshold0,05’ which gives two column names in the dataframe: ‘activation_time_threshold0,1’ and
+            ‘activation_time_threshold0,05’.
         """
-        # Create or import the corresponding batch of Macular Dict Array.
-        multi_macular_dict_array = MacularDictArray.make_multiple_macular_dict_array(multiple_dicts_simulations,
-                                                                                     multiple_dicts_preprocessings)
-
         # Create and clean the multiple_dicts_analysis attributes.
         self.multiple_dicts_analysis = multiple_dicts_analysis
         self.multiple_dicts_analysis = self.cleaning_multiple_dicts_features(multiple_dicts_analysis)
 
         # Create and clean the multiple_dicts_simulations attributes.
-        self._multiple_dicts_simulations = multiple_dicts_simulations
-        self._multiple_dicts_simulations = self.cleaning_multiple_dicts_features(multiple_dicts_simulations)
+        self._multiple_dicts_simulations = self.cleaning_multiple_dicts_features(
+            {condition: multi_macular_dict_array[condition].dict_simulation for condition in multi_macular_dict_array})
 
         # Create and clean the multiple_dicts_preprocessings attributes.
-        self._multiple_dicts_preprocessings = multiple_dicts_preprocessings
-        self._multiple_dicts_preprocessings = self.cleaning_multiple_dicts_features(multiple_dicts_preprocessings)
+        self._multiple_dicts_preprocessings = self.cleaning_multiple_dicts_features(
+            {condition: multi_macular_dict_array[condition].dict_preprocessing for condition in
+             multi_macular_dict_array})
 
         # Create dict_paths_pyb attributes to store each path_pyb associated to its condition.
         self._dict_paths_pyb = {}
         for condition in multi_macular_dict_array:
             self._dict_paths_pyb[condition] = multi_macular_dict_array[condition].path_pyb
-            # Delete path_pyb attribute from simulations dictionaries.
-            del self._multiple_dicts_simulations[condition]["path_pyb"]
 
         # Create the conditions/measurements container present in the multiple macular dict array.
         self._levels_multiple_dictionaries = self.get_levels_of_multi_macular_dict_array(multi_macular_dict_array)
