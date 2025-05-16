@@ -186,7 +186,7 @@ def test_multiple_dicts_analysis_getter():
         'X': {'activation_time': {
             'barSpeed30dps': {'VSDI': {'param1': 1},
                               all_measurements: {'param1': 2}},
-            'barSpeed27dps:barSpeed30dps': {'VSDI': {'param1': 1}}}}
+            'barSpeed28,5dps:barSpeed30dps': {'VSDI': {'param1': 1}}}}
         }
 
     # Initialisation of a multiple analysis dictionaries for a complex analysis.
@@ -497,7 +497,7 @@ def test_substituting_all_alias_in_multiple_analysis_dictionaries():
             'barSpeed30dps': {'VSDI': {'param1': 1},
                               all_measurements: {'param1': 2},
                               'BipolarResponse_BipolarGainControl': {'param1': 2}},
-            'barSpeed27dps:barSpeed30dps': {'VSDI': {'param1': 1}}}},
+            'barSpeed28,5dps:barSpeed30dps': {'VSDI': {'param1': 1}}}},
         'Y': {'activation_time': {
             'barSpeed30dps': {'VSDI': {'param1': 1},
                               all_measurements: {'param1': 2},
@@ -611,7 +611,7 @@ def test_creating_sort_order_from_multiple_dicts_analysis():
         "Conditions": {"analysis1": 1, "analysis2": {"barSpeed30dps": 2},
                        "analysis3": {"barSpeed30dps": {"measure3": 3}}},
         "X": {"activation_time": {
-            "barSpeed27dps": {"VSDI": {"param1": 1}},
+            "barSpeed28,5dps": {"VSDI": {"param1": 1}},
             "barSpeed30dps": {"VSDI": {"param1": 1}, all_measurements: {"param1": 2},
                               "BipolarResponse_BipolarGainControl": {"param1": 2}},
             all_conditions: {"VSDI": {"param1": 1}}
@@ -624,8 +624,8 @@ def test_creating_sort_order_from_multiple_dicts_analysis():
     dict_sort_order_correct = {
         'Conditions': {"analysis3": {"conditions": ["barSpeed30dps"],
                                      "measurements": {"barSpeed30dps": ["measure3"]}}},
-        'X': {'activation_time': {'conditions': [all_conditions, 'barSpeed27dps', 'barSpeed30dps'],
-                                  'measurements': {'barSpeed27dps': ['VSDI'],
+        'X': {'activation_time': {'conditions': [all_conditions, 'barSpeed28,5dps', 'barSpeed30dps'],
+                                  'measurements': {'barSpeed28,5dps': ['VSDI'],
                                                    'barSpeed30dps': [all_measurements,
                                                                      'BipolarResponse_BipolarGainControl', 'VSDI'],
                                                    all_conditions: ['VSDI']}}},
@@ -700,14 +700,14 @@ def test_analysis():
         all_conditions: {all_measurements: {"threshold": 0.01, "y": 7, "index": "temporal_ms"},
                          "VSDI": {"threshold": 0.001, "y": 7, "index": "temporal_ms"}},
         "barSpeed30dps": {all_measurements: {"threshold": 0.001, "y": 7, "index": "temporal"}},
-        "barSpeed27dps": {"BipolarResponse_BipolarGainControl": {"threshold": 0.005, "y": 7, "index": "temporal"}}}}}
+        "barSpeed28,5dps": {"BipolarResponse_BipolarGainControl": {"threshold": 0.005, "y": 7, "index": "temporal"}}}}}
 
     # Initialisation of a sort order dictionary for a complex analysis.
     dict_sort_order_default_complex = {'X': {'activation_time': {
-        'conditions': [all_conditions, 'barSpeed27dps', 'barSpeed30dps'],
+        'conditions': [all_conditions, 'barSpeed28,5dps', 'barSpeed30dps'],
         'measurements': {all_conditions: [all_measurements, 'VSDI'],
                          'barSpeed30dps': [all_measurements],
-                         'barSpeed27dps': ['BipolarResponse_BipolarGainControl']}}}}
+                         'barSpeed28,5dps': ['BipolarResponse_BipolarGainControl']}}}}
 
     # Set the complex analysis dictionary in the macular analysis dataframes attributes.
     macular_analysis_dataframes_default_empty._multiple_dicts_analysis["X"] = dict_analysis_default_complex["X"]
@@ -757,7 +757,8 @@ def test_make_common_group_analysis():
 
     # Setup parameters for common group analysis.
     common_analysis_group_generator = (analysis_pair for analysis_pair in
-                                       [("barSpeed27dps", "FiringRate_GanglionGainControl"), ("barSpeed30dps", "VSDI")])
+                                       [("barSpeed28,5dps", "FiringRate_GanglionGainControl"),
+                                        ("barSpeed30dps", "VSDI")])
     parameters_analysis_dict = {"threshold": 0.001, "y": 7, "index": "temporal_ms", "flag": "threshold0,001_y7"}
 
     # Make one common group analysis.
@@ -780,7 +781,7 @@ def test_make_common_group_analysis():
             activation_time_common_group_analysis.dict_analysis_dataframes["Time"][condition])
 
     print()
-    print(tabulate(macular_analysis_dataframes_default_empty.dict_analysis_dataframes["X"]["barSpeed27dps"],
+    print(tabulate(macular_analysis_dataframes_default_empty.dict_analysis_dataframes["X"]["barSpeed28,5dps"],
                    headers="keys", tablefmt="fancy_grid"))
     print(tabulate(macular_analysis_dataframes_default_empty.dict_analysis_dataframes["X"]["barSpeed30dps"],
                    headers="keys", tablefmt="fancy_grid"))

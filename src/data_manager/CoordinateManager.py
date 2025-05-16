@@ -66,10 +66,19 @@ class CoordinateManager:
             last_cell = dict_simulation["n_cells_y"]
 
         # Computing the arrival times of the bar in the centre of the cell receptor field.
-        list_time_bar_center = [
-           round(((round(x_col * dict_simulation["dx"], 5) +
-                       dict_simulation["size_bar"] / 2) / dict_simulation["speed"]), 5)
-            for x_col in range(0, last_cell)]
+        # Case of a discrete speed.
+        if not dict_simulation["speed"] - int(dict_simulation["speed"]):
+            list_time_bar_center = [
+                round(((round(x_col * dict_simulation["dx"], 5) +
+                        dict_simulation["size_bar"] / 2) / dict_simulation["speed"]), 5)
+                for x_col in range(0, last_cell)]
+
+        # Case of a decimal speed requiring correction.
+        else:
+            list_time_bar_center = [
+                round(((round(x_col * dict_simulation["dx"], 5) +
+                        dict_simulation["size_bar"] / 2) / (dict_simulation["speed"] + 0.1)), 5)
+                for x_col in range(0, last_cell)]
 
         return list_time_bar_center
 
