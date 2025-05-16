@@ -655,9 +655,6 @@ class MacularAnalysisDataframes:
     #     for analysis in self.multiple_dicts_analysis["Conditions"]:
     #         pass
 
-    # def make_temporal_dataframes_analysis(self, multi_macular_dict_array):
-    #     for analysis in self.multiple_dicts_analysis["Time"]:
-    #         pass
 
     def make_spatial_dataframes_analysis(self, dimension, multi_macular_dict_array, dict_sort_order):
         """Function used to perform all MacularAnalysisDataframe analyses to be carried out in the spatial dimension
@@ -681,18 +678,24 @@ class MacularAnalysisDataframes:
             Dictionary containing ordered lists of grouped conditions and measurements for all analyses and dimensions
             of multiple analysis dictionaries.
         """
+        # Dictionary containing all spatial analyses currently implemented.
+        available_spatial_analyses_dict = {
+            "activation_time": self.activation_time_analyzing,
+            "latency": self.latency_analyzing,
+            "time_to_peak": self.time_to_peak_analyzing,
+            "peak_delay": self.peak_delay_analyzing,
+            "peak_amplitude": self.peak_amplitude_analyzing
+        }
+
         # Performs all analyses listed in the current analysis dictionary.
         for analysis in self.multiple_dicts_analysis[dimension]:
-            if analysis == "activation_time":
-                self.activation_time_analyzing(self, multi_macular_dict_array, dimension, analysis, dict_sort_order)
-            elif analysis == "latency":
-                self.latency_analyzing(self, multi_macular_dict_array, dimension, analysis, dict_sort_order)
-            elif analysis == "time_to_peak":
-                self.time_to_peak_analyzing(self, multi_macular_dict_array, dimension, analysis, dict_sort_order)
-            elif analysis == "peak_delay":
-                self.peak_delay_analyzing(self, multi_macular_dict_array, dimension, analysis, dict_sort_order)
-            elif analysis == "peak_amplitude":
-                self.peak_amplitude_analyzing(self, multi_macular_dict_array, dimension, analysis, dict_sort_order)
+            if analysis in available_spatial_analyses_dict:
+                available_spatial_analyses_dict[analysis](self, multi_macular_dict_array, dimension, analysis,
+                                                          dict_sort_order)
+
+    # def make_temporal_dataframes_analysis(self, multi_macular_dict_array):
+    #     for analysis in self.multiple_dicts_analysis["Time"]:
+    #         pass
 
     @staticmethod
     def analysis(analysis_function):
