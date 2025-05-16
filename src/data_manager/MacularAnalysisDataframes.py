@@ -650,11 +650,45 @@ class MacularAnalysisDataframes:
 
         return sorted_list_elements
 
-    # def make_conditions_dataframes_analysis(self, multi_macular_dict_array):
-    #     conditions_analyser = ConditionsAnalyser()
-    #     for analysis in self.multiple_dicts_analysis["Conditions"]:
-    #         pass
+    def make_conditions_dataframes_analysis(self, multi_macular_dict_array, dict_sort_order):
+        """Function used to perform all MacularAnalysisDataframe analyses to be carried out in the conditions dimension.
 
+        The names of all analyses in the multiple analysis dictionaries are scanned and identified. For each of them, a
+        conditional block allows the corresponding analysis function to be executed.
+
+        A multiple analysis dictionary is provided as input to this function to allow the use of a dictionary without
+        aliases ‘all_conditions’ and ‘all_measurements’.
+
+        Parameters
+        ----------
+        dimension : str
+            Dimension of the MacularAnalysisDataframes in which the result of the current analysis is stored.
+
+        multi_macular_dict_array : dict of MacularDictArray
+            Dictionary associating specific conditions with different MacularDictArray.
+
+        dict_sort_order : dict of dict
+            Dictionary containing ordered lists of grouped conditions and measurements for all analyses and dimensions
+            of multiple analysis dictionaries.
+        """
+        dimension = "Conditions"
+
+        # Dictionary containing all conditions analyses currently implemented.
+        available_spatial_analyses_dict = {
+            "maximal_latency": self.maximal_latency_analyzing,
+            "anticipation_range": self.anticipation_range_analyzing,
+            "short_range_anticipation_speed": self.short_range_anticipation_speed_analyzing,
+            "long_range_anticipation_speed": self.long_range_anticipation_speed_analyzing,
+            "peak_speed": self.peak_speed_analyzing,
+            "stationary_peak_delay": self.stationary_peak_delay_analyzing,
+            "central_peak_amplitude": self.central_peak_amplitude_analyzing
+        }
+
+        # Performs all analyses listed in the current analysis dictionary.
+        for analysis in self.multiple_dicts_analysis[dimension]:
+            if analysis in available_spatial_analyses_dict:
+                available_spatial_analyses_dict[analysis](self, multi_macular_dict_array, dimension, analysis,
+                                                          dict_sort_order)
 
     def make_spatial_dataframes_analysis(self, dimension, multi_macular_dict_array, dict_sort_order):
         """Function used to perform all MacularAnalysisDataframe analyses to be carried out in the spatial dimension
