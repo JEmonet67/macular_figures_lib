@@ -44,6 +44,10 @@ all_measurements = levels_multiple_dictionaries_default[1]["barSpeed30dps"]
 with open(f"{path_data_test}/MacularAnalysisDataframes/activation_time_common_group_analysis.pyb", "rb") as file:
     activation_time_common_group_analysis = pickle.load(file)
 
+# Import default macular analysis dataframes of bar speed condition with peak amplitude conditions common group analysis
+with open(f"{path_data_test}/MacularAnalysisDataframes/peak_amplitude_conditions_common_group_analysis.pyb", "rb") as file:
+    peak_amplitude_conditions_common_group_analysis = pickle.load(file)
+
 multiple_dicts_simulations_head100 = {
     "global": {
         "n_cells_x": 83,
@@ -778,40 +782,63 @@ def test_common_analysis_group_parser():
 def test_make_common_group_analysis():
     # Import an empty default macular analysis dataframes of bar speed condition.
     with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
-        macular_analysis_dataframes_default_empty = pickle.load(file)
+        macular_analysis_dataframes_spatial_analysis = pickle.load(file)
 
-    # Setup parameters for common group analysis.
+    # Import an empty default macular analysis dataframes of bar speed condition.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
+        macular_analysis_dataframes_conditions_analysis = pickle.load(file)
+
+    # Setup generator and parameters for spatial common group analysis (activation time).
     common_analysis_group_generator = (analysis_pair for analysis_pair in
                                        [("barSpeed28,5dps", "FiringRate_GanglionGainControl"),
                                         ("barSpeed30dps", "VSDI")])
-    parameters_analysis_dict = {"threshold": 0.001, "y": 7, "index": "temporal_ms", "flag": "threshold0,001_y7"}
+    parameters_analysis_dict_spatial_analysis = {"threshold": 0.001, "y": 7, "index": "temporal_ms",
+                                                 "flag": "threshold0,001_y7"}
 
-    # Make one common group analysis.
-    macular_analysis_dataframes_default_empty.make_common_group_analysis(
+    # Make spatial common group analysis (activation time).
+    macular_analysis_dataframes_spatial_analysis.make_common_group_analysis(
         MacularAnalysisDataframes.activation_time_analyzing.__wrapped__,
         multi_macular_dict_array_default, common_analysis_group_generator,
-        "X", "activation_time", parameters_analysis_dict)
+        "X", "activation_time", parameters_analysis_dict_spatial_analysis)
 
     # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Conditions"].equals(
+    assert macular_analysis_dataframes_spatial_analysis.dict_analysis_dataframes["Conditions"].equals(
         activation_time_common_group_analysis.dict_analysis_dataframes["Conditions"])
 
     # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_empty.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["X"][condition].equals(
+    for condition in macular_analysis_dataframes_spatial_analysis.dict_paths_pyb:
+        assert macular_analysis_dataframes_spatial_analysis.dict_analysis_dataframes["X"][condition].equals(
             activation_time_common_group_analysis.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Y"][condition].equals(
+        assert macular_analysis_dataframes_spatial_analysis.dict_analysis_dataframes["Y"][condition].equals(
             activation_time_common_group_analysis.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Time"][condition].equals(
+        assert macular_analysis_dataframes_spatial_analysis.dict_analysis_dataframes["Time"][condition].equals(
             activation_time_common_group_analysis.dict_analysis_dataframes["Time"][condition])
 
-    print()
-    print(tabulate(macular_analysis_dataframes_default_empty.dict_analysis_dataframes["X"]["barSpeed28,5dps"],
-                   headers="keys", tablefmt="fancy_grid"))
-    print(tabulate(macular_analysis_dataframes_default_empty.dict_analysis_dataframes["X"]["barSpeed30dps"],
-                   headers="keys", tablefmt="fancy_grid"))
+    # Setup generator and parameters for conditions common group analysis (peak amplitude).
+    common_analysis_group_generator = (analysis_pair for analysis_pair in
+                                       [("barSpeed28,5dps", "FiringRate_GanglionGainControl"),
+                                        ("barSpeed28,5dps", "VSDI"),
+                                        ("barSpeed30dps", "VSDI")])
+    parameters_analysis_dict_conditions_analysis = {"x": 36, "y": 7, "flag": "x36_y7"}
 
-    # TODO Ajouter un test avec le dataframe condition et sans flag.
+    # Make conditions common group analysis (peak amplitude).
+    macular_analysis_dataframes_conditions_analysis.make_common_group_analysis(
+        MacularAnalysisDataframes.peak_amplitude_analyzing.__wrapped__,
+        multi_macular_dict_array_default, common_analysis_group_generator,
+        "Conditions", "peak_amplitude", parameters_analysis_dict_conditions_analysis)
+
+    # Verify that the conditions dataframe is correct.
+    assert macular_analysis_dataframes_conditions_analysis.dict_analysis_dataframes["Conditions"].equals(
+        peak_amplitude_conditions_common_group_analysis.dict_analysis_dataframes["Conditions"])
+
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_conditions_analysis.dict_paths_pyb:
+        assert macular_analysis_dataframes_conditions_analysis.dict_analysis_dataframes["X"][condition].equals(
+            peak_amplitude_conditions_common_group_analysis.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_conditions_analysis.dict_analysis_dataframes["Y"][condition].equals(
+            peak_amplitude_conditions_common_group_analysis.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_conditions_analysis.dict_analysis_dataframes["Time"][condition].equals(
+            peak_amplitude_conditions_common_group_analysis.dict_analysis_dataframes["Time"][condition])
 
 
 def test_activation_time_analyzing():
@@ -989,3 +1016,15 @@ def test_peak_amplitude_analyzing():
 
     # Verification of the validity of the spatial array Y of the amplitude.
     assert np.array_equal(amplitude_array_y, amplitude_array_correct_y)
+
+    # Create analysis dictionary for case on Conditions dimension dataframe.
+    parameters_analysis_dict_conditions = {"x": 36, "y": 7}
+
+    # Create new amplitude array for spatial dataframe of the Y dimension.
+    amplitude_conditions = MacularAnalysisDataframes.peak_amplitude_analyzing.__wrapped__(
+        multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
+        multi_macular_dict_array_default["barSpeed30dps"].index,
+        parameters_analysis_dict_conditions)
+
+    # Verification of the validity of the value of the amplitude.
+    assert amplitude_conditions == 0.038

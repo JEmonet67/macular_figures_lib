@@ -675,13 +675,13 @@ class MacularAnalysisDataframes:
 
         # Dictionary containing all conditions analyses currently implemented.
         available_spatial_analyses_dict = {
-            "maximal_latency": self.maximal_latency_analyzing,
-            "anticipation_range": self.anticipation_range_analyzing,
-            "short_range_anticipation_speed": self.short_range_anticipation_speed_analyzing,
-            "long_range_anticipation_speed": self.long_range_anticipation_speed_analyzing,
-            "peak_speed": self.peak_speed_analyzing,
-            "stationary_peak_delay": self.stationary_peak_delay_analyzing,
-            "central_peak_amplitude": self.central_peak_amplitude_analyzing
+            # "maximal_latency": self.maximal_latency_analyzing,
+            # "anticipation_range": self.anticipation_range_analyzing,
+            # "short_range_anticipation_speed": self.short_range_anticipation_speed_analyzing,
+            # "long_range_anticipation_speed": self.long_range_anticipation_speed_analyzing,
+            # "peak_speed": self.peak_speed_analyzing,
+            # "stationary_peak_delay": self.stationary_peak_delay_analyzing,
+            "peak_amplitude": self.peak_amplitude_analyzing
         }
 
         # Performs all analyses listed in the current analysis dictionary.
@@ -865,10 +865,16 @@ class MacularAnalysisDataframes:
         for condition, measurement in common_analysis_group_generator:
             # Defines the name of the line where the current analysis is stored.
             dataframe_row = f"{analysis}_{measurement}{str_parameters_analysis}"
-            # Conducting an analysis of a given condition and measurement.
-            self.dict_analysis_dataframes[dimension][condition].loc[dataframe_row] = analysis_function(
-                multi_macular_dict_array[condition].data[measurement], multi_macular_dict_array[condition].index
-                , parameters_analysis_dict)
+            # Conducting an analysis of a given condition and measurement in the conditions dataframe.
+            if dimension == "Conditions":
+                self.dict_analysis_dataframes[dimension].loc[dataframe_row, condition] = analysis_function(
+                    multi_macular_dict_array[condition].data[measurement], multi_macular_dict_array[condition].index
+                    , parameters_analysis_dict)
+            # Conducting an analysis of a given condition and measurement in spatio-temporal dataframes.
+            else:
+                self.dict_analysis_dataframes[dimension][condition].loc[dataframe_row] = analysis_function(
+                    multi_macular_dict_array[condition].data[measurement], multi_macular_dict_array[condition].index
+                    , parameters_analysis_dict)
 
     @staticmethod
     @analysis
@@ -1043,11 +1049,11 @@ class MacularAnalysisDataframes:
     @staticmethod
     @analysis
     def peak_amplitude_analyzing(data, index, parameters_analysis_dict):
-        """Function that analyses peak amplitude based on a single spatial dimension.
+        """Function that analyses peak amplitude based on a single spatial or conditions dimension.
 
         The amplitude is calculated in the 3D array and the index of a measurement of a condition. It is obtained
-        in the form of a 2D array from which only the desired X or Y position can be taken to obtain a 1D array based
-        on a single spatial dimension.
+        in the form of a 2D array from which only the desired X or Y positions can be taken. This can be a 1D array with
+        a single spatial dimension or a single value at a specific position.
 
         Parameters
         ----------
@@ -1063,16 +1069,20 @@ class MacularAnalysisDataframes:
 
         Returns
         ----------
-        amplitude_1d_array : np.array
-            1D array of amplitude along a single spatial axis.
+        amplitude : np.array or float
+            1D array of amplitude along a single spatial axis or value of peak amplitude at a specific spatial position.
         """
         # Calculation of the 2D array of amplitude.
         amplitude_2d_array = SpatialAnalyser.peak_amplitude_computing(data)
 
         # Extracting a single spatial dimension from the amplitude array.
-        if "x" in parameters_analysis_dict:
-            amplitude_1d_array = amplitude_2d_array[:, parameters_analysis_dict["x"]]
-        elif "y" in parameters_analysis_dict:
-            amplitude_1d_array = amplitude_2d_array[parameters_analysis_dict["y"], :]
+        if "x" in parameters_analysis_dict and "y" not in parameters_analysis_dict:
+            amplitude = amplitude_2d_array[:, parameters_analysis_dict["x"]]
+        elif "x" not in parameters_analysis_dict and "y" in parameters_analysis_dict:
+            amplitude = amplitude_2d_array[parameters_analysis_dict["y"], :]
 
-        return amplitude_1d_array
+        # Extracting a single spatial position from the amplitude array.
+        elif "x" in parameters_analysis_dict and "y" in parameters_analysis_dict:
+            amplitude = amplitude_2d_array[parameters_analysis_dict["y"], parameters_analysis_dict["x"]]
+
+        return amplitude
