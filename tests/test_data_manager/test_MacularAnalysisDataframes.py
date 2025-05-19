@@ -724,26 +724,44 @@ def test_analysis():
         macular_analysis_dataframes_default_empty = pickle.load(file)
 
     # Initialisation of a dictionary for a complex analysis.
-    dict_analysis_default_complex = {"X": {"activation_time": {
-        all_conditions: {all_measurements: {"threshold": 0.01, "y": 7, "index": "temporal_ms"},
+    dict_analysis_default_complex = {
+        "X": {"activation_time": {
+            all_conditions: {all_measurements: {"threshold": 0.01, "y": 7, "index": "temporal_ms"},
                          "VSDI": {"threshold": 0.001, "y": 7, "index": "temporal_ms"}},
-        "barSpeed30dps": {all_measurements: {"threshold": 0.001, "y": 7, "index": "temporal"}},
-        "barSpeed28,5dps": {"BipolarResponse_BipolarGainControl": {"threshold": 0.005, "y": 7, "index": "temporal"}}}}}
+            "barSpeed30dps": {all_measurements: {"threshold": 0.001, "y": 7, "index": "temporal"}},
+            "barSpeed28,5dps": {"BipolarResponse_BipolarGainControl": {"threshold": 0.005, "y": 7, "index": "temporal"}}}},
+        "Conditions": {"peak_amplitude": {
+            all_conditions: {all_measurements: {"x": 36, "y": 7}}}}
+    }
 
     # Initialisation of a sort order dictionary for a complex analysis.
-    dict_sort_order_default_complex = {'X': {'activation_time': {
-        'conditions': [all_conditions, 'barSpeed28,5dps', 'barSpeed30dps'],
-        'measurements': {all_conditions: [all_measurements, 'VSDI'],
-                         'barSpeed30dps': [all_measurements],
-                         'barSpeed28,5dps': ['BipolarResponse_BipolarGainControl']}}}}
+    dict_sort_order_default_complex = {
+        'X': {'activation_time': {
+            'conditions': [all_conditions, 'barSpeed28,5dps', 'barSpeed30dps'],
+            'measurements': {all_conditions: [all_measurements, 'VSDI'],
+                             'barSpeed30dps': [all_measurements],
+                             'barSpeed28,5dps': ['BipolarResponse_BipolarGainControl']}}},
+        'Conditions': {'peak_amplitude': {
+            'conditions': [all_conditions],
+            'measurements': {all_conditions: [all_measurements]}}}
+    }
 
     # Set the complex analysis dictionary in the macular analysis dataframes attributes.
     macular_analysis_dataframes_default_empty._multiple_dicts_analysis["X"] = dict_analysis_default_complex["X"]
+    macular_analysis_dataframes_default_empty._multiple_dicts_analysis["Conditions"] = (
+        dict_analysis_default_complex)["Conditions"]
 
-    # Use activation time analysis on empty macular analysis dataframes with the complex default dictionaries.
+    # Use spatial and conditions analysis on empty macular analysis dataframes with the complex default dictionaries.
     MacularAnalysisDataframes.activation_time_analyzing(macular_analysis_dataframes_default_empty,
                                                         multi_macular_dict_array_default,"X",
                                                         "activation_time", dict_sort_order_default_complex)
+    MacularAnalysisDataframes.peak_amplitude_analyzing(macular_analysis_dataframes_default_empty,
+                                                        multi_macular_dict_array_default,"Conditions",
+                                                        "peak_amplitude", dict_sort_order_default_complex)
+
+    # Verify that the conditions dataframe is correct.
+    assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_default_complex_make_analysis.dict_analysis_dataframes["Conditions"])
 
     # Verify that the X, Y, and T dataframes for each condition are equal.
     for condition in macular_analysis_dataframes_default_empty.dict_paths_pyb:
@@ -753,7 +771,6 @@ def test_analysis():
             macular_analysis_dataframes_default_complex_make_analysis.dict_analysis_dataframes["Y"][condition])
         assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Time"][condition].equals(
             macular_analysis_dataframes_default_complex_make_analysis.dict_analysis_dataframes["Time"][condition])
-
 
 def test_common_analysis_group_parser():
     # Names of conditions in an analysis group common to two conditions.
@@ -780,11 +797,11 @@ def test_common_analysis_group_parser():
 
 
 def test_make_common_group_analysis():
-    # Import an empty default macular analysis dataframes of bar speed condition.
+    # Import an empty default macular analysis dataframes of bar speed condition with spatial X dataframe analyzed.
     with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
         macular_analysis_dataframes_spatial_analysis = pickle.load(file)
 
-    # Import an empty default macular analysis dataframes of bar speed condition.
+    # Import an empty default macular analysis dataframes of bar speed condition with condition dataframe analyzed.
     with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
         macular_analysis_dataframes_conditions_analysis = pickle.load(file)
 
