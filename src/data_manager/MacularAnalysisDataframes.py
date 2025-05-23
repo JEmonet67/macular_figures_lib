@@ -17,34 +17,107 @@ class MacularAnalysisDataframes:
     Attributes
     ----------
     dict_paths_pyb : dict of str
-        Summary attr1
+        Dictionnaire associant les conditions d'un MacularDictArray multiple avec le path de leur fichier pyb.
 
     dict_analysis_dataframes : dict of pd.DataFrame
         Summary attr1
 
     multiple_dicts_analysis : dict of dict
-        Summary attr1
+        Dictionaries containing all analyses to be performed for each dimension of the MacularAnalysisDataframes.
+
+        The dictionary consists of a series of dictionaries included in the previous one, each representing a
+        hierarchical level of the analysis to be performed. The keys of the first dictionary are those of the
+        dimensions of the MacularAnalysisDataframes (‘Conditions’, ‘X’, ‘Y’, ‘Time’). The keys of the second
+        dictionary are those of the analyses to be performed on the given dimension. For each of these analyses,
+        there is a list of dictionaries, each representing a group of common analyses. These groups of common
+        analyses are a conditions and measurements for which the same analysis is performed with the same parameters.
+        The order in which the different dictionaries of common analysis groups are arranged in the list also defines
+        the order in which they will be performed. Thus, if two common analysis groups modify the same line of a
+        dataframe, it will be the last group in the list that will leave its value.
+
+        The dictionaries for these groups of common analyses must contain a ‘conditions’ and ‘measurements’ key, both
+        associated with all the names of the conditions and measurements included in that group. These names are in
+        the form of a string where each name is separated by ‘:’ as in, for example: ‘barSpeed15dps:barSpeed30dps’
+         or ‘FiringRate_GanglionGainControl:VSDI’. The dictionary also contains a “params” key associated with a
+        final dictionary level containing the parameters to be used for the analysis. The parameters to be used
+        depend on the analysis, but all have a ‘flag’ parameter that allows add a suffix behind the name of the
+        analysis used to create a new line in the corresponding dataframe in order to differentiate it from other
+        similar analyses. For example, to differentiate two ‘activation_time’ with two different thresholds, two
+        flags can be used:‘flag’:‘threshold0,1’ and ‘flag’:‘threshold0,05’ which gives two column names in the
+        dataframe: ‘activation_time_threshold0,1’ and 'activation_time_threshold0,05’.
+
+        There is a special case with the ‘MetaAnalysis’ key in the multiple analysis dictionary. This dictionary is
+        used to perform analyses using other analyses already performed within the MacularAnalysisDataframes. In
+        this case, the analysis key (second dictionary level) is associated with an additional dictionary level
+        used for meta-analysis. This dictionary level contains a first key ‘params’ containing any parameters that
+        do not depend on existing analyses. In addition, there are keys associated with the various arguments
+        required to perform the meta-analysis function. These arguments are associated with a list of groups of
+        common analyses in the form of dictionaries. These are all the analyses to be retrieved and used in the
+        meta-analysis calculation. Their dictionary contains keys ‘conditions’, ‘measurements’, “dimensions” and
+        ‘analyses’. Each of these is associated with a string of all the names of the common analysis group
+        separated by ‘:’.
+
+        Global aliases can be used for each element used in the common analysis group. These aliases allow you to
+        retrieve all possible elements (conditions, measurements, dimensions, analyses). In the case of
+        ‘measurements’ and 'analyses', the possible elements vary depending on the dimensions and conditions present
+        in the multiple analysis group. Aliases must contain the prefix ‘all_’ followed by the element from which
+        you want to retrieve everything. These aliases are substituted within the MacularAnalysisDataframes by the
+        getter of the multiple analysis dictionary. Be careful to only group together analyses that share the same
+        configurations.
+
+        In certain specific cases, the analysis key may be associated only with a Boolean, an int or a float, as with
+        the ‘sorting’ analysis for sorting condition names.
+
 
     multiple_dicts_simulations : dict of dict
-        Summary attr1
+        Dictionary associating simulation dictionaries with multiple conditions
+
+        The dictionary may  also contain a ‘global’ key containing parameters shared between all simulations. The
+        simulation dictionary cannot be empty or contains only a ‘global’ key. There must be at least one
+        difference, such as the pyb file name. It is possible to enter simulation dictionaries that only contain the
+        path of the pyb file.
 
     multiple_dicts_preprocessings : dict of dict
-        Summary attr1
+        Dictionary associating preprocessing dictionaries with multiple conditions
+
+        The dictionary may also contain a ‘global’ key containing parameters shared between all preprocessing of
+        MacularDictArray. The preprocessing dictionary can be empty or contains only a ‘global’ key.
 
     condition_reg : re.Pattern
         Regular expression to extract the name of the condition, its value and its unit from the keys of the
         MacularDictArray multiple dictionary.
 
+        This pattern is primarily used to sort conditions in the ‘Conditions’ dataframe of MacularAnalysisDataframes.
         By default, the regular expression entered allows you to read conditions that follow a ‘NameValueUnit’ format.
 
-    levels_multiple_dictionaries : list of str or dict of str
-        Container grouping all the names of conditions and measurements found in the associated multiple Macular Dict
-        Array separated by ‘:’.
+    analysis_dataframes_levels : dict of str or dict of dict
+        Container grouping all the names of conditions, measurements, dimensions and analyses found in the
+        MacularAnalysisDataframes or associated multiple Macular Dict Array, separated by ‘:’.
 
-        The first element is a character string with conditions names separated by ":". The second is a dictionary
-        associating the conditions of a multiple macular dict array as keys with values corresponding to the names
-        of the measurements present in each of the MacularDictArray. The names of the measurements are also
-        separated by ‘:’.
+        The first key "conditions" is associated to a character string with conditions names separated by ":". The
+        second key "measurements" is a dictionary associating the conditions of a multiple macular dict array as keys
+        with values corresponding to the names of the measurements present in each of the MacularDictArray. The names
+        of the measurements are also separated by ‘:’. La troisième clé "dimensions" est associée à une chaîne de caractères
+        avec toutes les dataframes de dimension contenu dans le MacularAnalysisDataframes actuel. La dernière clé "analyses"
+        est aussi un dictionnaire contenant des les noms des dimensions associés à un second dictionnaire avec des pairs
+        de noms de conditions et des noms des analyses dans le dataframe de cette dimension et de cette condition.
+
+        Example :
+        {
+        'conditions': 'barSpeed6dps:barSpeed15dps:barSpeed30dps',
+        'measurements': {
+        'barSpeed6dps': 'BipolarResponse_BipolarGainControl:VSDI',
+        'barSpeed15dps': 'FiringRate_GanglionGainControl:VSDI',
+        'barSpeed30dps': 'VSDI',
+        },
+        'dimensions': 'Conditions:Time:X:Y',
+        'analyses': {
+            'Conditions': 'barSpeed (dps)',
+            'X': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''},
+            'Y': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''},
+            'Time': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''}
+            }
+        }
 
     Example
     ----------
@@ -255,7 +328,7 @@ class MacularAnalysisDataframes:
         Parameters
         ----------
         multi_macular_dict_array : dict of MacularDictArray
-            Dictionary associating specific conditions with MacularDictArray.
+            Dictionary associating specific conditions with different MacularDictArray.
 
         name_index : str
             Name of the MacularDictArray index from which the index with the maximum size must be extracted. The names
@@ -484,7 +557,7 @@ class MacularAnalysisDataframes:
         Parameters
         ----------
         multi_macular_dict_array : dict of MacularDictArray
-            Dictionary associating specific conditions with MacularDictArray.
+            Dictionary associating specific conditions with different MacularDictArray.
 
         Returns
         ----------
@@ -735,7 +808,7 @@ class MacularAnalysisDataframes:
                 Macular analysis dataframes that the user want to do one analyse in one of its dimensions.
 
             multi_macular_dict_array : dict of MacularDictArray
-                Dictionary associating specific conditions with MacularDictArray.
+                Dictionary associating specific conditions with different MacularDictArray.
 
             dimension : str
                 Dimension of the MacularAnalysisDataframes in which the result of the current analysis is stored.
@@ -803,7 +876,7 @@ class MacularAnalysisDataframes:
             arguments: the data, the index and the analysis parameters.
 
         multi_macular_dict_array : dict of MacularDictArray
-            Dictionary associating specific conditions with MacularDictArray.
+            Dictionary associating specific conditions with different MacularDictArray.
 
         common_analysis_group_generator : list of tuples
             Generator of all tuples pairs of conditions and measurements in a group of common analyses.
@@ -850,8 +923,8 @@ class MacularAnalysisDataframes:
         """Function that analyses activation time based on a single spatial dimension.
 
         The activation time is calculated in the 3D array and the index of a measurement of a condition. It is obtained
-        in the form of a 2D array from which only the desired X or Y position can be taken to obtain a 1D array based
-        on a single spatial dimension.
+        in the form of a 2D array. From this array it's possible to only take the desired X or Y position to obtain a
+        1D array based on a single spatial dimension (spatial analysis decorator).
 
         Parameters
         ----------
@@ -868,8 +941,8 @@ class MacularAnalysisDataframes:
 
         Returns
         ----------
-        activation_time_1d_array : np.array
-            1D array of activation times along a single spatial axis.
+        activation_time_array : np.array
+            2D or 1D array of activation times along a single spatial axis.
         """
         # Calculation of the 2D array of activation times.
         activation_time_2d_array = SpatialAnalyser.activation_time_computing(data,
@@ -1032,8 +1105,8 @@ class MacularAnalysisDataframes:
             Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
 
         parameters_analysis_dict : dict
-            Dictionary of parameters to be used for amplitude analysis. It must contain only the x or y position to be
-            analysed.
+            Dictionary of parameters to be used for amplitude analysis. It must contain only the x and/or y position to
+            be analysed.
 
         Returns
         ----------
