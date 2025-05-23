@@ -34,18 +34,19 @@ with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_arr
 # Import the list of conditions/measures from the default multi macular dict array.
 with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
     macular_analysis_dataframes_default_empty = pickle.load(file)
-levels_multiple_dictionaries_default = macular_analysis_dataframes_default_empty.levels_multiple_dictionaries
+analysis_dataframes_levels = macular_analysis_dataframes_default_empty.analysis_dataframes_levels
 
 # Define strings containing all conditions and measures.
-all_conditions = levels_multiple_dictionaries_default[0]
-all_measurements = levels_multiple_dictionaries_default[1]["barSpeed30dps"]
+all_conditions = analysis_dataframes_levels["conditions"]
+all_measurements = analysis_dataframes_levels["measurements"]["barSpeed30dps"]
 
 # Import default macular analysis dataframes of bar speed condition with activation time common group analysis.
 with open(f"{path_data_test}/MacularAnalysisDataframes/activation_time_common_group_analysis.pyb", "rb") as file:
     activation_time_common_group_analysis = pickle.load(file)
 
 # Import default macular analysis dataframes of bar speed condition with peak amplitude conditions common group analysis
-with open(f"{path_data_test}/MacularAnalysisDataframes/peak_amplitude_conditions_common_group_analysis.pyb", "rb") as file:
+with open(f"{path_data_test}/MacularAnalysisDataframes/peak_amplitude_conditions_common_group_analysis.pyb",
+          "rb") as file:
     peak_amplitude_conditions_common_group_analysis = pickle.load(file)
 
 multiple_dicts_simulations_head100 = {
@@ -93,6 +94,98 @@ multiple_dicts_analysis_head100 = {
     "Time": {}
 }
 
+multiple_dicts_simulations_default = {
+    "global": {
+        "n_cells_x": 83,
+        "n_cells_y": 15,
+        "dx": 0.225,
+        "delta_t": 0.0167,
+        "end": "max",
+        "size_bar": 0.67,
+        "axis": "horizontal"
+    },
+    "barSpeed30dps": {
+        "path_pyb": f"../data_test/data_manager/MacularAnalysisDataframes/RC_RM_dSGpCP0033_barSpeed30dps_default_0f.pyb",
+        "path_csv": f"../data_test/data_manager/RC_RM_dSGpCP0033_barSpeed30dps_0f.csv",
+        "speed": 30
+    },
+    "barSpeed28,5dps": {
+        "path_pyb": f"../data_test/data_manager/MacularAnalysisDataframes/RC_RM_dSGpCP0083_barSpeed28,5dps_default_0f.pyb",
+        "path_csv": f"../data_test/data_manager/RC_RM_dSGpCP0083_barSpeed28,5dps_0f.csv",
+        "speed": 28.5
+    }
+}
+
+multiple_dicts_preprocessings_default = {
+    "global": {
+        "temporal_centering": True,
+        "spatial_x_centering": True,
+        "spatial_y_centering": True,
+        "binning": 0.0016,
+        "VSDI": True,
+        "derivative": {"VSDI": 31, "FiringRate_GanglionGainControl": 31},
+        "temporal_index_ms": 1000,
+        "spatial_index_mm_retina": 0.3,
+        "spatial_index_mm_cortex": 3,
+        "edge": (5, 0)
+    },
+    "barSpeed28,5dps": {},
+    "barSpeed30dps": {}
+}
+
+multiple_dicts_analysis_default = {
+    "Conditions": {"sorting": "NameValueUnit"},
+    "X": {
+        "activation_time": [{"conditions": "all_conditions", "measurements": "VSDI",
+                             "params": {"threshold": 0.001, "index": "temporal_ms", "y": 7, "flag": ""}}],
+        "latency": [{"conditions": "all_conditions", "measurements": "VSDI",
+                     "params": {"threshold": 0.001, "index": "temporal_centered_ms", "y": 7,
+                                "axis": "horizontal", "flag": ""}}],
+        "time_to_peak": [{"conditions": "all_conditions", "measurements": "all_measurements",
+                          "params": {"index": "temporal_ms", "y": 7, "flag": ""}}],
+        "peak_delay": [{"conditions": "all_conditions", "measurements": "VSDI",
+                        "params": {"index": "temporal_centered_ms", "y": 7, "axis": "horizontal", "flag": ""}}],
+        "peak_amplitude": [{"conditions": "all_conditions", "measurements": "all_measurements",
+                            "params": {"y": 7, "flag": ""}}],
+    },
+    "Y": {
+        "activation_time": [{"conditions": "all_conditions", "measurements": "VSDI",
+                             "params": {"threshold": 0.001, "index": "temporal_ms", "x": 36, "flag": ""}}],
+        "time_to_peak": [{"conditions": "all_conditions", "measurements": "all_measurements",
+                          "params": {"index": "temporal_ms", "x": 36, "flag": ""}}],
+        "peak_amplitude": [{"conditions": "all_conditions", "measurements": "all_measurements",
+                            "params": {"x": 36, "flag": ""}}],
+    },
+    "Time": {"test": "test"},
+    "Multidimensional": {
+        "multi_analysis": [{"conditions": "all_conditions", "measurements": "VSDI",
+                            "params": {"main_dimension": "X", "secondary_dimension": "Conditions", "flag": ""}}]
+    },
+    "MetaAnalysis": {
+        # Si on a une liste de valeurs de paramètres elle doit faire la taille des listes des groupes de
+        # meta-analyses communes.
+        "division": {"params": {"factor": 8},
+                     # Le dictionnaire de méta-analyse est parser pour créer une liste de méta-analyses communes dont la
+                     # longueur doit être la même pour chaque analyses utilisée dans la méta-analyse en cours.
+                     # Si il y a une seule analyse elle sera répétée pour tous les groupes de méta-analyses.
+                     # Les groupes de méta-analyses communes sont sous la forme d'un tuple
+                     # (dimension, condition, mesure, analyse, étiquette)
+                     "numerator": [
+                         {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
+                          "analyses": "peak_amplitude", "flag": ""},
+                         {"dimensions": "Y", "conditions": "all_conditions", "measurements": "VSDI",
+                          "analyses": "peak_amplitude", "flag": "y6"}],
+                     "denominator": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
+                                     "analyses": "peak_amplitude", "flag": ""},
+                     # facultative if already defined by the MetaAnalysis function.
+                     "output": [
+                         {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
+                          "analyses": "peak_amplitude_division", "flag": ""},
+                         {"dimensions": "Y", "conditions": "all_conditions", "measurements": "VSDI",
+                          "analyses": "peak_amplitude_division", "flag": "y6"}]
+                     }
+    }
+}
 
 
 def test_init():
@@ -129,34 +222,42 @@ def test_dict_paths_pyb_setter():
             == dict_paths_pyb_initial)
 
 
-def test_levels_multiple_dictionaries_getter():
-    levels_multiple_dictionaries_correct = [
-        'barSpeed15dps:barSpeed30dps:barSpeed6dps',
-        {'barSpeed6dps':
-             'BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:V_Amacrine:V_BipolarGainControl:'
-             'V_GanglionGainControl:muVn_CorticalExcitatory:muVn_CorticalInhibitory:v_e_CorticalExcitatory:'
-             'v_i_CorticalInhibitory',
-         'barSpeed15dps': 'BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:V_Amacrine:'
-                          'V_BipolarGainControl:V_GanglionGainControl:muVn_CorticalExcitatory:muVn_CorticalInhibitory:'
-                          'v_e_CorticalExcitatory:v_i_CorticalInhibitory',
-         'barSpeed30dps': 'BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:V_Amacrine:'
-                          'V_BipolarGainControl:V_GanglionGainControl:muVn_CorticalExcitatory:muVn_CorticalInhibitory:'
-                          'v_e_CorticalExcitatory:v_i_CorticalInhibitory'}]
+def test_analysis_dataframes_levels_getter():
+    analysis_dataframes_levels_correct = {
+        "conditions": 'barSpeed15dps:barSpeed30dps:barSpeed6dps',
+        "measurements": {'barSpeed6dps':
+                             'BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:'
+                             'V_Amacrine:V_BipolarGainControl:V_GanglionGainControl:muVn_CorticalExcitatory:'
+                             'muVn_CorticalInhibitory:v_e_CorticalExcitatory:v_i_CorticalInhibitory',
+                         'barSpeed15dps': 'BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:'
+                                          'V_Amacrine:V_BipolarGainControl:V_GanglionGainControl:'
+                                          'muVn_CorticalExcitatory:muVn_CorticalInhibitory:v_e_CorticalExcitatory:'
+                                          'v_i_CorticalInhibitory',
+                         'barSpeed30dps': 'BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:'
+                                          'V_Amacrine:V_BipolarGainControl:V_GanglionGainControl:'
+                                          'muVn_CorticalExcitatory:muVn_CorticalInhibitory:v_e_CorticalExcitatory:'
+                                          'v_i_CorticalInhibitory'},
+        "dimensions": "Conditions:Time:X:Y",
+        "analyses": {'Conditions': 'barSpeed (dps)',
+                     'X': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''},
+                     'Y': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''},
+                     'Time': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''}}
+    }
 
-    assert macular_analysis_dataframes_head100.levels_multiple_dictionaries == levels_multiple_dictionaries_correct
+    assert macular_analysis_dataframes_head100.analysis_dataframes_levels == analysis_dataframes_levels_correct
 
 
-def test_levels_multiple_dictionaries_setter():
-    # Case of an attempt to modify levels_multiple_dictionaries.
+def test_analysis_dataframes_levels_setter():
+    # Case of an attempt to modify analysis_dataframes_levels.
     try:
-        macular_analysis_dataframes_test.levels_multiple_dictionaries = {"test": "setter"}
+        macular_analysis_dataframes_test.analysis_dataframes_levels = {"test": "setter"}
         assert False
     except AttributeError:
         assert True
 
     # Verification that the value of dict_paths_pyb has not changed.
-    assert (macular_analysis_dataframes_test.levels_multiple_dictionaries
-            == macular_analysis_dataframes_head100.levels_multiple_dictionaries)
+    assert (macular_analysis_dataframes_test.analysis_dataframes_levels
+            == macular_analysis_dataframes_head100.analysis_dataframes_levels)
 
 
 def test_dict_analysis_dataframes_getter():
@@ -184,29 +285,40 @@ def test_dict_analysis_dataframes_setter():
 
 def test_multiple_dicts_analysis_getter():
     # Creation of the model multiple analysis dictionaries.
+
     multiple_dicts_analysis_substitued_correct = {
-        'Conditions': {'maximal_latency': {
-            'barSpeed30dps': {'VSDI': {'param1': 1}, all_measurements: {'param1': 2}},
-            all_conditions: {'VSDI': {'param1': 1}}}},
-        'X': {'activation_time': {
-            'barSpeed30dps': {'VSDI': {'param1': 1},
-                              all_measurements: {'param1': 2}},
-            'barSpeed28,5dps:barSpeed30dps': {'VSDI': {'param1': 1}}}}
+        'Conditions': {'maximal_latency': [
+            {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+            {"conditions": "barSpeed30dps", "measurements": all_measurements, "params": {'param1': 2}},
+            {"conditions": all_conditions, "measurements": "VSDI", "params": {'param1': 1}}
+        ]
+
+        },
+        'X': {'activation_time': [
+            {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+            {"conditions": "barSpeed30dps", "measurements": all_measurements, "params": {'param1': 2}},
+            {"conditions": "barSpeed28,5dps:barSpeed30dps", "measurements": "VSDI", "params": {'param1': 1}}
+        ]
         }
+    }
 
     # Initialisation of a multiple analysis dictionaries for a complex analysis.
     dict_analysis_test_default = {
-        "Conditions": {"maximal_latency": {
-            "barSpeed30dps": {"VSDI": {"param1": 1}, "all_measurements": {"param1": 2}},
-            "all_conditions": {"VSDI": {"param1": 1}}
-        }},
-        "X": {"activation_time": {
-            "barSpeed30dps": {"VSDI": {"param1": 1}, "all_measurements": {"param1": 2}},
-            "all_conditions": {"VSDI": {"param1": 1}}
-        }}
+        "Conditions": {"maximal_latency": [
+            {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+            {"conditions": "barSpeed30dps", "measurements": "all_measurements", "params": {'param1': 2}},
+            {"conditions": "all_conditions", "measurements": "VSDI", "params": {'param1': 1}}
+        ]
+        },
+        "X": {"activation_time": [
+            {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+            {"conditions": "barSpeed30dps", "measurements": "all_measurements", "params": {'param1': 2}},
+            {"conditions": "all_conditions", "measurements": "VSDI", "params": {'param1': 1}}
+        ]
+        }
     }
     # Set default levels multiple dictionaries in test Macular analysis dataframes.
-    macular_analysis_dataframes_test._levels_multiple_dictionaries = levels_multiple_dictionaries_default
+    macular_analysis_dataframes_test._analysis_dataframes_levels = analysis_dataframes_levels
     macular_analysis_dataframes_test._multiple_dicts_analysis = dict_analysis_test_default
 
     # Case with substitution of the getter.
@@ -219,9 +331,14 @@ def test_multiple_dicts_analysis_getter():
 
 
 def test_multiple_dicts_analysis_setter():
-    macular_analysis_dataframes_test.multiple_dicts_analysis = {"test": {"setter1": True, "setter2": False},
-                                                                "test2": {"setter3": False}, "test3": {}}
-    assert macular_analysis_dataframes_test.multiple_dicts_analysis == {"test": {"setter1": True}}
+    macular_analysis_dataframes_test.multiple_dicts_analysis = {
+        "dimension1": {"analysis1": [{"conditions": "condition1", "measurements": "measurement1"}, {}]},
+        "dimension2": {"analysis2": []},
+        "dimension3": {"analysis3": [{}]},
+        "dimension4": {}}
+
+    assert macular_analysis_dataframes_test.multiple_dicts_analysis == {"dimension1": {
+        "analysis1": [{"conditions": "condition1", "measurements": "measurement1"}]}}
 
 
 def test_multiple_dicts_preprocessings_getter():
@@ -345,8 +462,8 @@ def test_initialize_analysis_dataframe():
 def test_dataframe_conditions_sorting():
     # Creation of an ordered example list.
     macular_analysis_dataframes_test._dict_paths_pyb = {"wAmaGang10Hz": '',
-                                                       "wAmaGang3,8Hz": '',
-                                                       "barSpeed6dps": ''}
+                                                        "wAmaGang3,8Hz": '',
+                                                        "barSpeed6dps": ''}
 
     # Case of default sorting by alphabetical order and KeyError.
     macular_analysis_dataframes_test._multiple_dicts_analysis["Conditions"] = {}
@@ -354,13 +471,14 @@ def test_dataframe_conditions_sorting():
             ["barSpeed6dps", "wAmaGang10Hz", "wAmaGang3,8Hz"])
 
     # Case of default sorting by alphabetical order.
-    macular_analysis_dataframes_test._multiple_dicts_analysis["Conditions"] = {"sorting": False}
+    macular_analysis_dataframes_test._multiple_dicts_analysis["Conditions"]["sorting"] = False
     assert (macular_analysis_dataframes_test.dataframe_conditions_sorting() ==
             ["barSpeed6dps", "wAmaGang10Hz", "wAmaGang3,8Hz"])
 
     # Case of sorting based on a list defined in the multiple condition analysis dictionary.
-    macular_analysis_dataframes_test._multiple_dicts_analysis["Conditions"]["sorting"] = ["wAmaBip10Hz", "wAmaGang3,8Hz",
-                                                                                         "barSpeed6dps"]
+    macular_analysis_dataframes_test._multiple_dicts_analysis["Conditions"]["sorting"] = ["wAmaBip10Hz",
+                                                                                          "wAmaGang3,8Hz",
+                                                                                          "barSpeed6dps"]
     assert (macular_analysis_dataframes_test.dataframe_conditions_sorting() ==
             ["wAmaBip10Hz", "wAmaGang3,8Hz", "barSpeed6dps"])
 
@@ -371,9 +489,9 @@ def test_dataframe_conditions_sorting():
 
     # Case of sorting based on condition names and the ‘NameValueUnit’ format and with complex conditions to sort.
     macular_analysis_dataframes_test._dict_paths_pyb = {"barSpeed30dps_wAmaBip10Hz_wAmaGang0,1Hz": '',
-                                                       "barSpeed6dps_wAmaBip3Hz": '',
-                                                       "barSpeed6dps_wAmaGang0,1Hz": '',
-                                                       "barSpeed6dps": ''}
+                                                        "barSpeed6dps_wAmaBip3Hz": '',
+                                                        "barSpeed6dps_wAmaGang0,1Hz": '',
+                                                        "barSpeed6dps": ''}
     assert macular_analysis_dataframes_test.dataframe_conditions_sorting() == ["barSpeed6dps",
                                                                                "barSpeed6dps_wAmaBip3Hz",
                                                                                "barSpeed6dps_wAmaGang0,1Hz",
@@ -388,9 +506,9 @@ def test_name_value_unit_sorting_conditions():
 
     # Modification of dict_paths_pyb to add conditions to 3 disordered parameters to be sorted.
     macular_analysis_dataframes_test._dict_paths_pyb = {"barSpeed30dps_wAmaBip10Hz_wAmaGang0,1Hz": '',
-                                                       "barSpeed6dps_wAmaBip10Hz_wAmaGang0,8Hz": '',
-                                                       "barSpeed6dps_wAmaBip3Hz_wAmaGang0,8Hz": '',
-                                                       "barSpeed6dps_wAmaBip10Hz_wAmaGang0,1Hz": ''}
+                                                        "barSpeed6dps_wAmaBip10Hz_wAmaGang0,8Hz": '',
+                                                        "barSpeed6dps_wAmaBip3Hz_wAmaGang0,8Hz": '',
+                                                        "barSpeed6dps_wAmaBip10Hz_wAmaGang0,1Hz": ''}
 
     # Verify that the conditions are sorted correctly.
     macular_analysis_dataframes_test.name_value_unit_sorting_conditions()
@@ -439,10 +557,10 @@ def test_setup_conditions_values_to_condition_dataframe():
 
     # Preparation of a macular analysis dataframe for complex conditions.
     macular_analysis_dataframes_test._dict_paths_pyb = {"barSpeed6dps_wAmaGang0,8Hz": '',
-                                                       "barSpeed6dps_wAmaBip10Hz": '',
-                                                       "barSpeed6dps": "",
-                                                       "barSpeed30dps": "",
-                                                       "barSpeed6dps_wAmaBip10Hz_wAmaGang0,1Hz": ""}
+                                                        "barSpeed6dps_wAmaBip10Hz": '',
+                                                        "barSpeed6dps": "",
+                                                        "barSpeed30dps": "",
+                                                        "barSpeed6dps_wAmaBip10Hz_wAmaGang0,1Hz": ""}
     macular_analysis_dataframes_test.multiple_dicts_analysis["Conditions"] = {"sorting": "NameValueUnit"}
     macular_analysis_dataframes_test.initialize_dict_analysis_dataframes()
 
@@ -481,153 +599,252 @@ def test_get_levels_of_multi_macular_dict_array():
         multi_macular_dict_array_head100_variousLevel)
 
     # Verification of the character string of the conditions.
-    assert levels_multiple_dictionaries[0] == 'barSpeed15dps:barSpeed30dps:barSpeed6dps'
+    assert levels_multiple_dictionaries["conditions"] == 'barSpeed15dps:barSpeed30dps:barSpeed6dps'
 
     # Verification of the character string dictionary for measurements for each condition.
-    assert levels_multiple_dictionaries[1] == dict_all_measurements
+    assert levels_multiple_dictionaries["measurements"] == dict_all_measurements
+
+
+def test_get_levels_of_macular_analysis_dataframes():
+    # Création d'un dictionnaire des niveaux de macular analysis dataframes vide
+    dict_levels_macular_analysis_dataframes_correct = {
+        'dimensions': 'Conditions:Time:X:Y',
+        'analyses': {
+            'Conditions': 'barSpeed (dps)',
+            'X': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''},
+            'Y': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''},
+            'Time': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''}}}
+
+    assert macular_analysis_dataframes_head100.get_levels_of_macular_analysis_dataframes() == dict_levels_macular_analysis_dataframes_correct
+
+    # Import of a fully analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
+          as file):
+        mda_correct = pickle.load(file)
+
+    all_analyses_X = ('activation_time_VSDI:latency_VSDI:peak_amplitude_BipolarResponse_BipolarGainControl:'
+                      'peak_amplitude_FiringRate_GanglionGainControl:'
+                      'peak_amplitude_FiringRate_GanglionGainControl_derivative:peak_amplitude_VSDI:'
+                      'peak_amplitude_VSDI_derivative:peak_amplitude_V_Amacrine:'
+                      'peak_amplitude_V_BipolarGainControl:peak_amplitude_V_GanglionGainControl:'
+                      'peak_amplitude_muVn_CorticalExcitatory:peak_amplitude_muVn_CorticalInhibitory:'
+                      'peak_amplitude_v_e_CorticalExcitatory:peak_amplitude_v_i_CorticalInhibitory:peak_delay_VSDI:'
+                      'time_to_peak_BipolarResponse_BipolarGainControl:'
+                      'time_to_peak_FiringRate_GanglionGainControl:'
+                      'time_to_peak_FiringRate_GanglionGainControl_derivative:time_to_peak_VSDI:'
+                      'time_to_peak_VSDI_derivative:time_to_peak_V_Amacrine:'
+                      'time_to_peak_V_BipolarGainControl:time_to_peak_V_GanglionGainControl:'
+                      'time_to_peak_muVn_CorticalExcitatory:'
+                      'time_to_peak_muVn_CorticalInhibitory:time_to_peak_v_e_CorticalExcitatory:'
+                      'time_to_peak_v_i_CorticalInhibitory')
+    all_analyses_Y = ('activation_time_VSDI:peak_amplitude_BipolarResponse_BipolarGainControl:'
+                      'peak_amplitude_FiringRate_GanglionGainControl:'
+                      'peak_amplitude_FiringRate_GanglionGainControl_derivative:peak_amplitude_VSDI:'
+                      'peak_amplitude_VSDI_derivative:peak_amplitude_V_Amacrine:peak_amplitude_V_BipolarGainControl:'
+                      'peak_amplitude_V_GanglionGainControl:peak_amplitude_muVn_CorticalExcitatory:'
+                      'peak_amplitude_muVn_CorticalInhibitory:peak_amplitude_v_e_CorticalExcitatory:'
+                      'peak_amplitude_v_i_CorticalInhibitory:time_to_peak_BipolarResponse_BipolarGainControl:'
+                      'time_to_peak_FiringRate_GanglionGainControl:'
+                      'time_to_peak_FiringRate_GanglionGainControl_derivative:time_to_peak_VSDI:'
+                      'time_to_peak_VSDI_derivative:time_to_peak_V_Amacrine:time_to_peak_V_BipolarGainControl:'
+                      'time_to_peak_V_GanglionGainControl:time_to_peak_muVn_CorticalExcitatory:'
+                      'time_to_peak_muVn_CorticalInhibitory:time_to_peak_v_e_CorticalExcitatory:'
+                      'time_to_peak_v_i_CorticalInhibitory')
+
+    # Creation of a dictionary of complex and filled macular analysis dataframe levels
+    dict_levels_macular_analysis_dataframes_correct = {
+        'dimensions': 'Conditions:Time:X:Y',
+        'analyses': {
+            'Conditions': 'barSpeed (dps)',
+            'X': {'barSpeed30dps': all_analyses_X,
+                  'barSpeed28,5dps': all_analyses_X},
+            'Y': {'barSpeed30dps': all_analyses_Y,
+                  'barSpeed28,5dps': all_analyses_Y},
+            'Time': {'barSpeed30dps': '', 'barSpeed28,5dps': ''}}}
+
+    assert mda_correct.get_levels_of_macular_analysis_dataframes() == dict_levels_macular_analysis_dataframes_correct
 
 
 def test_substituting_all_alias_in_multiple_analysis_dictionaries():
-    # Creation of the model multiple analysis dictionaries.
+    # Creation of the model multiple analysis dictionaries with 4 common group analysis for each dimension.
     multiple_dicts_analysis_substitued_correct = {
-        'Conditions': {'maximal_latency': {
-            'barSpeed30dps': {'VSDI': {'param1': 1}, all_measurements: {'param1': 2},
-                              'BipolarResponse_BipolarGainControl': {'param1': 2}},
-            all_conditions: {'VSDI': {'param1': 1}}}},
-        'X': {'activation_time': {
-            'barSpeed30dps': {'VSDI': {'param1': 1},
-                              all_measurements: {'param1': 2},
-                              'BipolarResponse_BipolarGainControl': {'param1': 2}},
-            'barSpeed28,5dps:barSpeed30dps': {'VSDI': {'param1': 1}}}},
-        'Y': {'activation_time': {
-            'barSpeed30dps': {'VSDI': {'param1': 1},
-                              all_measurements: {'param1': 2},
-                              'BipolarResponse_BipolarGainControl': {'param1': 2}},
-            all_conditions: {'VSDI': {'param1': 1}}}},
-        'Time': {'test': {
-            'barSpeed30dps': {'VSDI': {'param1': 1},
-                              all_measurements: {'param1': 2},
-                              'BipolarResponse_BipolarGainControl': {'param1': 2}},
-            all_conditions: {'VSDI': {'param1': 1}}}}}
+        "Conditions": {
+            "maximal_latency": [
+                {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+                {"conditions": "barSpeed30dps", "measurements": all_measurements, "params": {"param1": 2}},
+                {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
+                 "params": {"param1": 2}},
+                {"conditions": all_conditions, "measurements": "VSDI", "params": {"param1": 1}}
+            ]}
+        ,
+        "X": {
+            "activation_time": [
+                {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+                {"conditions": "barSpeed30dps", "measurements": all_measurements, "params": {"param1": 2}},
+                {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
+                 "params": {"param1": 2}},
+                {"conditions": all_conditions, "measurements": "VSDI", "params": {"param1": 1}}
+            ]
+        },
+        "Y": {
+            "activation_time": [
+                {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+                {"conditions": "barSpeed30dps", "measurements": all_measurements, "params": {"param1": 2}},
+                {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
+                 "params": {"param1": 2}},
+                {"conditions": all_conditions, "measurements": "VSDI", "params": {"param1": 1}}
+            ]
+        },
+        "Time": {
+            "test_time": [
+                {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+                {"conditions": "barSpeed30dps", "measurements": all_measurements, "params": {"param1": 2}},
+                {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
+                 "params": {"param1": 2}},
+                {"conditions": all_conditions, "measurements": "VSDI", "params": {"param1": 1}}
+            ]
+        },
+        "MetaAnalysis": {
+            "test_meta_analysis":
+                {
+                    "arg1": [
+                        {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+                        {"conditions": "barSpeed30dps", "measurements": all_measurements, "params": {"param1": 2}},
+                        {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
+                         "params": {"param1": 2}},
+                        {"conditions": all_conditions, "measurements": "VSDI", "params": {"param1": 1}}
+                    ]
+                    # "params": {"conditions": "barSpeed30dps", "measurements": "VSDI", "param1": 1}
+                }
+        }
+    }
 
-    # Initialisation of a multiple analysis dictionaries for a complex analysis.
+    # Initialisation of a complex multiple analysis dictionaries with 4 common group analysis for each dimension.
     dict_analysis_test_default = {
-        "Conditions": {"maximal_latency": {
-            "barSpeed30dps": {"VSDI": {"param1": 1}, "all_measurements": {"param1": 2},
-                              "BipolarResponse_BipolarGainControl": {"param1": 2}},
-            "all_conditions": {"VSDI": {"param1": 1}}
-        }},
-        "X": {"activation_time": {
-            "barSpeed30dps": {"VSDI": {"param1": 1}, "all_measurements": {"param1": 2},
-                              "BipolarResponse_BipolarGainControl": {"param1": 2}},
-            "all_conditions": {"VSDI": {"param1": 1}}
-        }},
-        "Y": {"activation_time": {
-            "barSpeed30dps": {"VSDI": {"param1": 1}, "all_measurements": {"param1": 2},
-                              "BipolarResponse_BipolarGainControl": {"param1": 2}},
-            "all_conditions": {"VSDI": {"param1": 1}}
-        }},
-        "Time": {"test": {
-            "barSpeed30dps": {"VSDI": {"param1": 1}, "all_measurements": {"param1": 2},
-                              "BipolarResponse_BipolarGainControl": {"param1": 2}},
-            "all_conditions": {"VSDI": {"param1": 1}}
-        }}
+        "Conditions": {
+            "maximal_latency": [
+                {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+                {"conditions": "barSpeed30dps", "measurements": "all_measurements", "params": {"param1": 2}},
+                {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
+                 "params": {"param1": 2}},
+                {"conditions": "all_conditions", "measurements": "VSDI", "params": {"param1": 1}}
+            ]}
+        ,
+        "X": {
+            "activation_time": [
+                {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+                {"conditions": "barSpeed30dps", "measurements": "all_measurements", "params": {"param1": 2}},
+                {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
+                 "params": {"param1": 2}},
+                {"conditions": "all_conditions", "measurements": "VSDI", "params": {"param1": 1}}
+            ]
+        },
+        "Y": {
+            "activation_time": [
+                {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+                {"conditions": "barSpeed30dps", "measurements": "all_measurements", "params": {"param1": 2}},
+                {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
+                 "params": {"param1": 2}},
+                {"conditions": "all_conditions", "measurements": "VSDI", "params": {"param1": 1}}
+            ]
+        },
+        "Time": {
+            "test_time": [
+                {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+                {"conditions": "barSpeed30dps", "measurements": "all_measurements", "params": {"param1": 2}},
+                {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
+                 "params": {"param1": 2}},
+                {"conditions": "all_conditions", "measurements": "VSDI", "params": {"param1": 1}}
+            ]
+        },
+        "MetaAnalysis": {
+            "test_meta_analysis":
+                {"arg1": [
+                    {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
+                    {"conditions": "barSpeed30dps", "measurements": "all_measurements", "params": {"param1": 2}},
+                    {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
+                     "params": {"param1": 2}},
+                    {"conditions": "all_conditions", "measurements": "VSDI", "params": {"param1": 1}}
+                ]
+                }
+        }
     }
 
     # Set default levels multiple dictionaries in test Macular analysis dataframes.
-    macular_analysis_dataframes_test._levels_multiple_dictionaries = levels_multiple_dictionaries_default
+    macular_analysis_dataframes_test._analysis_dataframes_levels = analysis_dataframes_levels
 
     # Execute the substituting_all_alias_in_multiple_analysis_dictionaries function to be tested.
     multiple_dicts_analysis_substitued = (macular_analysis_dataframes_test.
-                                          substituting_all_alias_in_multiple_analysis_dictionaries(
+    substituting_all_alias_in_multiple_analysis_dictionaries(
         dict_analysis_test_default))
 
     assert multiple_dicts_analysis_substitued == multiple_dicts_analysis_substitued_correct
 
 
 def test_substituting_all_alias_in_analysis_dictionary():
-    # Initialisation of a dictionary for a complex analysis.
-    dict_analysis_head100 = {"activation_time": {
-        "all_conditions": {"all_measurements": {"threshold": 0.01, "y": 7, "index": "temporal_index"},
-                           "VSDI": {"threshold": 0.001, "y": 7, "index": "temporal_index"}},
-        "barSpeed30dps": {"all_measurements": {"threshold": 0.005, "y": 7, "index": "temporal_index"}},
-        "barSpeed6dps:barSpeed30dps": {"BipolarResponse_BipolarGainControl": {"threshold": 0.005, "y": 7,
-                                                                              "index": "temporal_index"}},
-        "barSpeed15dps:barSpeed30dps:barSpeed6dps": {"VSDI": {"threshold": 0.001, "y": 10, "index": "temporal_index"}}
-    },
-        "test1": 1,
-        "test2": {"all_conditions": 2},
-        "test3": {"all_conditions": {"all_measurements": 3}}
-    }
-
     # Creation of character strings with all conditions of the MacularAnalysisDataframe.
     all_conditions = ":".join(sorted([condition for condition in macular_analysis_dataframes_head100.dict_paths_pyb]))
 
-    # Creation of character strings with all measurements from the MacularAnalysisDataframe.
-    all_measurements = ":".join(sorted([measure for measure in multi_macular_dict_array_head100[
-        all_conditions.split(":")[0]].data]))
+    # Creation of character strings with all measurements from the MacularAnalysisDataframe, one with different size.
+    all_measurements = {
+        condition: ":".join(sorted([measure for measure in multi_macular_dict_array_head100[condition].data]))
+        for condition in macular_analysis_dataframes_head100.dict_paths_pyb}
+    all_measurements["barSpeed15dps"] = ":".join(all_measurements["barSpeed15dps"].split(":")[:5])
+
+    # Creation of character strings with all dimensions from the MacularAnalysisDataframe.
+    all_dimensions = ":".join(macular_analysis_dataframes_head100.dict_analysis_dataframes.keys())
+
+    # Creation of character strings with all analyses from the MacularAnalysisDataframe, one with different size.
+    all_analyses = {
+        dimension: ":".join(sorted(list(macular_analysis_dataframes_head100.dict_analysis_dataframes[dimension].index)))
+        if dimension == "Conditions"
+        else {condition: ":".join(
+            sorted(list(macular_analysis_dataframes_head100.dict_analysis_dataframes[dimension][condition].index)))
+              for condition in macular_analysis_dataframes_head100.dict_analysis_dataframes[dimension]}
+        for dimension in macular_analysis_dataframes_head100.dict_analysis_dataframes.keys()}
+    all_analyses["X"]["barSpeed30dps"] = ":".join(all_analyses["X"]["barSpeed30dps"].split(":")[:5])
 
     # Creation of the structure containing the names of conditions and measures separated by ‘:’.
-    macular_analysis_dataframes_test._levels_multiple_dictionaries = [all_conditions, {"barSpeed15dps": all_measurements,
-                                                     "barSpeed6dps": all_measurements,
-                                                     "barSpeed30dps": ":".join(all_measurements.split(":")[:5])}]
+    macular_analysis_dataframes_test._analysis_dataframes_levels = {"conditions": all_conditions,
+                                                                    "measurements": all_measurements,
+                                                                    "dimensions": all_dimensions,
+                                                                    "analyses": all_analyses}
 
-    # Definition of the same multiple analysis dictionaries but with the aliases substituted.
-    multiple_dicts_analysis_head100_spatialAnalysis_substracted = {"activation_time": {
-        f"{all_conditions}": {f"{all_measurements}": {"threshold": 0.01, "y": 7, "index": "temporal_index"},
-                              "VSDI": {"threshold": 0.001, "y": 7, "index": "temporal_index"}},
-        "barSpeed30dps": {"BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:V_Amacrine:"
-                          "V_BipolarGainControl:V_GanglionGainControl": {"threshold": 0.005, "y": 7,
-                                                                         "index": "temporal_index"}},
-        "barSpeed6dps:barSpeed30dps": {"BipolarResponse_BipolarGainControl": {"threshold": 0.005, "y": 7,
-                                                                              "index": "temporal_index"}}
-    },
-        "test1": 1,
-        "test2": {all_conditions: 2},
-        "test3": {all_conditions: {all_measurements: 3}}
-    }
+    # Case of substitution with aliases ‘all_conditions’ and ‘all_measurements’
+    test_dict_analysis = {"conditions": "all_conditions", "measurements": "all_measurements",
+                          "params": {"threshold": 0.01, "y": 7, "index": "temporal_index"}, "flag": ""}
+    macular_analysis_dataframes_test.substituting_all_alias_in_common_analysis_group_dictionary(test_dict_analysis)
+    assert test_dict_analysis == {"conditions": all_conditions,
+                                  "measurements": ":".join(all_measurements["barSpeed15dps"].split(":")[:5]),
+                                  "params": {"threshold": 0.01, "y": 7, "index": "temporal_index"}, "flag": ""}
 
-    # Substitution of aliases with the substituting_analysis_dictionary_all_alias function.
-    macular_analysis_dataframes_test.substituting_all_alias_in_analysis_dictionary(
-        dict_analysis_head100, "activation_time")
-    macular_analysis_dataframes_test.substituting_all_alias_in_analysis_dictionary(
-        dict_analysis_head100, "test1")
-    macular_analysis_dataframes_test.substituting_all_alias_in_analysis_dictionary(
-        dict_analysis_head100, "test2")
-    macular_analysis_dataframes_test.substituting_all_alias_in_analysis_dictionary(
-        dict_analysis_head100, "test3")
+    # Case of substitution without aliases ‘all_conditions’ and ‘all_measurements’.
+    test_dict_analysis = {"conditions": "barSpeed15dps:barSpeed30dps:barSpeed6dps", "measurements": "VSDI",
+                          "params": {"threshold": 0.01, "y": 7, "index": "temporal_index"}, "flag": ""}
+    macular_analysis_dataframes_test.substituting_all_alias_in_common_analysis_group_dictionary(test_dict_analysis)
+    assert (test_dict_analysis ==
+            {"conditions": "barSpeed15dps:barSpeed30dps:barSpeed6dps", "measurements": "VSDI",
+             "params": {"threshold": 0.01, "y": 7, "index": "temporal_index"}, "flag": ""}
+            )
 
-    # Verification of correct substitutions.
-    assert (dict_analysis_head100 ==
-            multiple_dicts_analysis_head100_spatialAnalysis_substracted)
+    # Case of a substitution with alias ‘all_analyses’ for the ‘Conditions’ dimension of a MacularAnalysisDataframes.
+    test_dict_analysis = {"conditions": "barSpeed15dps:barSpeed30dps:barSpeed6dps", "measurements": "VSDI",
+                          "dimensions": "Conditions", "analyses": "all_analyses", "flag": ""}
+    macular_analysis_dataframes_test.substituting_all_alias_in_common_analysis_group_dictionary(test_dict_analysis)
+    assert (test_dict_analysis ==
+            {"conditions": "barSpeed15dps:barSpeed30dps:barSpeed6dps", "measurements": "VSDI",
+             "dimensions": "Conditions", "analyses": all_analyses["Conditions"], "flag": ""}
+            )
 
+    # Case of a substitution with alias ‘all_analyses’ for spatiotemporal dimensions of a MacularAnalysisDataframes.
+    test_dict_analysis = {"conditions": "barSpeed30dps", "measurements": "VSDI", "dimensions": "X",
+                          "analyses": "all_analyses", "flag": ""}
+    macular_analysis_dataframes_test.substituting_all_alias_in_common_analysis_group_dictionary(test_dict_analysis)
+    assert (test_dict_analysis ==
+            {"conditions": "barSpeed30dps", "measurements": "VSDI",
+             "dimensions": "X", "analyses": ":".join(all_analyses["X"]["barSpeed30dps"].split(":")[:5]),
+             "flag": ""})
 
-def test_creating_sort_order_from_multiple_dicts_analysis():
-    # Initialisation of multiple analysis dictionaries for a complex analysis.
-    dict_analysis_test_default = {
-        "Conditions": {"analysis1": 1, "analysis2": {"barSpeed30dps": 2},
-                       "analysis3": {"barSpeed30dps": {"measure3": 3}}},
-        "X": {"activation_time": {
-            "barSpeed28,5dps": {"VSDI": {"param1": 1}},
-            "barSpeed30dps": {"VSDI": {"param1": 1}, all_measurements: {"param1": 2},
-                              "BipolarResponse_BipolarGainControl": {"param1": 2}},
-            all_conditions: {"VSDI": {"param1": 1}}
-        }},
-        "Y": {},
-        "Time": {}
-    }
-
-    # Creation of the model sort order dictionary.
-    dict_sort_order_correct = {
-        'Conditions': {"analysis3": {"conditions": ["barSpeed30dps"],
-                                     "measurements": {"barSpeed30dps": ["measure3"]}}},
-        'X': {'activation_time': {'conditions': [all_conditions, 'barSpeed28,5dps', 'barSpeed30dps'],
-                                  'measurements': {'barSpeed28,5dps': ['VSDI'],
-                                                   'barSpeed30dps': [all_measurements,
-                                                                     'BipolarResponse_BipolarGainControl', 'VSDI'],
-                                                   all_conditions: ['VSDI']}}},
-        'Y': {},
-        'Time': {}}
 
     # Preparation of attributes of macular analysis dataframes.
     macular_analysis_dataframes_test._multiple_dicts_analysis = dict_analysis_test_default
@@ -683,21 +900,11 @@ def test_make_spatial_dataframes_analysis():
         macular_analysis_dataframes_default_spatial_X_filled = pickle.load(file)
 
     # Set up multiple analysis dictionaries in the macular analysis test dataframes.
-    macular_analysis_dataframes_default_empty._multiple_dicts_analysis["X"] = {
-        "activation_time": {"all_conditions": {"VSDI": {"threshold": 0.001, "index": "temporal_ms", "y": 7}}},
-        "latency": {"all_conditions": {"VSDI": {"threshold": 0.001, "index": "temporal_centered_ms", "y": 7,
-                                                "axis": "horizontal"}}},
-        "time_to_peak": {"all_conditions": {"all_measurements": {"index": "temporal_ms", "y": 7}}},
-        "peak_delay": {"all_conditions": {"all_measurements": {"index": "temporal_centered_ms", "y": 7, "axis": "horizontal"}}},
-        "peak_amplitude": {"all_conditions": {"all_measurements": {"y": 7}}}
-    }
-
-    # Create sort order dictionary for macular analysis test dataframes.
-    dict_sort_order = macular_analysis_dataframes_default_empty.creating_sort_order_from_multiple_dicts_analysis()
+    macular_analysis_dataframes_default_empty._multiple_dicts_analysis["X"] = multiple_dicts_analysis_default["X"]
 
     # Use the make spatial dataframes analysis on the macular analysis test dataframes.
     macular_analysis_dataframes_default_empty.make_spatial_dataframes_analysis(
-        "X", multi_macular_dict_array_default, dict_sort_order)
+        "X", multi_macular_dict_array_default)
 
     # Verify that the conditions dataframe is correct.
     assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Conditions"].equals(
@@ -723,27 +930,26 @@ def test_analysis():
     with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
         macular_analysis_dataframes_default_empty = pickle.load(file)
 
-    # Initialisation of a dictionary for a complex analysis.
+    # Initialisation of a dictionary for a complex analysis with 4 common analysis group in X and 1 in Conditions.
     dict_analysis_default_complex = {
-        "X": {"activation_time": {
-            all_conditions: {all_measurements: {"threshold": 0.01, "y": 7, "index": "temporal_ms"},
-                         "VSDI": {"threshold": 0.001, "y": 7, "index": "temporal_ms"}},
-            "barSpeed30dps": {all_measurements: {"threshold": 0.001, "y": 7, "index": "temporal"}},
-            "barSpeed28,5dps": {"BipolarResponse_BipolarGainControl": {"threshold": 0.005, "y": 7, "index": "temporal"}}}},
-        "Conditions": {"peak_amplitude": {
-            all_conditions: {all_measurements: {"x": 36, "y": 7}}}}
-    }
-
-    # Initialisation of a sort order dictionary for a complex analysis.
-    dict_sort_order_default_complex = {
-        'X': {'activation_time': {
-            'conditions': [all_conditions, 'barSpeed28,5dps', 'barSpeed30dps'],
-            'measurements': {all_conditions: [all_measurements, 'VSDI'],
-                             'barSpeed30dps': [all_measurements],
-                             'barSpeed28,5dps': ['BipolarResponse_BipolarGainControl']}}},
-        'Conditions': {'peak_amplitude': {
-            'conditions': [all_conditions],
-            'measurements': {all_conditions: [all_measurements]}}}
+        "X": {"activation_time":
+            [
+                {"conditions": all_conditions, "measurements": all_measurements,
+                 "params": {"threshold": 0.01, "y": 7, "index": "temporal_ms", "flag": ""}},
+                {"conditions": all_conditions, "measurements": "VSDI",
+                 "params": {"threshold": 0.001, "y": 7, "index": "temporal_ms", "flag": ""}},
+                {"conditions": "barSpeed28,5dps", "measurements": "BipolarResponse_BipolarGainControl",
+                 "params": {"threshold": 0.005, "y": 7, "index": "temporal", "flag": ""}},
+                {"conditions": "barSpeed30dps", "measurements": all_measurements,
+                 "params": {"threshold": 0.001, "y": 7, "index": "temporal", "flag": ""}}
+            ]
+        },
+        "Conditions": {"peak_amplitude":
+            [
+                {"conditions": all_conditions, "measurements": all_measurements,
+                 "params": {"x": 36, "y": 7, "flag": ""}}
+            ]
+        }
     }
 
     # Set the complex analysis dictionary in the macular analysis dataframes attributes.
@@ -753,11 +959,11 @@ def test_analysis():
 
     # Use spatial and conditions analysis on empty macular analysis dataframes with the complex default dictionaries.
     MacularAnalysisDataframes.activation_time_analyzing(macular_analysis_dataframes_default_empty,
-                                                        multi_macular_dict_array_default,"X",
-                                                        "activation_time", dict_sort_order_default_complex)
+                                                        multi_macular_dict_array_default, "X",
+                                                        "activation_time")
     MacularAnalysisDataframes.peak_amplitude_analyzing(macular_analysis_dataframes_default_empty,
-                                                        multi_macular_dict_array_default,"Conditions",
-                                                        "peak_amplitude", dict_sort_order_default_complex)
+                                                       multi_macular_dict_array_default, "Conditions",
+                                                       "peak_amplitude")
 
     # Verify that the conditions dataframe is correct.
     assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Conditions"].equals(
@@ -771,6 +977,7 @@ def test_analysis():
             macular_analysis_dataframes_default_complex_make_analysis.dict_analysis_dataframes["Y"][condition])
         assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Time"][condition].equals(
             macular_analysis_dataframes_default_complex_make_analysis.dict_analysis_dataframes["Time"][condition])
+
 
 def test_common_analysis_group_parser():
     # Names of conditions in an analysis group common to two conditions.

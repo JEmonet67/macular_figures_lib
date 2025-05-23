@@ -53,7 +53,7 @@ class MacularAnalysisDataframes:
 
     """
 
-    def __init__(self, multiple_dicts_simulations, multiple_dicts_preprocessings, multiple_dicts_analysis):
+    def __init__(self, multi_macular_dict_array, multiple_dicts_analysis):
         """Summary
 
         Explanation
@@ -72,23 +72,45 @@ class MacularAnalysisDataframes:
             The dictionary consists of a series of dictionaries included in the previous one, each representing a
             hierarchical level of the analysis to be performed. The keys of the first dictionary are those of the
             dimensions of the MacularAnalysisDataframes (‘Conditions’, ‘X’, ‘Y’, ‘Time’). The keys of the second
-            dictionary are those of the analyses to be performed on the given dimension. The keys of the third
-            dictionary are the conditions of the MacularDictArray to be analysed. The keys of the fourth dictionary are
-            the measurements of the MacularDictArray to be analysed. Finally, the last dictionary contains keys
-            associating the parameters of the analysis function with their values. This last dictionary could in certain
-            specific cases be replaced by a single value or a Boolean if the analysis in progress does not require more
-            parameters
+            dictionary are those of the analyses to be performed on the given dimension. For each of these analyses,
+            there is a list of dictionaries, each representing a group of common analyses. These groups of common
+            analyses are a conditions and measurements for which the same analysis is performed with the same
+            parameters. The order in which the different dictionaries of common analysis groups are arranged in the
+            list also defines the order in which they will be performed. Thus, if two common analysis groups modify the
+            same line of a dataframe, it will be the last group in the list that will leave its value.
 
-            The last two hierarchical levels of the analysis (conditions and measures) represent what are known as
-            common analysis groups. These are all the conditions and measurements for which the same analysis is
-            performed with the same parameters.
+            The dictionaries for these groups of common analyses must contain a ‘conditions’ and ‘measurements’ key,
+            both associated with all the names of the conditions and measurements included in that group. These names
+            are in the form of a string where each name is separated by ‘:’ as in, for example:
+            ‘barSpeed15dps:barSpeed30dps’ or ‘FiringRate_GanglionGainControl:VSDI’. The dictionary also contains a
+            “params” key associated with a final dictionary level containing the parameters to be used for the analysis.
+            The parameters to be used depend on the analysis, but all have a ‘flag’ parameter that allows add a suffix
+            behind the name of the analysis used to create a new line in the corresponding dataframe in order to
+            differentiate it from other similar analyses. For example, to differentiate two ‘activation_time’ with two
+            different thresholds, two flags can be used:‘flag’:‘threshold0,1’ and ‘flag’:‘threshold0,05’ which gives two
+            column names in the dataframe: ‘activation_time_threshold0,1’ and 'activation_time_threshold0,05’.
 
-            Among the analysis parameters is a specific keyword that can be used for any group of common analyses. This
-            ‘flag’ keyword corresponds to a suffix that will be added to the name of the analysis in its corresponding
-            dataframe in order to differentiate it from other similar analyses. For example, to differentiate two
-            ‘activation_time’ with two different thresholds, two flags can be used: ‘flag’:‘threshold0,1’ and
-            ‘flag’:‘threshold0,05’ which gives two column names in the dataframe: ‘activation_time_threshold0,1’ and
-            ‘activation_time_threshold0,05’.
+            There is a special case with the ‘MetaAnalysis’ key in the multiple analysis dictionary. This dictionary is
+            used to perform analyses using other analyses already performed within the MacularAnalysisDataframes. In
+            this case, the analysis key (second dictionary level) is associated with an additional dictionary level
+            used for meta-analysis. This dictionary level contains a first key ‘params’ containing any parameters that
+            do not depend on existing analyses. In addition, there are keys associated with the various arguments
+            required to perform the meta-analysis function. These arguments are associated with a list of groups of
+            common analyses in the form of dictionaries. These are all the analyses to be retrieved and used in the
+            meta-analysis calculation. Their dictionary contains keys ‘conditions’, ‘measurements’, “dimensions” and
+            ‘analyses’. Each of these is associated with a string of all the names of the common analysis group
+            separated by ‘:’.
+
+            Global aliases can be used for each element used in the common analysis group. These aliases allow you to
+            retrieve all possible elements (conditions, measurements, dimensions, analyses). In the case of
+            ‘measurements’ and 'analyses', the possible elements vary depending on the dimensions and conditions present
+            in the multiple analysis group. Aliases must contain the prefix ‘all_’ followed by the element from which
+            you want to retrieve everything. These aliases are substituted within the MacularAnalysisDataframes by the
+            getter of the multiple analysis dictionary. Be careful to only group together analyses that share the same
+            configurations.
+
+            In certain specific cases, the analysis key may be associated only with a Boolean, an int or a float, as with
+            the ‘sorting’ analysis for sorting condition names.
         """
         # Create and clean the multiple_dicts_analysis attributes.
         self.multiple_dicts_analysis = multiple_dicts_analysis
@@ -108,8 +130,8 @@ class MacularAnalysisDataframes:
         for condition in multi_macular_dict_array:
             self._dict_paths_pyb[condition] = multi_macular_dict_array[condition].path_pyb
 
-        # Create the conditions/measurements container present in the multiple macular dict array.
-        self._levels_multiple_dictionaries = self.get_levels_of_multi_macular_dict_array(multi_macular_dict_array)
+        # Extract the conditions/measurements levels present in the MacularAnalysisDataframes.
+        self._analysis_dataframes_levels = self.get_levels_of_multi_macular_dict_array(multi_macular_dict_array)
 
         # Regular expression to extract the name, value and unit of a condition with "NameValueUnit" format.
         self.condition_reg = re.compile("(^[A-Za-z]+)(-?[0-9]{1,4},?[0-9]{0,4})([A-Za-z]+$)")
@@ -119,9 +141,6 @@ class MacularAnalysisDataframes:
         x_index = self.get_maximal_index_multi_macular_dict_array(multi_macular_dict_array, "spatial_x")
         y_index = self.get_maximal_index_multi_macular_dict_array(multi_macular_dict_array, "spatial_y")
         self.initialize_dict_analysis_dataframes(x_index, y_index, t_index)
-
-        # Creation of a dictionary containing the conditions and their measurements sorted.
-        dict_sort_order = self.creating_sort_order_from_multiple_dicts_analysis()
 
         # Make analysis
         self.make_spatial_dataframes_analysis(multiple_dicts_analysis_substituted["X"], "X",
@@ -140,16 +159,16 @@ class MacularAnalysisDataframes:
         raise AttributeError("The attribute dict_paths_pyb can't be modified.")
 
     @property
-    def levels_multiple_dictionaries(self):
-        """Getter for the levels_multiple_dictionaries attribute.
+    def analysis_dataframes_levels(self):
+        """Getter for the analysis_dataframes_levels attribute.
         """
-        return self._levels_multiple_dictionaries
+        return self._analysis_dataframes_levels
 
-    @levels_multiple_dictionaries.setter
-    def levels_multiple_dictionaries(self, levels_multiple_dictionaries):
-        """Setter for the levels_multiple_dictionaries attribute.
+    @analysis_dataframes_levels.setter
+    def analysis_dataframes_levels(self, analysis_dataframes_levels):
+        """Setter for the analysis_dataframes_levels attribute.
         """
-        raise AttributeError("The attribute levels_multiple_dictionaries can't be modified.")
+        raise AttributeError("The attribute analysis_dataframes_levels can't be modified.")
 
     @property
     def dict_analysis_dataframes(self):
@@ -166,6 +185,9 @@ class MacularAnalysisDataframes:
     @property
     def multiple_dicts_analysis(self):
         """Getter for the multiple_dicts_analysis attribute.
+
+        This getter allows you to keep the original multiple analysis dictionary while substituting the aliases ‘all_’
+        it contains whenever you need to use the multiple analysis dictionary.
         """
         # Create a copy of the multiple analysis dictionaries.
         multiple_dicts_analysis_substituted = copy.deepcopy(self._multiple_dicts_analysis)
@@ -415,9 +437,15 @@ class MacularAnalysisDataframes:
         multiple_dicts_features_cleaned = copy.deepcopy(multiple_dicts_features)
 
         for dataframe in multiple_dicts_features:
-            # Removal of false features.
             for feature in multiple_dicts_features[dataframe]:
-                if not multiple_dicts_features[dataframe][feature]:
+                # Removal of false list in features.
+                if isinstance(multiple_dicts_features_cleaned[dataframe][feature], list):
+                    for i_sub_feature in range(len(multiple_dicts_features_cleaned[dataframe][feature])):
+                        if not multiple_dicts_features_cleaned[dataframe][feature][i_sub_feature]:
+                            del multiple_dicts_features_cleaned[dataframe][feature][i_sub_feature]
+
+                # Removal of false features.
+                if not multiple_dicts_features_cleaned[dataframe][feature]:
                     del multiple_dicts_features_cleaned[dataframe][feature]
 
             # Removed empty features dictionaries.
@@ -460,14 +488,14 @@ class MacularAnalysisDataframes:
 
         Returns
         ----------
-        levels_multiple_dictionaries : list of str or dict of str
-            Container grouping all the names of conditions and measurements found in the associated multiple Macular
+        dict_levels_multi_macular_dict_array : dict of str or dict
+            Dictionary grouping all the names of conditions and measurements found in the associated multiple Macular
             Dict Array separated by ‘:’.
 
-            The first element is a character string with conditions names separated by ":". The second is a dictionary
-            associating the conditions of a multiple macular dict array as keys with values corresponding to the names
-            of the measurements present in each of the MacularDictArray. The names of the measurements are also
-            separated by ‘:’.
+            The first element "conditions" is a character string with conditions names separated by ":". The second
+            "measurements" is a dictionary associating the conditions of a multiple macular dict array as keys with
+            values corresponding to the names of the measurements present in each of the MacularDictArray. The names of
+            the measurements are also separated by ‘:’.
         """
         # Create character string containing all the conditions of a multiple MacularDictArray separated by ‘:’.
         all_conditions = ":".join(sorted([condition for condition in self.dict_paths_pyb]))
@@ -477,9 +505,45 @@ class MacularAnalysisDataframes:
             condition: ":".join(sorted([measure for measure in multi_macular_dict_array[condition].data]))
             for condition in self.dict_paths_pyb}
 
-        levels_multiple_dictionaries = [all_conditions, all_measurements]
+        dict_levels_multi_macular_dict_array = {"conditions": all_conditions, "measurements": all_measurements}
 
-        return levels_multiple_dictionaries
+        return dict_levels_multi_macular_dict_array
+
+    def get_levels_of_macular_analysis_dataframes(self):
+        """Extract and format all dimensions names and their analyses from a MacularAnalysisDictionary within strings
+        of characters separated by ‘:’.
+
+        The analyses that come into play could vary depending on the dimension of MacularAnalysisDictionary. This is why
+        the structure used to store the names of the analyses is a dictionary associating the dimensions of the
+        MacularAnalysisDictionary with their analyses.
+
+        Examples : "X:Y" or "peak_amplitude:activation_time"
+
+        Returns
+        ----------
+        dict_levels_macular_analysis_dataframes_correct : dict of str or dict
+            Dictionary grouping all the names of dimensions and analyses found in the current MacularAnalysisDictionary
+            separated by ‘:’.
+
+            The first element "dimensions" is a character string with dimensions names separated by ":". The second
+            "analyses" is a dictionary associating the dimensions of a multiple macular dict array as keys with
+            values corresponding to the names of the analysis present in each of the MacularAnalysisDictionary
+            dimensions. The names of the analyses are also separated by ‘:’.
+        """
+        # Create character string containing all the conditions of a multiple MacularDictArray separated by ‘:’.
+        all_dimensions = ":".join(sorted(self.dict_analysis_dataframes.keys()))
+
+        # Create dictionary associating each multiple MacularDictArray conditions with their "all_conditions".
+        all_analyses = {
+            dimension: ":".join(sorted(list(self.dict_analysis_dataframes[dimension].index)))
+            if dimension == "Conditions"
+            else {condition: ":".join(sorted(list(self.dict_analysis_dataframes[dimension][condition].index)))
+                  for condition in self.dict_analysis_dataframes[dimension]}
+            for dimension in self.dict_analysis_dataframes.keys()}
+
+        dict_levels_macular_analysis_dataframes_correct = {"dimensions": all_dimensions, "analyses": all_analyses}
+
+        return dict_levels_macular_analysis_dataframes_correct
 
     def substituting_all_alias_in_multiple_analysis_dictionaries(self, multiple_dicts_analysis):
         """Function replacing all aliases ‘all_conditions’ and ‘all_measurements’ in multiple analysis dictionaries.
@@ -494,182 +558,127 @@ class MacularAnalysisDataframes:
         multiple_dicts_analysis : dict of dict
             Multiple analysis dictionary with "all_conditions" and "all_measurements" aliases substituted.
         """
+        # Double loop to browse the dimensions and analyses contained in the multiple analysis dictionary.
         for dimension in multiple_dicts_analysis:
             for analysis in multiple_dicts_analysis[dimension]:
-                self.substituting_all_alias_in_analysis_dictionary(multiple_dicts_analysis[dimension], analysis)
+                # Case of meta-analyses.
+                if dimension == "MetaAnalysis":
+                    # Loop on the arguments of the meta-analysis function.
+                    for meta_analysis_arguments in multiple_dicts_analysis["MetaAnalysis"][analysis]:
+                        if meta_analysis_arguments is not "params":
+                            # Verify that common analysis groups are organised within a list.
+                            if isinstance(multiple_dicts_analysis[dimension][analysis][meta_analysis_arguments], list):
+                                # Loop on common analysis groups.
+                                for common_group_analysis in (
+                                        multiple_dicts_analysis)[dimension][analysis][meta_analysis_arguments]:
+                                    # Verification that we are dealing with the dictionary of a common analysis groups.
+                                    if isinstance(common_group_analysis, dict):
+                                        self.substituting_all_alias_in_common_analysis_group_dictionary(common_group_analysis)
+                else:
+                    # Verify that common analysis groups are organised within a list.
+                    if isinstance(multiple_dicts_analysis[dimension][analysis], list):
+                        # Loop on common analysis groups.
+                        for common_group_analysis in multiple_dicts_analysis[dimension][analysis]:
+                            # Verification that we are dealing with the dictionary of a common analysis groups.
+                            if isinstance(common_group_analysis, dict):
+                                self.substituting_all_alias_in_common_analysis_group_dictionary(common_group_analysis)
 
         return multiple_dicts_analysis
 
-    def substituting_all_alias_in_analysis_dictionary(self, multiple_dicts_analysis_unidimensional, name_level, n=0):
-        """Recursive function allowing the aliases ‘all_conditions’ and ‘all_measurements’ to be substituted within one
-        analysis dictionary of a dimension of the MacularAnalysisDataframe (X, Y, Time, Conditions).
+    def substituting_all_alias_in_common_analysis_group_dictionary(self, common_analysis_group_dictionary):
+        """Function that allows global aliases in the dictionary of a group of common analyses to be substituted.
 
-        The recursion of the function is only performed on the two levels of the analysis dictionary: the conditions
-        and measurements. In the case of ‘all_measurements’, all measurements associated with the current
-        MacularDictArray are taken into account. This means that if several conditions are associated with the same
-        ‘all_measurements’, these conditions must have MacularDictArray with exactly the same measurements.
-
-        If the conditions and measurements associated with ‘all_conditions’ and ‘all_measurements’ already exist in
-        the dictionary, the latter will be replaced by the dictionary associated with “all_conditions” or
-        ‘all_measurements’. An alert message is displayed when this happens to inform the user.
+        Global aliases are aliases that are used when you do not want to define specific elements of a hierarchical
+        level of the analysis and instead want to consider all possible elements. The different hierarchical levels are
+        conditions, measures, dimensions and analyses. Global aliases are all designed with the hierarchical level
+        preceded by the suffix ‘all_’. So we have ‘all_conditions’, ‘all_measurements’, ‘all_dimensions’ and
+        ‘all_analyses’. In the cases of “all_measurements” and ‘all_analyses’, the names retrieved depend on the
+        dimension or condition considered.
 
         Parameters
         ----------
-        multiple_dicts_analysis_unidimensional : dict of dict
-            Dictionary for analysing a given dimension (X, Y, Time or Conditions) associating analyses or conditions
-            (depending on the level of recursion) with dictionaries of conditions or measurements. These measurements
-            can also be a Boolean, int or float parameter.
-
-        name_level : str
-            Name of the architectural level in which we are located in the analysis dictionary.
-
-        n : int
-            Hierarchical level counter in the analysis dictionary that increases with recursion. It is always less than
-            or equal to 2.
-
+        common_analysis_group_dictionary : dict
+            Dictionary for a group of common analyses. It must contain a ‘conditions’ key and a “measurements” key
+            associated with the measurement or conditions included in the group of common analyses, separated by ‘:’.
+            In the case of a group of common analyses for meta-analyses, it must also contain the ‘dimensions’ and
+            'analyses' keys associated with the dimension(s) and analyses of the group, again separated by ‘:’. Each of
+            these keys may be associated with an alias allowing all names associated with this hierarchical level of
+            the MacularAnalysisDataframes to be included.
+            Example : {"dimensions": "X", "conditions": "all_conditions", "measurements": "all_measurements",
+                          "analyses": "peak_amplitude:activation_time:time_to_peak"}
         """
-        # Case of the ‘condition’ level of the analysis dictionary structure.
-        if isinstance(self.levels_multiple_dictionaries[n], str):
-            levels_current_dictionary = self.levels_multiple_dictionaries[n]
-        # Case of the ‘measurement’ level of the analysis dictionary structure.
-        elif isinstance(self.levels_multiple_dictionaries[n], dict):
-            levels_current_dictionary = self.levels_multiple_dictionaries[n][name_level.split(":")[0]]
+        # Replace the alias for all conditions in a multiple MacularDictArray.
+        if common_analysis_group_dictionary["conditions"] == "all_conditions":
+            common_analysis_group_dictionary["conditions"] = self.analysis_dataframes_levels["conditions"]
 
-        # Increment the hierarchical level counter.
-        n += 1
+        # Replace the alias for all measurements in a multiple MacularDictArray.
+        if common_analysis_group_dictionary["measurements"] == "all_measurements":
+            common_analysis_group_dictionary["measurements"] = self.analysis_dataframes_levels["measurements"][common_analysis_group_dictionary[
+                "conditions"].split(":")[0]]
 
-        # Substitution only on analyses with an additional hierarchical level in their analysis dictionary.
-        if isinstance(multiple_dicts_analysis_unidimensional[name_level], dict):
-            # Loop through all names of lower levels in the analysis dictionary hierarchy.
-            for low_level in multiple_dicts_analysis_unidimensional[name_level].copy():
-                # The name of the level is kept or adapted if it was ‘all_conditions’ or ‘all_measurements’.
-                corrected_low_level = low_level
-                if "all_" in low_level:
-                    corrected_low_level = levels_current_dictionary
-                    # Error message when the adapted level of ‘all_conditions’ or ‘all_measurements’ already exists.
-                    if corrected_low_level in multiple_dicts_analysis_unidimensional[name_level]:
-                        print(f"Warning: substitution of existing term : {corrected_low_level}")
-                    multiple_dicts_analysis_unidimensional[name_level][corrected_low_level] = (
-                        multiple_dicts_analysis_unidimensional)[name_level][low_level]
-                    del multiple_dicts_analysis_unidimensional[name_level][low_level]
+        # Substitution of the alias for all dimensions in the case of the Meta-analyses analysis dictionary.
+        try:
+            if common_analysis_group_dictionary["dimensions"] == "all_dimensions":
+                common_analysis_group_dictionary["dimensions"] = self.analysis_dataframes_levels["dimensions"]
+        except KeyError:
+            pass
 
-                # If you are in the first level of the dictionary hierarchy, you enter the next level.
-                if n < 2:
-                    self.substituting_all_alias_in_analysis_dictionary(
-                        multiple_dicts_analysis_unidimensional[name_level], corrected_low_level, n)
+        # Substitution of the alias for all analyses in the case of the Meta-analyses analysis dictionary.
+        try:
+            if common_analysis_group_dictionary["analyses"] == "all_analyses":
+                if common_analysis_group_dictionary["dimensions"].split(":")[0] == "Conditions":
+                    common_analysis_group_dictionary["analyses"] = self.analysis_dataframes_levels["analyses"][common_analysis_group_dictionary[
+                        "dimensions"].split(":")[0]]
                 else:
-                    pass
+                    common_analysis_group_dictionary["analyses"] = self.analysis_dataframes_levels["analyses"][common_analysis_group_dictionary[
+                        "dimensions"].split(":")[0]][common_analysis_group_dictionary["conditions"].split(":")[0]]
+        except KeyError:
+            pass
 
-    def creating_sort_order_from_multiple_dicts_analysis(self):
-        """Function to create a dictionary containing ordered lists of conditions and measurements to be analysed for
-        each dimension and analysis.
-
-        These lists allow each dimension and analysis to analyse each group of conditions and measurements in
-        alphabetical order. There is also an exception for the first item in the list, which will always correspond to
-        the conditions or measurements corresponding to aliases ‘all_conditions’ and ‘all_measurements’. The aim is to
-        start with the global cases before move on to the specific cases.
-
-        The dictionary is initially structured with two hierarchical levels corresponding to the dimension of the
-        Macular Analysis Dataframes to be used and the analysis. For a given dimension and analysis, there is a
-        dictionary with the keys ‘conditions’ and ‘measurements’. The ‘conditions’ key is directly associated with the
-        list of conditions in the multi_macular_dict_array. The ‘measurements’ key, on the other hand, is associated
-        with another dictionary composed of keys corresponding to the conditions in the multi_macular_dict_array
-        associated with the lists of measurements found in each of the MacularDictArray.
-
-        Creating an ordered list within this dictionary requires that the analysis dictionary be composed of a double
-        dictionary with the conditions and then the measurements as keys. Otherwise, the common analysis or analysis
-        group is ignored.
-
-        Returns
-        ----------
-        dict_sort_order : dict of dict
-            Dictionary containing ordered lists of grouped conditions and measurements for all analyses and dimensions of
-            multiple analysis dictionaries.
-        """
-        dict_sort_order = {}
-        for dimension in self.multiple_dicts_analysis:
-            dict_sort_order[dimension] = {}
-            for analysis in self.multiple_dicts_analysis[dimension]:
-                # Verify that the current analysis dictionary is indeed a dictionary.
-                if isinstance(self.multiple_dicts_analysis[dimension][analysis], dict):
-                    # Sort the list of condition names.
-                    sorted_list_conditions = self.creating_sort_order_from_dict_analysis(
-                        self.multiple_dicts_analysis[dimension][analysis],
-                        self.levels_multiple_dictionaries[0])
-                    dict_sort_order[dimension][analysis] = {"conditions": sorted_list_conditions, "measurements": {}}
-                    for grouped_conditions in self.multiple_dicts_analysis[dimension][analysis]:
-                        # Verify that the current analysis dictionary is a double dictionary.
-                        if isinstance(self.multiple_dicts_analysis[dimension][analysis][grouped_conditions],
-                                      dict):
-                            # Sort the list of measurement names depending on the current condition.
-                            sorted_list_measurements = self.creating_sort_order_from_dict_analysis(
-                                self.multiple_dicts_analysis[dimension][analysis][grouped_conditions],
-                                self.levels_multiple_dictionaries[1][grouped_conditions.split(":")[0]])
-                            dict_sort_order[dimension][analysis]["measurements"][grouped_conditions] = (
-                                sorted_list_measurements)
-                        # If the current analysis dictionary is not a double dictionary, it is removed.
-                        else:
-                            del dict_sort_order[dimension][analysis]
-
-        return dict_sort_order
-
-    @staticmethod
-    def creating_sort_order_from_dict_analysis(dict_analysis, first_element):
-        """Function that collects all names from a hierarchical level of the multiple analysis dictionaries and sorts
-        them into an ordered list.
-
-        The hierarchical level processed can be that of condition groups or measurements. Names can therefore be
-        composed of a succession of conditions or measurements separated by ‘:’.
-
-        The sorting is done alphabetically by the names of the elements. In addition, it is possible to place a given
-        input element at the start of the sorted list if it is present in the keys of the analysis dictionary.
-
-        Parameters
-        ----------
-        dict_analysis : dict of dict
-            Dictionary corresponding to a hierarchical level in the multiple analysis dictionaries.
-
-        first_element : str
-            Name of a hierarchical level in the multiple analysis dictionaries to be placed at the top of the ordered
-            list.
-
-        Returns
-        ----------
-        sorted_list_elements : list of str
-            Ordered list of names at a hierarchical level in the multiple analysis dictionaries.
-        """
-        # Creates and sorts the sorted list of elements in the current hierarchy of the analysis dictionary.
-        sorted_list_elements = [grouped_elements for grouped_elements in dict_analysis]
-        sorted_list_elements.sort()
-        if first_element in sorted_list_elements:
-            # Deletes the item to be placed at the start of the list.
-            sorted_list_elements.pop(sorted_list_elements.index(first_element))
-
-            # Adds the item to be placed at the start of the list to the first position.
-            sorted_list_elements.insert(0, first_element)
-
-        return sorted_list_elements
-
-    def make_conditions_dataframes_analysis(self, multi_macular_dict_array, dict_sort_order):
-        """Function used to perform all MacularAnalysisDataframe analyses to be carried out in the conditions dimension.
+    def make_spatial_dataframes_analysis(self, dimension, multi_macular_dict_array):
+        """Function used to perform all MacularAnalysisDataframe analyses to be carried out in the spatial dimension
+        (X and Y).
 
         The names of all analyses in the multiple analysis dictionaries are scanned and identified. For each of them, a
-        conditional block allows the corresponding analysis function to be executed.
-
-        A multiple analysis dictionary is provided as input to this function to allow the use of a dictionary without
-        aliases ‘all_conditions’ and ‘all_measurements’.
+        conditional block allows the corresponding analysis function to be executed. All these functions take as inputs
+        the current MacularAnalysisDataframes, the multiple macular dict array, the dimension, and the current analysis.
 
         Parameters
         ----------
         dimension : str
-            Dimension of the MacularAnalysisDataframes in which the result of the current analysis is stored.
+            Dimension of the MacularAnalysisDataframes in which the result of the current analysis is stored
+            ("X" or "Y").
 
         multi_macular_dict_array : dict of MacularDictArray
             Dictionary associating specific conditions with different MacularDictArray.
+        """
+        # Dictionary containing all spatial analyses currently implemented.
+        available_spatial_analyses_dict = {
+            "activation_time": self.activation_time_analyzing,
+            "latency": self.latency_analyzing,
+            "time_to_peak": self.time_to_peak_analyzing,
+            "peak_delay": self.peak_delay_analyzing,
+            "peak_amplitude": self.peak_amplitude_analyzing
+        }
 
-        dict_sort_order : dict of dict
-            Dictionary containing ordered lists of grouped conditions and measurements for all analyses and dimensions
-            of multiple analysis dictionaries.
+        # Performs all analyses listed in the current analysis dictionary.
+        for analysis in self.multiple_dicts_analysis[dimension]:
+            if analysis in available_spatial_analyses_dict:
+                available_spatial_analyses_dict[analysis](self, multi_macular_dict_array, dimension, analysis)
+
+        return sorted_list_elements
+
+    def make_conditions_dataframes_analysis(self, multi_macular_dict_array):
+        """Function used to perform all MacularAnalysisDataframe analyses to be carried out in the conditions dimension.
+
+        The names of all analyses in the multiple analysis dictionaries are scanned and identified. For each of them, a
+        conditional block allows the corresponding analysis function to be executed. All these functions take as inputs
+        the current MacularAnalysisDataframes, the multiple macular dict array, the dimension, and the current analysis.
+
+        Parameters
+        ----------
+        multi_macular_dict_array : dict of MacularDictArray
+            Dictionary associating specific conditions with different MacularDictArray.
         """
         dimension = "Conditions"
 
@@ -687,49 +696,8 @@ class MacularAnalysisDataframes:
         # Performs all analyses listed in the current analysis dictionary.
         for analysis in self.multiple_dicts_analysis[dimension]:
             if analysis in available_spatial_analyses_dict:
-                available_spatial_analyses_dict[analysis](self, multi_macular_dict_array, dimension, analysis,
-                                                          dict_sort_order)
+                available_spatial_analyses_dict[analysis](self, multi_macular_dict_array, dimension, analysis)
 
-    def make_spatial_dataframes_analysis(self, dimension, multi_macular_dict_array, dict_sort_order):
-        """Function used to perform all MacularAnalysisDataframe analyses to be carried out in the spatial dimension
-        (X and Y).
-
-        The names of all analyses in the multiple analysis dictionaries are scanned and identified. For each of them, a
-        conditional block allows the corresponding analysis function to be executed.
-
-        A multiple analysis dictionary is provided as input to this function to allow the use of a dictionary without
-        aliases ‘all_conditions’ and ‘all_measurements’.
-
-        Parameters
-        ----------
-        dimension : str
-            Dimension of the MacularAnalysisDataframes in which the result of the current analysis is stored.
-
-        multi_macular_dict_array : dict of MacularDictArray
-            Dictionary associating specific conditions with MacularDictArray.
-
-        dict_sort_order : dict of dict
-            Dictionary containing ordered lists of grouped conditions and measurements for all analyses and dimensions
-            of multiple analysis dictionaries.
-        """
-        # Dictionary containing all spatial analyses currently implemented.
-        available_spatial_analyses_dict = {
-            "activation_time": self.activation_time_analyzing,
-            "latency": self.latency_analyzing,
-            "time_to_peak": self.time_to_peak_analyzing,
-            "peak_delay": self.peak_delay_analyzing,
-            "peak_amplitude": self.peak_amplitude_analyzing
-        }
-
-        # Performs all analyses listed in the current analysis dictionary.
-        for analysis in self.multiple_dicts_analysis[dimension]:
-            if analysis in available_spatial_analyses_dict:
-                available_spatial_analyses_dict[analysis](self, multi_macular_dict_array, dimension, analysis,
-                                                          dict_sort_order)
-
-    # def make_temporal_dataframes_analysis(self, multi_macular_dict_array):
-    #     for analysis in self.multiple_dicts_analysis["Time"]:
-    #         pass
 
     @staticmethod
     def analysis(analysis_function):
@@ -743,21 +711,23 @@ class MacularAnalysisDataframes:
             This analysis function changes between each analysis, so they must all have the same three input
             arguments: the data, the index and the analysis parameters.
         """
+
         @wraps(analysis_function)
-        def modified_analysis_function(macular_analysis_dataframes, multi_macular_dict_array, dimension, analysis,
-                                       dict_sort_order):
+        def modified_analysis_function(macular_analysis_dataframes, multi_macular_dict_array, dimension, analysis):
             """Function applied within the decorator, prior to the analysis function, to process each group of common
             analyses and analyse each of their pairs of conditions/measurements.
 
             Depending on the type of analysis being performed, the name of the analysis and the associated function are
             modified. The global analysis is performed by carrying out specific analyses for groups of common analyses.
             Each of these groups combines conditions and measurements that share the same parameter values for the
-            current analysis.
+            current analysis. These common analysis groups are presented in the form of dictionaries contained in a
+            list. The dictionaries must contain a ‘conditions’ key, “measurements” associated with the names of the
+            conditions and measurements in the group separated by ‘:’ and a ‘params’ key containing all the parameters
+            to be used for the current analysis.
 
-            Before analysis, the multiple analysis dictionaries is corrected to replace all instances of the terms
-            ‘all_conditions’ or “all_measurements” in the current analysis with character strings containing all
-            conditions or measurements from the MacularDictArray processed in the MacularAnalysisDataframes. These
-            conditions and measurements are separated by ‘:’.
+            The function goes through the list of common analysis groups in the order decided by the user. This order
+            is important because if two common analysis groups act on one or more identical rows of dataframes, then
+            the last common analysis group processed will leave its value.
 
             Parameters
             ----------
@@ -772,23 +742,18 @@ class MacularAnalysisDataframes:
 
             analysis : str
                 Name of the current analysis.
-
-            dict_sort_order : dict of dict
-                Dictionary containing ordered lists of grouped conditions and measurements for all analyses and
-                dimensions of multiple analysis dictionaries.
             """
-            # Double loop allowing to browse the conditions and measurements of common analysis groups.
-            for grouped_conditions in dict_sort_order[dimension][analysis]["conditions"]:
-                for grouped_measurements in dict_sort_order[dimension][analysis]["measurements"][grouped_conditions]:
-                    # Extract the list of condition/measurements pairs to be analysed with the same parameters.
-                    common_analysis_group_generator = macular_analysis_dataframes.common_analysis_group_parser(
-                        grouped_conditions, grouped_measurements)
-                    # Analysis of conditions/measurements for a common analysis group sharing the same parameters.
-                    macular_analysis_dataframes.make_common_group_analysis(
-                        analysis_function, multi_macular_dict_array,
-                        common_analysis_group_generator, dimension, analysis,
-                        macular_analysis_dataframes.multiple_dicts_analysis[dimension][analysis][grouped_conditions]
-                        [grouped_measurements])
+            # Loop allowing to browse the conditions and measurements of common analysis groups.
+            for common_analysis_group_dict in macular_analysis_dataframes.multiple_dicts_analysis[dimension][analysis]:
+                grouped_conditions = common_analysis_group_dict["conditions"]
+                grouped_measurements = common_analysis_group_dict["measurements"]
+                # Extract the list of condition/measurements pairs to be analysed with the same parameters.
+                common_analysis_group_generator = macular_analysis_dataframes.common_analysis_group_parser(
+                    grouped_conditions, grouped_measurements)
+                # Analysis of conditions/measurements for a common analysis group sharing the same parameters.
+                macular_analysis_dataframes.make_common_group_analysis(
+                    analysis_function, multi_macular_dict_array,
+                    common_analysis_group_generator, dimension, analysis, common_analysis_group_dict["params"])
 
         return modified_analysis_function
 
@@ -857,7 +822,10 @@ class MacularAnalysisDataframes:
         """
         # Managing the presence of a "flag" in the analysis dictionary.
         try:
-            str_parameters_analysis = f"_{parameters_analysis_dict['flag']}"
+            if parameters_analysis_dict['flag'] != "":
+                str_parameters_analysis = f"_{parameters_analysis_dict['flag']}"
+            else:
+                str_parameters_analysis = ""
         except KeyError:
             str_parameters_analysis = ""
 
