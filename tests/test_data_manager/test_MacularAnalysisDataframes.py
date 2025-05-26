@@ -980,24 +980,56 @@ def test_analysis():
 
 
 def test_common_analysis_group_parser():
-    # Names of conditions in an analysis group common to two conditions.
+    # Names of conditions in an common group analysis.
     grouped_conditions = "barSpeed6dps_ampGang5Hz:barSpeed30dps"
 
-    # Names of conditions in an analysis group that are common to three measurements.
-    grouped_measurements = "FiringRate_GanglionGainControl:BipolarResponse_BipolarGainControl:VSDI"
+    # Names of measurements in a common group analysis.
+    grouped_measurements = "FiringRate:VSDI"
 
-    # Pairs of conditions and measurements in a common analysis group with 2 conditions and 3 measures.
+    # Names of dimensions in an analysis group common to two conditions.
+    grouped_dimensions = "X:Y"
+
+    # Names of analyses in an analysis group that are common to two measurements.
+    grouped_analyses = "activation_time:latency"
+
+    # Pairs of conditions and measurements in a common analysis group with only conditions and measures.
     common_analysis_group_generator_correct = (analysis_pair for analysis_pair in
-                                               [("barSpeed6dps_ampGang5Hz", "FiringRate_GanglionGainControl"),
-                                                ("barSpeed6dps_ampGang5Hz", "BipolarResponse_BipolarGainControl"),
+                                               [("barSpeed6dps_ampGang5Hz", "FiringRate"),
                                                 ("barSpeed6dps_ampGang5Hz", "VSDI"),
-                                                ("barSpeed30dps", "FiringRate_GanglionGainControl"),
-                                                ("barSpeed30dps", "BipolarResponse_BipolarGainControl"),
+                                                ("barSpeed30dps", "FiringRate"),
                                                 ("barSpeed30dps", "VSDI")])
+
     common_analysis_group_generator = macular_analysis_dataframes_test.common_analysis_group_parser(
-        grouped_conditions, grouped_measurements)
+        [grouped_conditions, grouped_measurements])
 
     # Verification of each pair of conditions and measurements.
+    for analysis_pair, analysis_pair_correct in zip(common_analysis_group_generator,
+                                                    common_analysis_group_generator_correct):
+        assert analysis_pair == analysis_pair_correct
+
+    # Tuples of conditions and measurements in a common analysis group with dimensions, conditions, measures, analyses.
+    common_analysis_group_generator_correct = (analysis_pair for analysis_pair in
+                                               [("X", "barSpeed6dps_ampGang5Hz", "FiringRate", "activation_time"),
+                                                ("X", "barSpeed6dps_ampGang5Hz", "FiringRate", "latency"),
+                                                ("X", "barSpeed6dps_ampGang5Hz", "VSDI", "activation_time"),
+                                                ("X", "barSpeed6dps_ampGang5Hz", "VSDI", "latency"),
+                                                ("X", "barSpeed30dps", "FiringRate", "activation_time"),
+                                                ("X", "barSpeed30dps", "FiringRate", "latency"),
+                                                ("X", "barSpeed30dps", "VSDI", "activation_time"),
+                                                ("X", "barSpeed30dps", "VSDI", "latency"),
+                                                ("Y", "barSpeed6dps_ampGang5Hz", "FiringRate", "activation_time"),
+                                                ("Y", "barSpeed6dps_ampGang5Hz", "FiringRate", "latency"),
+                                                ("Y", "barSpeed6dps_ampGang5Hz", "VSDI", "activation_time"),
+                                                ("Y", "barSpeed6dps_ampGang5Hz", "VSDI", "latency"),
+                                                ("Y", "barSpeed30dps", "FiringRate", "activation_time"),
+                                                ("Y", "barSpeed30dps", "FiringRate", "latency"),
+                                                ("Y", "barSpeed30dps", "VSDI", "activation_time"),
+                                                ("Y", "barSpeed30dps", "VSDI", "latency")
+                                                ])
+
+    common_analysis_group_generator = macular_analysis_dataframes_test.common_analysis_group_parser(
+        [grouped_dimensions, grouped_conditions, grouped_measurements, grouped_analyses])
+
     for analysis_pair, analysis_pair_correct in zip(common_analysis_group_generator,
                                                     common_analysis_group_generator_correct):
         assert analysis_pair == analysis_pair_correct

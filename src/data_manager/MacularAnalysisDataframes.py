@@ -646,7 +646,8 @@ class MacularAnalysisDataframes:
                                         multiple_dicts_analysis)[dimension][analysis][meta_analysis_arguments]:
                                     # Verification that we are dealing with the dictionary of a common analysis groups.
                                     if isinstance(common_group_analysis, dict):
-                                        self.substituting_all_alias_in_common_analysis_group_dictionary(common_group_analysis)
+                                        self.substituting_all_alias_in_common_analysis_group_dictionary(
+                                            common_group_analysis)
                 else:
                     # Verify that common analysis groups are organised within a list.
                     if isinstance(multiple_dicts_analysis[dimension][analysis], list):
@@ -686,8 +687,9 @@ class MacularAnalysisDataframes:
 
         # Replace the alias for all measurements in a multiple MacularDictArray.
         if common_analysis_group_dictionary["measurements"] == "all_measurements":
-            common_analysis_group_dictionary["measurements"] = self.analysis_dataframes_levels["measurements"][common_analysis_group_dictionary[
-                "conditions"].split(":")[0]]
+            common_analysis_group_dictionary["measurements"] = self.analysis_dataframes_levels["measurements"][
+                common_analysis_group_dictionary[
+                    "conditions"].split(":")[0]]
 
         # Substitution of the alias for all dimensions in the case of the Meta-analyses analysis dictionary.
         try:
@@ -700,10 +702,12 @@ class MacularAnalysisDataframes:
         try:
             if common_analysis_group_dictionary["analyses"] == "all_analyses":
                 if common_analysis_group_dictionary["dimensions"].split(":")[0] == "Conditions":
-                    common_analysis_group_dictionary["analyses"] = self.analysis_dataframes_levels["analyses"][common_analysis_group_dictionary[
-                        "dimensions"].split(":")[0]]
+                    common_analysis_group_dictionary["analyses"] = self.analysis_dataframes_levels["analyses"][
+                        common_analysis_group_dictionary[
+                            "dimensions"].split(":")[0]]
                 else:
-                    common_analysis_group_dictionary["analyses"] = self.analysis_dataframes_levels["analyses"][common_analysis_group_dictionary[
+                    common_analysis_group_dictionary["analyses"] = \
+                    self.analysis_dataframes_levels["analyses"][common_analysis_group_dictionary[
                         "dimensions"].split(":")[0]][common_analysis_group_dictionary["conditions"].split(":")[0]]
         except KeyError:
             pass
@@ -818,11 +822,9 @@ class MacularAnalysisDataframes:
             """
             # Loop allowing to browse the conditions and measurements of common analysis groups.
             for common_analysis_group_dict in macular_analysis_dataframes.multiple_dicts_analysis[dimension][analysis]:
-                grouped_conditions = common_analysis_group_dict["conditions"]
-                grouped_measurements = common_analysis_group_dict["measurements"]
                 # Extract the list of condition/measurements pairs to be analysed with the same parameters.
                 common_analysis_group_generator = macular_analysis_dataframes.common_analysis_group_parser(
-                    grouped_conditions, grouped_measurements)
+                    [common_analysis_group_dict["conditions"], common_analysis_group_dict["measurements"]])
                 # Analysis of conditions/measurements for a common analysis group sharing the same parameters.
                 macular_analysis_dataframes.make_common_group_analysis(
                     analysis_function, multi_macular_dict_array,
@@ -830,29 +832,45 @@ class MacularAnalysisDataframes:
 
         return modified_analysis_function
 
-    @staticmethod
-    def common_analysis_group_parser(grouped_conditions, grouped_measurements):
-        """Function that transforms the names of conditions and measurements in a group of common analyses into a
-        generator of pairs of conditions and measurements that share one or more identical analyses.
+    def common_analysis_group_parser(self, list_grouped_levels, list_analysis_levels=None, n=0):
+        """Recursive function for creating a unique association generator for hierarchical levels.
 
-        The sets of condition names or measurements in the common analysis group (grouped_conditions and
-        grouped_measurements) are separated by ‘:’. To extract each of them, separate them using this symbol.
-
-        Examples : "barSpeed27dps:barSpeed30dps" or "BipolarResponse_BipolarGainControl:VSDI"
+        The goal is to create all possible unique tuples of hierarchical level names from a given number of different
+        names for each hierarchical level. These different names are provided in the grouped level list. Each item in
+        the list is a different name for a given level separated by ‘:’. All levels are classified in a hierarchical
+        order defined within this list of grouped levels.
 
         Parameters
         ----------
-        grouped_conditions : str
-            Names of conditions in a common analysis group.
+        list_grouped_levels : list of str
+            List containing different hierarchical level names separated by ‘:’. For example: ‘X:Y’ or
+            ‘barSpeed30dps:barSpeed27dps’. The number of hierarchical levels contained in this list will define the
+            depth of recursion.
 
-        grouped_measurements : str
-            Names of measurements in a common analysis group.
+        list_analysis_levels : list of str
+            List containing all the names of an association of a hierarchical level. This list is constructed at each
+            hierarchical level and is reset between each association of a different hierarchical level. The list is
+            transformed into a tuple once it is complete.
+
+        n : int
+            Hierarchical level counter in the analysis dictionary that increases with recursion. It is always equal to
+            the length of the grouped levels list.
         """
-        # Loop on the conditions and measurements of the common analysis group.
-        for condition in grouped_conditions.split(":"):
-            for measurement in grouped_measurements.split(":"):
-                # New pair condition, measurement for analysis in generator.
-                yield condition, measurement
+        # Loop on the current hierarchical level of the current analysis.
+        for level in list_grouped_levels[n].split(":"):
+            # Initialisation of the list of analysis levels when at level 0.
+            if not n:
+                list_analysis_levels = []
+            # Increment the list of analysis levels with the current level.
+            new_list_current_analysis_levels = list_analysis_levels + [level]
+
+            # Call the recursive function to go down one level if you are not at the last level.
+            if n < len(list_grouped_levels) - 1:
+                yield from self.common_analysis_group_parser(list_grouped_levels,
+                                                                       new_list_current_analysis_levels, n + 1)
+            else:
+                # Returns the analysis level tuple to the generator once the last level has been reached.
+                yield tuple(new_list_current_analysis_levels)
 
     def make_common_group_analysis(self, analysis_function, multi_macular_dict_array, common_analysis_group_generator,
                                    dimension, analysis, parameters_analysis_dict):
