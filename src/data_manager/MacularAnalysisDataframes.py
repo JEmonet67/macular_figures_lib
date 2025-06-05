@@ -7,6 +7,7 @@ import pandas as pd
 
 from src.data_manager.MacularDictArray import MacularDictArray
 from src.data_manager.SpatialAnalyser import SpatialAnalyser
+from src.data_manager.ConditionsAnalyser import ConditionsAnalyser
 
 
 class MacularAnalysisDataframes:
@@ -760,16 +761,10 @@ class MacularAnalysisDataframes:
 
         # Dictionary containing all conditions analyses currently implemented.
         available_spatial_analyses_dict = {
-            # "maximal_latency": self.maximal_latency_analyzing,
-            # "anticipation_range": self.anticipation_range_analyzing,
-            # "short_range_anticipation_speed": self.short_range_anticipation_speed_analyzing,
-            # "long_range_anticipation_speed": self.long_range_anticipation_speed_analyzing,
-            # "peak_speed": self.peak_speed_analyzing,
-            # "stationary_peak_delay": self.stationary_peak_delay_analyzing,
             "peak_amplitude": self.peak_amplitude_analyzing
         }
 
-        # Performs all analyses listed in the current analysis dictionary.
+        # Performs all conditions analyses listed in the current analysis dictionary.
         for analysis in self.multiple_dicts_analysis[dimension]:
             if analysis in available_spatial_analyses_dict:
                 available_spatial_analyses_dict[analysis](self, multi_macular_dict_array, dimension, analysis)
@@ -836,7 +831,8 @@ class MacularAnalysisDataframes:
 
         return modified_analysis_function
 
-    def common_analysis_group_parser(self, list_grouped_levels, list_analysis_levels=None, n=0):
+    @staticmethod
+    def common_analysis_group_parser(list_grouped_levels, list_analysis_levels=None, n=0):
         """Recursive function for creating a unique association generator for hierarchical levels.
 
         The goal is to create all possible unique tuples of hierarchical level names from a given number of different

@@ -136,7 +136,11 @@ multiple_dicts_preprocessings_default = {
 }
 
 multiple_dicts_analysis_default = {
-    "Conditions": {"sorting": "NameValueUnit"},
+    "Conditions": {
+        "sorting": "NameValueUnit",
+        "peak_amplitude": [{"conditions": "all_conditions", "measurements": "FiringRate_GanglionGainControl:VSDI",
+                            "params": {"x": 36, "y": 7, "flag": ""}}]
+    },
     "X": {
         "activation_time": [{"conditions": "all_conditions", "measurements": "VSDI",
                              "params": {"threshold": 0.001, "index": "temporal_ms", "y": 7, "flag": "ms"}}],
