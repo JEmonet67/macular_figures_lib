@@ -12,10 +12,10 @@ class SpatialAnalyser:
 
         Parameters
         ----------
-        data_array : np.array
+        data_array : np.ndarray
             3D array containing activity data.
 
-        index_array : np.array
+        index_array : np.ndarray
             One-dimensional array containing the time index to be used.
 
         threshold : floats
@@ -23,7 +23,7 @@ class SpatialAnalyser:
 
         Returns
         ----------
-        activation_time_array : np.array()
+        activation_time_array : np.ndarray
             2D array containing the activation times of the 3D array given as input.
         """
         # Initialises a 2D array with the same size as the spatial dimensions of the data array.
@@ -51,10 +51,10 @@ class SpatialAnalyser:
 
         Parameters
         ----------
-        data_array : np.array
+        data_array : np.ndarray
             3D array containing activity data.
 
-        index_array : list of np.array
+        index_array : list of np.ndarray
             One-dimensional array containing the time index to be used.
 
         threshold : floats
@@ -65,7 +65,7 @@ class SpatialAnalyser:
 
         Returns
         ----------
-        activation_time_array : np.array()
+        activation_time_array : np.ndarray
             2D array containing the activation times of the 3D array given as input.
         """
         # Initialises a 2D array with the same size as the spatial dimensions of the data array.
@@ -97,15 +97,15 @@ class SpatialAnalyser:
 
         Parameters
         ----------
-        data_array : np.array
+        data_array : np.ndarray
             3D array containing activity data.
 
-        index_array : list of np.array
+        index_array : list of np.ndarray
             One-dimensional array containing the time index to be used.
 
         Returns
         ----------
-        time_to_peak_array : np.array()
+        time_to_peak_array : np.ndarray
             2D array containing the time to peak of the 3D array given as input.
         """
         # Initialises a 2D array with the same size as the spatial dimensions of the data array.
@@ -130,10 +130,10 @@ class SpatialAnalyser:
 
         Parameters
         ----------
-        data_array : np.array
+        data_array : np.ndarray
             3D array containing activity data.
 
-        index_array : list of np.array
+        index_array : list of np.ndarray
             One-dimensional array containing the time index to be used.
 
         threshold : floats
@@ -144,7 +144,7 @@ class SpatialAnalyser:
 
         Returns
         ----------
-        latency_array : np.array()
+        latency_array : np.ndarray
             2D array containing the latency of the 3D array given as input.
         """
         # Initialises a 2D array with the same size as the spatial dimensions of the data array.
@@ -177,10 +177,10 @@ class SpatialAnalyser:
 
         Parameters
         ----------
-        data_array : np.array
+        data_array : np.ndarray
             3D array containing activity data.
 
-        index_array : list of np.array
+        index_array : list of np.ndarray
             One-dimensional array containing the time index to be used.
 
         axis : str
@@ -188,7 +188,7 @@ class SpatialAnalyser:
 
         Returns
         ----------
-        peak_delay_array : np.array()
+        peak_delay_array : np.ndarray
             2D array containing the delay to peak of the 3D array given as input.
         """
         # Initialises a 2D array with the same size as the spatial dimensions of the data array.
@@ -217,12 +217,12 @@ class SpatialAnalyser:
 
         Parameters
         ----------
-        data_array : np.array
+        data_array : np.ndarray
             3D array containing activity data.
 
         Returns
         ----------
-        amplitude_array : np.array()
+        amplitude_array : np.ndarray
             2D array containing the amplitude of the 3D array given as input.
         """
         # Initialises a 2D array with the same size as the spatial dimensions of the data array.

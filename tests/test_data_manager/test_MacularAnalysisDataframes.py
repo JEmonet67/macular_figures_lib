@@ -105,12 +105,14 @@ multiple_dicts_simulations_default = {
         "axis": "horizontal"
     },
     "barSpeed30dps": {
-        "path_pyb": f"../data_test/data_manager/MacularAnalysisDataframes/RC_RM_dSGpCP0033_barSpeed30dps_default_0f.pyb",
+        "path_pyb": f"../data_test/data_manager/MacularAnalysisDataframes/"
+                    f"RC_RM_dSGpCP0033_barSpeed30dps_default_0f.pyb",
         "path_csv": f"../data_test/data_manager/RC_RM_dSGpCP0033_barSpeed30dps_0f.csv",
         "speed": 30
     },
     "barSpeed28,5dps": {
-        "path_pyb": f"../data_test/data_manager/MacularAnalysisDataframes/RC_RM_dSGpCP0083_barSpeed28,5dps_default_0f.pyb",
+        "path_pyb": f"../data_test/data_manager/MacularAnalysisDataframes/"
+                    f"RC_RM_dSGpCP0083_barSpeed28,5dps_default_0f.pyb",
         "path_csv": f"../data_test/data_manager/RC_RM_dSGpCP0083_barSpeed28,5dps_0f.csv",
         "speed": 28.5
     }
@@ -606,7 +608,7 @@ def test_get_levels_of_multi_macular_dict_array():
 
 
 def test_get_levels_of_macular_analysis_dataframes():
-    # Création d'un dictionnaire des niveaux de macular analysis dataframes vide
+    # Creation of an empty dictionary of macular analysis dataframe levels.
     dict_levels_macular_analysis_dataframes_correct = {
         'dimensions': 'Conditions:Time:X:Y',
         'analyses': {
@@ -615,7 +617,8 @@ def test_get_levels_of_macular_analysis_dataframes():
             'Y': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''},
             'Time': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''}}}
 
-    assert macular_analysis_dataframes_head100.get_levels_of_macular_analysis_dataframes() == dict_levels_macular_analysis_dataframes_correct
+    assert (macular_analysis_dataframes_head100.get_levels_of_macular_analysis_dataframes() ==
+            dict_levels_macular_analysis_dataframes_correct)
 
     # Import of a fully analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
     with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
@@ -662,7 +665,8 @@ def test_get_levels_of_macular_analysis_dataframes():
                   'barSpeed28,5dps': all_analyses_Y},
             'Time': {'barSpeed30dps': '', 'barSpeed28,5dps': ''}}}
 
-    assert mda_correct.get_levels_of_macular_analysis_dataframes() == dict_levels_macular_analysis_dataframes_correct
+    assert (macular_analysis_dataframes_default.get_levels_of_macular_analysis_dataframes() ==
+            dict_levels_macular_analysis_dataframes_correct)
 
 
 def test_substituting_all_alias_in_multiple_analysis_dictionaries():
@@ -800,7 +804,7 @@ def test_substituting_all_alias_in_analysis_dictionary():
         if dimension == "Conditions"
         else {condition: ":".join(
             sorted(list(macular_analysis_dataframes_head100.dict_analysis_dataframes[dimension][condition].index)))
-              for condition in macular_analysis_dataframes_head100.dict_analysis_dataframes[dimension]}
+            for condition in macular_analysis_dataframes_head100.dict_analysis_dataframes[dimension]}
         for dimension in macular_analysis_dataframes_head100.dict_analysis_dataframes.keys()}
     all_analyses["X"]["barSpeed30dps"] = ":".join(all_analyses["X"]["barSpeed30dps"].split(":")[:5])
 
@@ -832,7 +836,7 @@ def test_substituting_all_alias_in_analysis_dictionary():
                           "dimensions": "Conditions", "analyses": "all_analyses", "flag": ""}
     macular_analysis_dataframes_test.substituting_all_alias_in_common_analysis_group_dictionary(test_dict_analysis)
     assert (test_dict_analysis ==
-            {"conditions": "barSpeed15dps:barSpeed30dps:barSpeed6dps", "measurements": "VSDI",
+            {"conditions": all_conditions, "measurements": "VSDI",
              "dimensions": "Conditions", "analyses": all_analyses["Conditions"], "flag": ""}
             )
 
@@ -980,7 +984,7 @@ def test_analysis():
 
 
 def test_common_analysis_group_parser():
-    # Names of conditions in an common group analysis.
+    # Names of conditions in a common group analysis.
     grouped_conditions = "barSpeed6dps_ampGang5Hz:barSpeed30dps"
 
     # Names of measurements in a common group analysis.

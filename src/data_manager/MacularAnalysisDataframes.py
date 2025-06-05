@@ -359,17 +359,17 @@ class MacularAnalysisDataframes:
 
         Parameters
         ----------
-        x_index : np.array
+        x_index : np.ndarray
             Index of the x-axis used for the x-axis dataframe.
 
             This parameter is facultative.
 
-        y_index : np.array
+        y_index : np.ndarray
             Index of the y-axis used for the y-axis dataframe.
 
             This parameter is facultative.
 
-        t_index : np.array
+        t_index : np.ndarray
             Index of the t-axis used for the t-axis dataframe.
 
             This parameter is facultative.
@@ -664,7 +664,7 @@ class MacularAnalysisDataframes:
 
         Global aliases are aliases that are used when you do not want to define specific elements of a hierarchical
         level of the analysis and instead want to consider all possible elements. The different hierarchical levels are
-        conditions, measures, dimensions and analyses. Global aliases are all designed with the hierarchical level
+        conditions, measurements, dimensions and analyses. Global aliases are all designed with the hierarchical level
         preceded by the suffix ‘all_’. So we have ‘all_conditions’, ‘all_measurements’, ‘all_dimensions’ and
         ‘all_analyses’. In the cases of “all_measurements” and ‘all_analyses’, the names retrieved depend on the
         dimension or condition considered.
@@ -688,8 +688,7 @@ class MacularAnalysisDataframes:
         # Replace the alias for all measurements in a multiple MacularDictArray.
         if common_analysis_group_dictionary["measurements"] == "all_measurements":
             common_analysis_group_dictionary["measurements"] = self.analysis_dataframes_levels["measurements"][
-                common_analysis_group_dictionary[
-                    "conditions"].split(":")[0]]
+                common_analysis_group_dictionary["conditions"].split(":")[0]]
 
         # Substitution of the alias for all dimensions in the case of the Meta-analyses analysis dictionary.
         try:
@@ -707,8 +706,8 @@ class MacularAnalysisDataframes:
                             "dimensions"].split(":")[0]]
                 else:
                     common_analysis_group_dictionary["analyses"] = \
-                    self.analysis_dataframes_levels["analyses"][common_analysis_group_dictionary[
-                        "dimensions"].split(":")[0]][common_analysis_group_dictionary["conditions"].split(":")[0]]
+                        self.analysis_dataframes_levels["analyses"][common_analysis_group_dictionary[
+                            "dimensions"].split(":")[0]][common_analysis_group_dictionary["conditions"].split(":")[0]]
         except KeyError:
             pass
 
@@ -738,7 +737,7 @@ class MacularAnalysisDataframes:
             "peak_amplitude": self.peak_amplitude_analyzing
         }
 
-        # Performs all analyses listed in the current analysis dictionary.
+        # Performs all spatial analyses listed in the current analysis dictionary.
         for analysis in self.multiple_dicts_analysis[dimension]:
             if analysis in available_spatial_analyses_dict:
                 available_spatial_analyses_dict[analysis](self, multi_macular_dict_array, dimension, analysis)
@@ -819,11 +818,16 @@ class MacularAnalysisDataframes:
 
             analysis : str
                 Name of the current analysis.
+
+            Returns
+            ----------
+            analysis_function : function
+                Decorated analysis function to apply to calculate the current analysis.
             """
             # Loop allowing to browse the conditions and measurements of common analysis groups.
             for common_analysis_group_dict in macular_analysis_dataframes.multiple_dicts_analysis[dimension][analysis]:
                 # Extract the list of condition/measurements pairs to be analysed with the same parameters.
-                common_analysis_group_generator = macular_analysis_dataframes.common_analysis_group_parser(
+                common_analysis_group_generator = MacularAnalysisDataframes.common_analysis_group_parser(
                     [common_analysis_group_dict["conditions"], common_analysis_group_dict["measurements"]])
                 # Analysis of conditions/measurements for a common analysis group sharing the same parameters.
                 macular_analysis_dataframes.make_common_group_analysis(
@@ -866,14 +870,15 @@ class MacularAnalysisDataframes:
 
             # Call the recursive function to go down one level if you are not at the last level.
             if n < len(list_grouped_levels) - 1:
-                yield from self.common_analysis_group_parser(list_grouped_levels,
-                                                                       new_list_current_analysis_levels, n + 1)
+                yield from MacularAnalysisDataframes.common_analysis_group_parser(list_grouped_levels,
+                                                                                  new_list_current_analysis_levels,
+                                                                                  n + 1)
             else:
                 # Returns the analysis level tuple to the generator once the last level has been reached.
                 yield tuple(new_list_current_analysis_levels)
 
     def make_common_group_analysis(self, analysis_function, multi_macular_dict_array, common_analysis_group_generator,
-                                   dimension, analysis, parameters_analysis_dict):
+                                   dimension, analysis, common_parameters_analysis_dict):
         """Function that performs a given analysis within a common group of analyses
 
         A common analysis group is a bunch of conditions and measurements that share one or more identical analyses
@@ -905,35 +910,26 @@ class MacularAnalysisDataframes:
         analysis : str
             Name of the current analysis.
 
-        parameters_analysis_dict : dict
+        common_parameters_analysis_dict : dict
             Dictionary containing all parameters of the current analysis.
 
             The parameters vary depending on the analysis, except for the optional ‘flag’ parameter, which can always be
             present. It corresponds to a suffix used to specify the name of the dataframe row that will be added.
         """
-        # Managing the presence of a "flag" in the analysis dictionary.
-        try:
-            if parameters_analysis_dict['flag'] != "":
-                str_parameters_analysis = f"_{parameters_analysis_dict['flag']}"
-            else:
-                str_parameters_analysis = ""
-        except KeyError:
-            str_parameters_analysis = ""
-
         # Loop of conditions and measurements of the common analysis group.
         for condition, measurement in common_analysis_group_generator:
             # Defines the name of the line where the current analysis is stored.
-            dataframe_row = f"{analysis}_{measurement}{str_parameters_analysis}"
+            dataframe_row = f"{analysis}_{measurement}_{common_parameters_analysis_dict['flag']}".strip("_")
             # Conducting an analysis of a given condition and measurement in the conditions dataframe.
             if dimension == "Conditions":
                 self.dict_analysis_dataframes[dimension].loc[dataframe_row, condition] = analysis_function(
                     multi_macular_dict_array[condition].data[measurement], multi_macular_dict_array[condition].index
-                    , parameters_analysis_dict)
+                    , common_parameters_analysis_dict)
             # Conducting an analysis of a given condition and measurement in spatio-temporal dataframes.
             else:
                 self.dict_analysis_dataframes[dimension][condition].loc[dataframe_row] = analysis_function(
                     multi_macular_dict_array[condition].data[measurement], multi_macular_dict_array[condition].index
-                    , parameters_analysis_dict)
+                    , common_parameters_analysis_dict)
 
     @staticmethod
     @analysis
@@ -946,10 +942,10 @@ class MacularAnalysisDataframes:
 
         Parameters
         ----------
-        data : np.array
+        data : np.ndarray
             3D array containing the values of a measurement for a given condition.
 
-        index : dict of np.array
+        index : dict of np.ndarray
             Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
 
         parameters_analysis_dict : dict
@@ -959,7 +955,7 @@ class MacularAnalysisDataframes:
 
         Returns
         ----------
-        activation_time_array : np.array
+        activation_time_array : np.ndarray
             2D or 1D array of activation times along a single spatial axis.
         """
         # Calculation of the 2D array of activation times.
@@ -992,10 +988,10 @@ class MacularAnalysisDataframes:
 
         Parameters
         ----------
-        data : np.array
+        data : np.ndarray
             3D array containing the values of a measurement for a given condition.
 
-        index : dict of np.array
+        index : dict of np.ndarray
             Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
 
         parameters_analysis_dict : dict
@@ -1005,7 +1001,7 @@ class MacularAnalysisDataframes:
 
         Returns
         ----------
-        activation_time_1d_array : np.array
+        activation_time_1d_array : np.ndarray
             1D array of latency along a single spatial axis.
         """
         # Calculation of the 2D array of latency.
@@ -1032,10 +1028,10 @@ class MacularAnalysisDataframes:
 
         Parameters
         ----------
-        data : np.array
+        data : np.ndarray
             3D array containing the values of a measurement for a given condition.
 
-        index : dict of np.array
+        index : dict of np.ndarray
             Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
 
         parameters_analysis_dict : dict
@@ -1045,7 +1041,7 @@ class MacularAnalysisDataframes:
 
         Returns
         ----------
-        time_to_peak_1d_array : np.array
+        time_to_peak_1d_array : np.ndarray
             1D array of time to peak along a single spatial axis.
         """
         # Calculation of the 2D array of time to peak.
@@ -1076,10 +1072,10 @@ class MacularAnalysisDataframes:
 
         Parameters
         ----------
-        data : np.array
+        data : np.ndarray
             3D array containing the values of a measurement for a given condition.
 
-        index : dict of np.array
+        index : dict of np.ndarray
             Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
 
         parameters_analysis_dict : dict
@@ -1089,7 +1085,7 @@ class MacularAnalysisDataframes:
 
         Returns
         ----------
-        activation_time_1d_array : np.array
+        activation_time_1d_array : np.ndarray
             1D array of delay to peak along a single spatial axis.
         """
         # Calculation of the 2D array of delay_to_peak.
@@ -1116,10 +1112,10 @@ class MacularAnalysisDataframes:
 
         Parameters
         ----------
-        data : np.array
+        data : np.ndarray
             3D array containing the values of a measurement for a given condition.
 
-        index : dict of np.array
+        index : dict of np.ndarray
             Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
 
         parameters_analysis_dict : dict
@@ -1128,7 +1124,7 @@ class MacularAnalysisDataframes:
 
         Returns
         ----------
-        amplitude : np.array or float
+        amplitude : np.ndarray or float
             1D array of amplitude along a single spatial axis or value of peak amplitude at a specific spatial position.
         """
         # Calculation of the 2D array of amplitude.
