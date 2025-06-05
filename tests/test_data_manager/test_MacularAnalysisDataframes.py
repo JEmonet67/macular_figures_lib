@@ -31,6 +31,10 @@ with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_arr
 with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_array_default.pyb", "rb") as file:
     multi_macular_dict_array_default = pickle.load(file)
 
+# Initialisation of the meta-analysis parameter dictionary of default multiple macular dict array.
+dict_index_default = {condition: multi_macular_dict_array_default[condition].index
+                      for condition in multi_macular_dict_array_default}
+
 # Import the list of conditions/measures from the default multi macular dict array.
 with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
     macular_analysis_dataframes_default_empty = pickle.load(file)
@@ -48,6 +52,16 @@ with open(f"{path_data_test}/MacularAnalysisDataframes/activation_time_common_gr
 with open(f"{path_data_test}/MacularAnalysisDataframes/peak_amplitude_conditions_common_group_analysis.pyb",
           "rb") as file:
     peak_amplitude_conditions_common_group_analysis = pickle.load(file)
+
+# Import a default MacularAnalysisDataframes model with meta-analyses division already performed.
+with open(f"{path_data_test}/MacularAnalysisDataframes/peak_amplitudes_meta_analysis_normalization.pyb",
+          "rb") as file:
+    peak_amplitude_meta_analysis_normalized = pickle.load(file)
+
+# Import of a fully analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
+with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe.pyb", "rb")
+      as file):
+    macular_analysis_dataframes_default = pickle.load(file)
 
 multiple_dicts_simulations_head100 = {
     "global": {
@@ -168,28 +182,36 @@ multiple_dicts_analysis_default = {
                             "params": {"main_dimension": "X", "secondary_dimension": "Conditions", "flag": ""}}]
     },
     "MetaAnalysis": {
-        # Si on a une liste de valeurs de paramètres elle doit faire la taille des listes des groupes de
-        # meta-analyses communes.
-        "division": {"params": {"factor": 8},
-                     # Le dictionnaire de méta-analyse est parser pour créer une liste de méta-analyses communes dont la
-                     # longueur doit être la même pour chaque analyses utilisée dans la méta-analyse en cours.
-                     # Si il y a une seule analyse elle sera répétée pour tous les groupes de méta-analyses.
-                     # Les groupes de méta-analyses communes sont sous la forme d'un tuple
-                     # (dimension, condition, mesure, analyse, étiquette)
-                     "numerator": [
-                         {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
-                          "analyses": "peak_amplitude", "flag": ""},
-                         {"dimensions": "Y", "conditions": "all_conditions", "measurements": "VSDI",
-                          "analyses": "peak_amplitude", "flag": "y6"}],
-                     "denominator": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
-                                     "analyses": "peak_amplitude", "flag": ""},
-                     # facultative if already defined by the MetaAnalysis function.
-                     "output": [
-                         {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
-                          "analyses": "peak_amplitude_division", "flag": ""},
-                         {"dimensions": "Y", "conditions": "all_conditions", "measurements": "VSDI",
-                          "analyses": "peak_amplitude_division", "flag": "y6"}]
-                     }
+        "peak_speed": [
+            {"time_to_peak": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                              "analyses": "time_to_peak", "flag": ""},
+             "params": {"output": "horizontal_peak_speed", "index": "spatial_x"}}
+        ],
+        "normalization": [
+            {"numerator": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
+                           "analyses": "peak_amplitude", "flag": ""},
+             "denominator": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements":
+                 "FiringRate_GanglionGainControl", "analyses": "peak_amplitude", "flag": ""},
+             "output": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
+                        "analyses": "spatial_peak_amplitudes_normalization"},
+             "params": {"factor": 8}},
+
+            {"numerator": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                           "analyses": "peak_amplitude", "flag": ""},
+             "denominator": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
+                             "analyses": "peak_amplitude", "flag": ""},
+             "output": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                        "analyses": "norm_peak_amplitudes_normalization"},
+             "params": {"factor": 8}},
+
+            {"numerator": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
+                           "analyses": "peak_amplitude", "flag": ""},
+             "denominator": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
+                             "analyses": "peak_amplitude", "flag": ""},
+             "output": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
+                        "analyses": "cond_peak_amplitudes_normalization"},
+             "params": {"factor": 8}}
+        ]
     }
 }
 
@@ -625,9 +647,9 @@ def test_get_levels_of_macular_analysis_dataframes():
             dict_levels_macular_analysis_dataframes_correct)
 
     # Import of a fully analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
-    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
-          as file):
-        mda_correct = pickle.load(file)
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe.pyb", "rb")
+          as file_test):
+        macular_analysis_dataframes_default = pickle.load(file_test)
 
     all_analyses_X = ('activation_time_VSDI_ms:latency_VSDI_ms:peak_amplitude_BipolarResponse_BipolarGainControl:'
                       'peak_amplitude_FiringRate_GanglionGainControl:'
@@ -713,17 +735,23 @@ def test_substituting_all_alias_in_multiple_analysis_dictionaries():
             ]
         },
         "MetaAnalysis": {
-            "test_meta_analysis":
-                {
-                    "arg1": [
-                        {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
-                        {"conditions": "barSpeed30dps", "measurements": all_measurements, "params": {"param1": 2}},
-                        {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
-                         "params": {"param1": 2}},
-                        {"conditions": all_conditions, "measurements": "VSDI", "params": {"param1": 1}}
-                    ]
-                    # "params": {"conditions": "barSpeed30dps", "measurements": "VSDI", "param1": 1}
-                }
+            "normalization": [
+                {"arg1": {"dimensions": "X:Y", "conditions": all_conditions, "measurements": "VSDI",
+                          "analyses": "peak_amplitude", "flag": ""},
+                 "arg2": {"dimensions": "X:Y", "conditions": all_conditions, "measurements": "VSDI",
+                          "analyses": "peak_amplitude_normalization", "flag": ""},
+                 "arg3": {"dimensions": "X:Y", "conditions": all_conditions, "measurements": "VSDI",
+                          "analyses": "peak_amplitude_normalization", "flag": ""},
+                 "params": {"params1": 8, "flag": ""}},
+
+                {"arg1": {"dimensions": "Y", "conditions": all_conditions, "measurements": "VSDI",
+                          "analyses": "peak_amplitude", "flag": "y6"},
+                 "arg2": {"dimensions": "Conditions", "conditions": all_conditions, "measurements": "VSDI",
+                          "analyses": "peak_amplitude", "flag": ""},
+                 "arg3": {"dimensions": "Y", "conditions": all_conditions, "measurements": "VSDI",
+                          "analyses": "peak_amplitude_normalization", "flag": "y6"},
+                 "params": {"params1": 8, "flag": "y6"}}
+            ]
         }
     }
 
@@ -766,15 +794,23 @@ def test_substituting_all_alias_in_multiple_analysis_dictionaries():
             ]
         },
         "MetaAnalysis": {
-            "test_meta_analysis":
-                {"arg1": [
-                    {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
-                    {"conditions": "barSpeed30dps", "measurements": "all_measurements", "params": {"param1": 2}},
-                    {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
-                     "params": {"param1": 2}},
-                    {"conditions": "all_conditions", "measurements": "VSDI", "params": {"param1": 1}}
-                ]
-                }
+            "normalization": [
+                {"arg1": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
+                          "analyses": "peak_amplitude", "flag": ""},
+                 "arg2": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
+                          "analyses": "peak_amplitude_normalization", "flag": ""},
+                 "arg3": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
+                          "analyses": "peak_amplitude_normalization", "flag": ""},
+                 "params": {"params1": 8, "flag": ""}},
+
+                {"arg1": {"dimensions": "Y", "conditions": "all_conditions", "measurements": "VSDI",
+                          "analyses": "peak_amplitude", "flag": "y6"},
+                 "arg2": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
+                          "analyses": "peak_amplitude", "flag": ""},
+                 "arg3": {"dimensions": "Y", "conditions": "all_conditions", "measurements": "VSDI",
+                          "analyses": "peak_amplitude_normalization", "flag": "y6"},
+                 "params": {"params1": 8, "flag": "y6"}}
+            ]
         }
     }
 
@@ -1252,3 +1288,474 @@ def test_peak_amplitude_analyzing():
 
     # Verification of the validity of the value of the amplitude.
     assert amplitude_conditions == 0.038
+
+
+def test_meta_analysis():
+    # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
+          as file_test):
+        macular_analysis_dataframes_default_test = pickle.load(file_test)
+
+    # Use division meta-analysis on default macular analysis dataframes with the default analyses dictionaries.
+    MacularAnalysisDataframes.normalization_analyzing(macular_analysis_dataframes_default_test, "normalization",
+                                                      dict_index_default)
+
+    # Verify that the conditions dataframe is correct.
+    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
+        peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Conditions"])
+
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
+            peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
+            peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
+            peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Time"][condition])
+
+
+def test_multiple_common_meta_analysis_group_parser():
+    # Initialisation of a decondensed dictionary model of common meta-analysis groups.
+    parsed_dictionaries_correct = [
+        {"arg1": [("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag1"),
+                  ("X", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag1"),
+                  ("Y", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag1"),
+                  ("Y", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag1")],
+         "params": {"factor": 8, "flag": "external_flag1"}},
+
+        {"arg1": [("X", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag2"),
+                  ("Y", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag2")],
+         "output1": [("X", "barSpeed30dps", "VSDI", "peak_amplitude"),
+                     ("Y", "barSpeed30dps", "VSDI", "peak_amplitude")],
+         "params": {"factor": 7}},
+
+        {"arg1": [("Conditions", "barSpeed28,5dps", "VSDI", "latency", "internal_flag3"),
+                  ("Conditions", "barSpeed30dps", "VSDI", "latency", "internal_flag3")],
+         "params": {"factor": 8, "output": "peak_amplitude_mean"}},
+    ]
+
+    # Initialisation of a condensed dictionary of common meta-analysis groups.
+    meta_analysis_dictionaries = [
+        {"arg1": {"dimensions": "X:Y", "conditions": "barSpeed28,5dps:barSpeed30dps", "measurements": "VSDI",
+                  "analyses": "peak_amplitude", "flag": "internal_flag1"},
+         "params": {"factor": 8, "flag": "external_flag1"}},
+        {"arg1": {"dimensions": "X:Y", "conditions": "barSpeed30dps", "measurements": "VSDI",
+                  "analyses": "peak_amplitude", "flag": "internal_flag2"},
+         "output1": {"dimensions": "X:Y", "conditions": "barSpeed30dps", "measurements": "VSDI",
+                     "analyses": "peak_amplitude"},
+         "params": {"factor": 7}},
+        {"arg1": {"dimensions": "Conditions", "conditions": "barSpeed28,5dps:barSpeed30dps", "measurements": "VSDI",
+                  "analyses": "latency", "flag": "internal_flag3"},
+         "params": {"factor": 8, "output": "peak_amplitude_mean"}}
+    ]
+
+    # Parsing the dictionary of common meta-analysis groups.
+    parsed_dictionaries = MacularAnalysisDataframes.multiple_common_meta_analysis_group_parser(
+        meta_analysis_dictionaries)
+
+    assert parsed_dictionaries == parsed_dictionaries_correct
+
+
+def test_common_meta_analysis_group_parser():
+    # Initialisation of a complex dictionary model of common meta-analysis groups.
+    parsed_dictionary_correct = {
+        "arg1": [
+            ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("X", "barSpeed28,5dps", "VSDI", "latency", "internal_flag"),
+            ("X", "barSpeed28,5dps", "FiringRate", "peak_amplitude", "internal_flag"),
+            ("X", "barSpeed28,5dps", "FiringRate", "latency", "internal_flag"),
+            ("X", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("X", "barSpeed30dps", "VSDI", "latency", "internal_flag"),
+            ("X", "barSpeed30dps", "FiringRate", "peak_amplitude", "internal_flag"),
+            ("X", "barSpeed30dps", "FiringRate", "latency", "internal_flag"),
+
+            ("Y", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Y", "barSpeed28,5dps", "VSDI", "latency", "internal_flag"),
+            ("Y", "barSpeed28,5dps", "FiringRate", "peak_amplitude", "internal_flag"),
+            ("Y", "barSpeed28,5dps", "FiringRate", "latency", "internal_flag"),
+            ("Y", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Y", "barSpeed30dps", "VSDI", "latency", "internal_flag"),
+            ("Y", "barSpeed30dps", "FiringRate", "peak_amplitude", "internal_flag"),
+            ("Y", "barSpeed30dps", "FiringRate", "latency", "internal_flag")
+        ],
+        "arg2": [("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag")] * 16,
+        # TODO Régler le problème d'ordre des conditions dans l'arg3 comparé à l'arg1.
+        "arg3": [
+            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag")
+        ],
+        "output": [
+            ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude_latency_normalization"),
+            ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude_latency_normalization"),
+            ("X", "barSpeed28,5dps", "FiringRate", "peak_amplitude_latency_normalization"),
+            ("X", "barSpeed28,5dps", "FiringRate", "peak_amplitude_latency_normalization"),
+            ("X", "barSpeed30dps", "VSDI", "peak_amplitude_latency_normalization"),
+            ("X", "barSpeed30dps", "VSDI", "peak_amplitude_latency_normalization"),
+            ("X", "barSpeed30dps", "FiringRate", "peak_amplitude_latency_normalization"),
+            ("X", "barSpeed30dps", "FiringRate", "peak_amplitude_latency_normalization"),
+
+            ("Y", "barSpeed28,5dps", "VSDI", "peak_amplitude_latency_normalization"),
+            ("Y", "barSpeed28,5dps", "VSDI", "peak_amplitude_latency_normalization"),
+            ("Y", "barSpeed28,5dps", "FiringRate", "peak_amplitude_latency_normalization"),
+            ("Y", "barSpeed28,5dps", "FiringRate", "peak_amplitude_latency_normalization"),
+            ("Y", "barSpeed30dps", "VSDI", "peak_amplitude_latency_normalization"),
+            ("Y", "barSpeed30dps", "VSDI", "peak_amplitude_latency_normalization"),
+            ("Y", "barSpeed30dps", "FiringRate", "peak_amplitude_latency_normalization"),
+            ("Y", "barSpeed30dps", "FiringRate", "peak_amplitude_latency_normalization")
+        ],
+        "params": {"factor": 8}}
+
+    # Initialisation of an unparsed complex dictionary of common meta-analysis groups.
+    common_meta_analysis_group_dictionary = {
+        "arg1": {"dimensions": "X:Y", "conditions": "barSpeed28,5dps:barSpeed30dps",
+                 "measurements": "VSDI:FiringRate",
+                 "analyses": "peak_amplitude:latency", "flag": "internal_flag"},
+        "arg2": {"dimensions": "Conditions", "conditions": "barSpeed30dps", "measurements": "VSDI",
+                 "analyses": "peak_amplitude", "flag": "internal_flag"},
+        "arg3": {"dimensions": "Conditions", "conditions": "barSpeed28,5dps:barSpeed30dps", "measurements": "VSDI",
+                 "analyses": "peak_amplitude", "flag": "internal_flag"},
+        "output": {"dimensions": "X:Y", "conditions": "barSpeed28,5dps:barSpeed30dps",
+                   "measurements": "VSDI:FiringRate",
+                   "analyses": "peak_amplitude_latency_normalization"},
+        "params": {"factor": 8}}
+
+    # Parsing the dictionary of common meta-analysis groups.
+    parsed_dictionary = MacularAnalysisDataframes.common_meta_analysis_group_parser(
+        common_meta_analysis_group_dictionary)
+
+    assert parsed_dictionary == parsed_dictionary_correct
+
+
+def test_resizing_common_analysis_group_levels():
+    # Initialisation of the list to be reproduced, consisting of an element repeated 4 times.
+    common_analysis_group_levels_list_correct = [("dimension1", "conditions1", "measurement1", "analysis1"),
+                                                 ("dimension1", "conditions1", "measurement1", "analysis1"),
+                                                 ("dimension1", "conditions1", "measurement1", "analysis1"),
+                                                 ("dimension1", "conditions1", "measurement1", "analysis1")]
+
+    # Initialisation of the single list of elements.
+    common_analysis_group_levels_list = [("dimension1", "conditions1", "measurement1", "analysis1")]
+
+    # Case of a list with a single element to be repeated 4 times.
+    assert MacularAnalysisDataframes.resizing_common_analysis_group_levels(
+        common_analysis_group_levels_list, 4) == common_analysis_group_levels_list_correct
+
+    # Initialisation of the list to be reproduced, consisting of 3 elements repeated twice.
+    common_analysis_group_levels_list_correct = [("dimension1", "conditions1", "measurement1", "analysis1"),
+                                                 ("dimension1", "conditions1", "measurement1", "analysis1"),
+                                                 ("dimension2", "conditions2", "measurement2", "analysis2"),
+                                                 ("dimension2", "conditions2", "measurement2", "analysis2"),
+                                                 ("dimension3", "conditions3", "measurement3", "analysis3"),
+                                                 ("dimension3", "conditions3", "measurement3", "analysis3")
+                                                 ]
+
+    # Initialisation of the list of 3 elements.
+    common_analysis_group_levels_list = [("dimension1", "conditions1", "measurement1", "analysis1"),
+                                         ("dimension2", "conditions2", "measurement2", "analysis2"),
+                                         ("dimension3", "conditions3", "measurement3", "analysis3")]
+
+    # Case of a list of 3 elements to be repeated twice.
+    assert MacularAnalysisDataframes.resizing_common_analysis_group_levels(
+        common_analysis_group_levels_list, 6) == common_analysis_group_levels_list_correct
+
+
+def test_make_common_group_meta_analysis():
+    # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
+          as file_test):
+        macular_analysis_dataframes_default_test = pickle.load(file_test)
+
+    # Getting a list of dictionaries of common meta-analysis groups that's not condensed for tests.
+    common_meta_analysis_group_dictionaries = MacularAnalysisDataframes.multiple_common_meta_analysis_group_parser(
+        macular_analysis_dataframes_default_test.multiple_dicts_analysis["MetaAnalysis"]["normalization"])
+
+    # Execution of a group of common meta-analyses based only on spatial dataframes.
+    macular_analysis_dataframes_default_test.make_common_group_meta_analysis(
+        MacularAnalysisDataframes.normalization_analyzing.__wrapped__, common_meta_analysis_group_dictionaries[0],
+        "normalization", dict_index_default)
+
+    # Execution of a group of common meta-analyses based on spatial and condition dataframes.
+    macular_analysis_dataframes_default_test.make_common_group_meta_analysis(
+        MacularAnalysisDataframes.normalization_analyzing.__wrapped__, common_meta_analysis_group_dictionaries[1],
+        "normalization", dict_index_default)
+
+    # Execution of a group of common meta-analyses based only on condition dataframes.
+    macular_analysis_dataframes_default_test.make_common_group_meta_analysis(
+        MacularAnalysisDataframes.normalization_analyzing.__wrapped__, common_meta_analysis_group_dictionaries[2],
+        "normalization", dict_index_default)
+
+    # Verify that the conditions dataframe is correct.
+    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
+        peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Conditions"])
+
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
+            peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
+            peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
+            peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Time"][condition])
+
+
+def test_extract_all_analysis_array_from_dataframes():
+    # Initialisation of a meta-analysis dictionary after extraction of the arrays from each analysis.
+    correct_meta_analysis_dictionary = {
+        "numerator": np.array([0.041, 0.045, 0.041, 0.045, 0.041, 0.044, 0.041, 0.043, 0.041,
+                               0.041, 0.042, 0.041, 0.042, 0.04, 0.043, 0.04, 0.043, 0.039,
+                               0.043, 0.039, 0.043, 0.04, 0.043, 0.04, 0.042, 0.04, 0.041, 0.041,
+                               0.041, 0.042, 0.04, 0.042, 0.04, 0.042, 0.039, 0.042, 0.039,
+                               0.043, 0.039, 0.043, 0.04, 0.042, 0.04, 0.041, 0.041, 0.041,
+                               0.041, 0.04, 0.042, 0.04, 0.042, 0.039, 0.043, 0.04, 0.043, 0.04,
+                               0.043, 0.04, 0.043, 0.04, 0.042, 0.041, 0.042, 0.042, 0.042,
+                               0.043, 0.042, 0.044, 0.042, 0.045, 0.043, 0.047, 0.043]),
+        "denominator": 0.039,
+        "output": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude")
+    }
+
+    # Initialisation of a meta-analysis dictionary before extracting the arrays from each analysis.
+    meta_analysis_dictionary = {
+        "numerator": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", ""),
+        "denominator": ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", ""),
+        "output": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude")
+    }
+
+    # Extraction of arrays from each analysis.
+    MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes_default,
+                                                                         meta_analysis_dictionary)
+    # Verification that the two dictionaries are equal.
+    for arguments in meta_analysis_dictionary:
+        if "output" in arguments:
+            assert meta_analysis_dictionary[arguments] == correct_meta_analysis_dictionary[arguments]
+        else:
+            assert np.array_equal(meta_analysis_dictionary[arguments], correct_meta_analysis_dictionary[arguments])
+
+
+def test_extract_one_analysis_array_from_dataframes():
+    # Define level names for an analysis located in the spatial dataframe X.
+    meta_analysis_dictionary_x = ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", "")
+
+    # Extraction of the analysis associated with the previously defined levels.
+    analysis_array_x = MacularAnalysisDataframes.extract_one_analysis_array_from_dataframes(
+        macular_analysis_dataframes_default, meta_analysis_dictionary_x)
+
+    # Case of extracting the array of values from an analysis from the spatial dataframe X of a given condition.
+    assert np.array_equal(analysis_array_x, np.array([0.041, 0.045, 0.041, 0.045, 0.041, 0.044, 0.041, 0.043, 0.041,
+                                                      0.041, 0.042, 0.041, 0.042, 0.04, 0.043, 0.04, 0.043, 0.039,
+                                                      0.043, 0.039, 0.043, 0.04, 0.043, 0.04, 0.042, 0.04, 0.041, 0.041,
+                                                      0.041, 0.042, 0.04, 0.042, 0.04, 0.042, 0.039, 0.042, 0.039,
+                                                      0.043, 0.039, 0.043, 0.04, 0.042, 0.04, 0.041, 0.041, 0.041,
+                                                      0.041, 0.04, 0.042, 0.04, 0.042, 0.039, 0.043, 0.04, 0.043, 0.04,
+                                                      0.043, 0.04, 0.043, 0.04, 0.042, 0.041, 0.042, 0.042, 0.042,
+                                                      0.043, 0.042, 0.044, 0.042, 0.045, 0.043, 0.047, 0.043]))
+
+    # Definition of level names for an analysis located in the conditions dataframe.
+    meta_analysis_dictionary_conditions = ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "test")
+
+    # Adding a new value line to the conditions dataframe.
+    macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"].loc[
+        "peak_amplitude_VSDI_test"] = (1.8, 3.2)
+
+    # Extraction of the analysis associated with the previously defined levels.
+    analysis_array_conditions = MacularAnalysisDataframes.extract_one_analysis_array_from_dataframes(
+        macular_analysis_dataframes_default, meta_analysis_dictionary_conditions)
+
+    # Case of extracting the value of an analysis for a condition from the conditions dataframe.
+    assert analysis_array_conditions == 1.8
+    # Remove the new value row in the conditions dataframe.
+    macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"].drop("peak_amplitude_VSDI_test",
+                                                                                    inplace=True)
+
+
+def test_make_meta_analysis_outputs():
+    # Defining a meta-analysis name for tests.
+    meta_analysis_name = "normalization"
+
+    # Definition of a dictionary of argument levels without output for the default case.
+    meta_analysis_dictionary = {
+        "numerator": ("X", "barSpeed28,5dps", "VSDI", "latency", ""),
+        "denominator": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", "")}
+
+    # Definition of a meta-analysis parameter dictionary for tests.
+    parameters_meta_analysis_dict = {"factor": 8, "flag": "external_flag"}
+
+    # Case of default formatting.
+    dataframe_name_dict = MacularAnalysisDataframes.make_meta_analysis_outputs(meta_analysis_name,
+                                                                               meta_analysis_dictionary,
+                                                                               parameters_meta_analysis_dict)
+    assert dataframe_name_dict["output"] == {"name": "peak_amplitude_VSDI_latency_VSDI_normalization_external_flag"}
+
+    # Added an output in the meta-analysis parameters.
+    parameters_meta_analysis_dict["output_test_1"] = "VSDI_latency_peak_amplitude_normalization"
+
+    # Case of formatting from the output in the meta-analysis parameters.
+    dataframe_name_dict = MacularAnalysisDataframes.make_meta_analysis_outputs(meta_analysis_name,
+                                                                               meta_analysis_dictionary,
+                                                                               parameters_meta_analysis_dict)
+    assert dataframe_name_dict["output_test_1"] == {"name": "VSDI_latency_peak_amplitude_normalization"}
+
+    # Added two outputs to the meta-analysis function arguments.
+    meta_analysis_dictionary["output_test_2"] = (
+        "X", "barSpeed28,5dps", "VSDI", "latency_peak_amplitude_normalization", "")
+    meta_analysis_dictionary["output_test_3"] = ("X", "barSpeed28,5dps", "VSDI", "normalization", "")
+
+    # Case of formatting from the outputs in the arguments of the meta-analysis function.
+    dataframe_name_dict = MacularAnalysisDataframes.make_meta_analysis_outputs(meta_analysis_name,
+                                                                               meta_analysis_dictionary,
+                                                                               parameters_meta_analysis_dict)
+    assert dataframe_name_dict["output_test_2"] == {"dimension": "X", "condition": "barSpeed28,5dps",
+                                                    "name": "latency_peak_amplitude_normalization"}
+    assert dataframe_name_dict["output_test_3"] == {"dimension": "X", "condition": "barSpeed28,5dps",
+                                                    "name": "normalization"}
+
+
+def test_add_array_line_to_dataframes():
+    # Adding an array to the spatial dataframe X of condition barSpeed30dps.
+    MacularAnalysisDataframes.add_array_line_to_dataframes(macular_analysis_dataframes_head100, "X",
+                                                           "barSpeed30dps", "test_X",
+                                                           np.array([i for i in range(83)]))
+    assert np.array_equal(macular_analysis_dataframes_head100.dict_analysis_dataframes["X"]["barSpeed30dps"].loc[
+                              "test_X"], np.array([i for i in range(83)]))
+
+    # Add an array to the conditions dataframe.
+    MacularAnalysisDataframes.add_array_line_to_dataframes(macular_analysis_dataframes_head100, "Conditions",
+                                                           "all", "test_conditions",
+                                                           np.array([0, 4, 5]))
+    assert np.array_equal(macular_analysis_dataframes_head100.dict_analysis_dataframes["Conditions"].loc[
+                              "test_conditions"], np.array([0, 4, 5]))
+
+    # Adds a unique value to a condition in the conditions dataframe.
+    MacularAnalysisDataframes.add_array_line_to_dataframes(macular_analysis_dataframes_head100, "Conditions",
+                                                           "barSpeed15dps", "test_conditions_2",
+                                                           10)
+    assert macular_analysis_dataframes_head100.dict_analysis_dataframes["Conditions"].loc[
+               "test_conditions_2"][1] == 10
+    assert np.isnan(macular_analysis_dataframes_head100.dict_analysis_dataframes["Conditions"].loc[
+                        "test_conditions_2"][0])
+    assert np.isnan(macular_analysis_dataframes_head100.dict_analysis_dataframes["Conditions"].loc[
+                        "test_conditions_2"][2])
+
+
+def test_normalization_analyzing():
+    # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
+          as file_test):
+        macular_analysis_dataframes_default_test = pickle.load(file_test)
+
+    # Initialisation of the meta-analysis parameter dictionary for tests.
+    parameters_meta_analysis_dict = {"factor": 8}
+
+    # Initialisation of a dictionary of argument associated to 2 arrays of values in numerator and denominator.
+    meta_analysis_dictionary = {
+        "numerator": ("X", "barSpeed28,5dps", "VSDI", "latency", "ms"),
+        "denominator": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", ""),
+        "output": {"dimension": "X", "condition": "barSpeed28,5dps", "name": "latency_ms_peak_amplitude_normalization"}}
+
+    # Performing division meta-analysis with arrays as numerators and denominators.
+    MacularAnalysisDataframes.normalization_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+                                                                  meta_analysis_dictionary, dict_index_default,
+                                                                  parameters_meta_analysis_dict)
+
+    # Getting the array calculated in the division meta-analysis.
+    output_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+        "latency_ms_peak_amplitude_normalization"].values
+
+    # Manual calculation of the expected array values of the meta-analysis division.
+    denominator_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+        "peak_amplitude_VSDI"].values
+    numerator_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+        "latency_VSDI_ms"].values
+    output_array_expected = numerator_array / denominator_array * 8
+
+    # Case of division meta-analysis with arrays as numerator and denominator values.
+    assert np.array_equal(output_array, output_array_expected)
+
+    # Initialisation of a dictionary of argument with a value in the denominator and an array in the numerator.
+    meta_analysis_dictionary = {
+        "numerator": ("X", "barSpeed28,5dps", "VSDI", "latency", "ms"),
+        "denominator": ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", ""),
+        "output": {"dimension": "X", "condition": "barSpeed28,5dps",
+                   "name": "cond_x_latency_ms_peak_amplitude_normalization"}}
+
+    # Performs the division meta-analysis with a value and an array of values in the arguments.
+    MacularAnalysisDataframes.normalization_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+                                                                  meta_analysis_dictionary, dict_index_default,
+                                                                  parameters_meta_analysis_dict)
+
+    # Getting the array calculated in the division meta-analysis.
+    output_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+        "cond_x_latency_ms_peak_amplitude_normalization"].values
+
+    # Manual calculation of the expected array values of the meta-analysis division.
+    denominator_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+        "peak_amplitude_VSDI", "barSpeed28,5dps"]
+    numerator_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+        "latency_VSDI_ms"].values
+    output_array_expected = numerator_array / denominator_array * 8
+
+    # Case of meta-analysis of division with a value in the denominator and an array in the numerator.
+    assert np.array_equal(output_array, output_array_expected)
+
+    # Initialisation of a dictionary of argument associated to 2 values in numerator, denominator and in output.
+    meta_analysis_dictionary = {
+        "numerator": ("Conditions", "barSpeed28,5dps", "VSDI",
+                      "peak_amplitude", ""),
+        "denominator": ("Conditions", "barSpeed28,5dps", "FiringRate_GanglionGainControl", "peak_amplitude", ""),
+        "output": {"dimension": "Conditions", "condition": "barSpeed28,5dps", "name":
+            "vsdi_ganglion_peak_amplitude_normalization"}}
+
+    # Performing division meta-analysis with two unique values in the arguments.
+    MacularAnalysisDataframes.normalization_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+                                                                  meta_analysis_dictionary, dict_index_default,
+                                                                  parameters_meta_analysis_dict)
+
+    # Getting the array calculated in the division meta-analysis.
+    output_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+        "vsdi_ganglion_peak_amplitude_normalization"].values
+
+    # Manual calculation of the expected value of the meta-analysis division.
+    denominator_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+        "peak_amplitude_FiringRate_GanglionGainControl", "barSpeed28,5dps"]
+    numerator_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+        "peak_amplitude_VSDI", "barSpeed28,5dps"]
+    output_array_expected = numerator_array / denominator_array * 8
+
+    # Case of meta-analysis of division with unique values in the numerator and denominator.
+    assert np.array_equal(output_array[0], output_array_expected)
+    assert output_array[1] is np.nan
+
+    # Remove to verify that these additions are the only changes made during the meta-analysis.
+    macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].drop(
+        "latency_ms_peak_amplitude_normalization", inplace=True)
+    macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].drop(
+        "cond_x_latency_ms_peak_amplitude_normalization", inplace=True)
+    macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].drop(
+        "vsdi_ganglion_peak_amplitude_normalization", inplace=True)
+
+    # Verify that the conditions dataframe is correct.
+    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"])
+
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
+            macular_analysis_dataframes_default.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
+            macular_analysis_dataframes_default.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
+            macular_analysis_dataframes_default.dict_analysis_dataframes["Time"][condition])
+

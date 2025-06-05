@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from src.data_manager.MacularDictArray import MacularDictArray
+from src.data_manager.MetaAnalyser import MetaAnalyser
 from src.data_manager.SpatialAnalyser import SpatialAnalyser
 from src.data_manager.ConditionsAnalyser import ConditionsAnalyser
 
@@ -637,18 +638,14 @@ class MacularAnalysisDataframes:
             for analysis in multiple_dicts_analysis[dimension]:
                 # Case of meta-analyses.
                 if dimension == "MetaAnalysis":
-                    # Loop on the arguments of the meta-analysis function.
-                    for meta_analysis_arguments in multiple_dicts_analysis["MetaAnalysis"][analysis]:
-                        if meta_analysis_arguments is not "params":
-                            # Verify that common analysis groups are organised within a list.
-                            if isinstance(multiple_dicts_analysis[dimension][analysis][meta_analysis_arguments], list):
-                                # Loop on common analysis groups.
-                                for common_group_analysis in (
-                                        multiple_dicts_analysis)[dimension][analysis][meta_analysis_arguments]:
-                                    # Verification that we are dealing with the dictionary of a common analysis groups.
-                                    if isinstance(common_group_analysis, dict):
-                                        self.substituting_all_alias_in_common_analysis_group_dictionary(
-                                            common_group_analysis)
+                    # Loop on the common meta-analysis groups list.
+                    for common_meta_analysis_group in multiple_dicts_analysis["MetaAnalysis"][analysis]:
+                        # Loop on the arguments of the meta-analysis function.
+                        for meta_analysis_arguments in common_meta_analysis_group:
+                            if meta_analysis_arguments != "params":
+                                # Substitution of aliases in the common analysis group for each meta-analysis argument.
+                                self.substituting_all_alias_in_common_analysis_group_dictionary(
+                                    common_meta_analysis_group[meta_analysis_arguments])
                 else:
                     # Verify that common analysis groups are organised within a list.
                     if isinstance(multiple_dicts_analysis[dimension][analysis], list):
@@ -769,6 +766,30 @@ class MacularAnalysisDataframes:
             if analysis in available_spatial_analyses_dict:
                 available_spatial_analyses_dict[analysis](self, multi_macular_dict_array, dimension, analysis)
 
+    # TODO test
+    def make_meta_analysis_dataframes_analysis(self, dict_index):
+        """Function used to perform all MacularAnalysisDataframe meta-analyses.
+
+        The names of all meta-analyses type in the multiple analysis dictionaries are scanned and identified. For each
+        of them, a conditional block allows the corresponding analysis function to be executed. All these functions
+        take as inputs the current MacularAnalysisDataframes, the dimension, and the current analysis.
+        """
+        # Dictionary containing all meta-analyses type currently implemented.
+        available_spatial_analyses_dict = {
+            "normalization": self.normalization_analyzing,
+            "peak_speed": self.peak_speed_analyzing,
+            # "stationary_peak_delay": self.stationary_peak_delay_analyzing,
+            # "linear_fit": self.linear_fit_analyzing,
+            # "maximal_latency": self.maximal_latency_analyzing,
+            # "anticipation_range": self.anticipation_range_analyzing,
+            # "short_range_anticipation_speed": self.short_range_anticipation_speed_analyzing,
+            # "long_range_anticipation_speed": self.long_range_anticipation_speed_analyzing
+        }
+
+        # Performs all meta-analyses type listed in the current analysis dictionary.
+        for meta_analysis_type in self.multiple_dicts_analysis["MetaAnalysis"]:
+            if meta_analysis_type in available_spatial_analyses_dict:
+                available_spatial_analyses_dict[meta_analysis_type](self, meta_analysis_type, dict_index)
 
     @staticmethod
     def analysis(analysis_function):
@@ -1137,3 +1158,545 @@ class MacularAnalysisDataframes:
             amplitude = amplitude_2d_array[parameters_analysis_dict["y"], parameters_analysis_dict["x"]]
 
         return amplitude
+
+    # TODO
+    @staticmethod
+    def meta_analysis(meta_analysis_function):
+        """Decorator for functions used to perform a specific meta-analysis of a multiple analysis dictionary.
+
+        Parameters
+        ----------
+        meta_analysis_function : function
+            Analysis function to apply to calculate the current meta-analysis.
+
+            This meta-analysis function changes between each meta-analysis, so they must all have the same three input
+            arguments: the data, the index and the analysis parameters. However, the data may be in different forms
+            depending on the function of the meta-analysis.
+        """
+
+        @wraps(meta_analysis_function)
+        def modified_meta_analysis_function(macular_analysis_dataframes, meta_analysis_type, dict_index):
+            # TODO Test, relire commentaires
+            """Function applied within the decorator, prior to the meta-analysis function, to process each group of common
+            analyses and analyse each of their pairs of conditions/measurements.
+
+            Depending on the type of meta-analysis being performed, the name of the meta-analysis and the associated
+            function are modified. The global analysis is performed by carrying out specific analyses for groups
+            of common analyses. Each of these groups combines conditions and measurements that share the same
+            parameter values for the current analysis. These common analysis groups are presented in the form of
+            dictionaries contained in a list. The dictionaries must contain a ‘conditions’ key, “measurements” associated with the names of the
+            conditions and measurements in the group separated by ‘:’ and a ‘params’ key containing all the parameters
+            to be used for the current analysis.
+
+            The function goes through the list of common analysis groups in the order decided by the user. This order
+            is important because if two common analysis groups act on one or more identical rows of dataframes, then
+            the last common analysis group processed will leave its value.
+
+            Lors d'une méta-analyse, l'ensemble des analyses contenues dans les listes des groupes communs d'analyses
+            associés à chaque arguments de la fonction de Meta-analyses sont récupérées une par une. L'ordre dans lequel sont
+            renseignées les différentes analyses utilisées par chaque argument est donc crucial. Si la méta-analyse nécessite
+            plusieurs arguments, le nombre d'analyses contenues dans leurs groupes d'analyses communes respectives doivent
+            être identiques. Il est aussi possible qu'un argument soit associé à une unique analyse, dans ce cas elle sera
+            ré-utilisée pour toutes les méta-analyses s'il y en a plus d'une.
+
+            Chaque analyses d'un MacularAnalysisDataframes peut être définie par les 4 niveaux hiérarchiques d'un
+            MacularAnalysisDataframes. On a la dimension ("X", "Y", "Conditions"), la condition ("barSpeed30dps",
+            "ampGang30Hz"), la mesure ("VSDI", "FiringRate_GanglionGainControl") et le type de l'analyse ("latency",
+            "peak_amplitude"). Il faut donc utiliser ces 4 niveaux pour localiser et extraire une analyse. A cela
+            s'ajoute aussi le nom du flag s'il y en a un.
+
+            # Le dictionnaire de méta-analyse est parser pour créer une liste de méta-analyses communes dont la
+            # longueur doit être la même pour chaque analyses utilisée dans la méta-analyse en cours.
+            # Si il y a une seule analyse elle sera répétée pour tous les groupes de méta-analyses.
+            # Les groupes de méta-analyses communes sont sous la forme d'un tuple
+            # (dimension, condition, mesure, analyse, étiquette)
+            # Les groupes de méta-analyses communes fonctionnent comme les groupes d'analyses communes, elles regroupent un
+            # ensemble de méta-analyses identiques avec les mêmes paramètres et à réaliser sur tout un lot d'input.
+            # Seul ces inputs varient. Le but est donc de récupérer tout ces inputs avant de les traiter identiquement.
+
+            Le dictionnaire de méta-analyse peut contenir deux manières de définir des outputs, la manière utilisée dépend
+            avant tout de la méta-analyse considérée. Certaine méta-analyses n'auront pas besoin de définir complètement
+            un nouvel output.
+
+            Parler de la structure des méta-analyses arguments et de la répartition des méta-analyses au sein de leurs
+            listes.
+
+            Parler de la différence entre l'argument output qui sert à spécifier un output totalement différent tandis
+            que si on le met pas ça veut dire que le type de méta-analyse prend un output parmi les arguments des analyses.
+
+            Parameters
+            ----------
+            macular_analysis_dataframes : MacularAnalysisDataframes
+                Macular analysis dataframes that the user want to do one meta-analysis. This dataframe will be used to
+                extract the analyses required for the meta-analysis.
+
+            meta_analysis_type : str
+                Name of the current meta-analysis type.
+
+            Returns
+            ----------
+            modified_meta_analysis_function : function
+                Decorated meta-analysis function to apply to calculate the current meta-analysis.
+            """
+            # Decondensed information on each analysis contained in the dictionaries of common meta-analysis groups.
+            common_meta_analysis_group_dictionaries = MacularAnalysisDataframes.multiple_common_meta_analysis_group_parser(
+                macular_analysis_dataframes.multiple_dicts_analysis["MetaAnalysis"][meta_analysis_type])
+
+            # Loop through each dictionary of common meta-analysis groups to execute them one by one.
+            for dictionary in common_meta_analysis_group_dictionaries:
+                macular_analysis_dataframes.make_common_group_meta_analysis(meta_analysis_function, dictionary,
+                                                                            meta_analysis_type, dict_index)
+
+        return modified_meta_analysis_function
+
+    @staticmethod
+    def multiple_common_meta_analysis_group_parser(meta_analysis_dictionaries):
+        """Function that transforms a list of condensed common meta-analysis dictionaries to detail all the
+        meta-analyses that comprise it.
+
+        The process works by decondensing one by one all the condensed common analysis dictionaries associated with
+        each meta-analysis argument.
+
+        Parameters
+        ----------
+        meta_analysis_dictionaries : list of dict
+            List of multiple different dictionaries of common meta-analysis group where keys are meta-analysis function
+            arguments and values are condensed common analysis group dictionaries.
+
+        Returns
+        ----------
+        parsed_meta_analysis_dictionaries : list of dict
+            List of a common meta-analysis group dictionaries with detailed meta-analyses for each meta-analysis
+            arguments.
+        """
+        parsed_meta_analysis_dictionaries = []
+        for common_group_meta_analysis_dictionary in meta_analysis_dictionaries:
+            parsed_meta_analysis_dictionaries += [MacularAnalysisDataframes.common_meta_analysis_group_parser(
+                common_group_meta_analysis_dictionary)]
+
+        return parsed_meta_analysis_dictionaries
+
+    @staticmethod
+    def common_meta_analysis_group_parser(common_meta_analysis_group_dictionary):
+        """Function that decondenses all meta-analyses contained in a dictionary of common meta-analysis groups. This is
+        characterised by the presence of a list of the levels defining each analyses containing in meta-analyses
+        arguments: its dimension, condition, measure, type of analysis and any associated flag.
+
+        Parsing will replace each of meta-analysis arguments dictionaries with the list of tuples of level names that
+        define the different analyses to be extracted from the MacularAnalysisDataframes. The dictionary also contains
+        a ‘params’ key associated with external parameters to be used for meta-analysis. This dictionary is not modified
+        during parsing.
+
+        In the case where the lists of analysis level for each argument are of different sizes, their size will be
+        adjusted as far as possible to the maximum size observed. This can only be done if the size of the list is
+        proportional to the maximum size. Each item in the list will be repeated n times to fill the size. The value
+        ‘n’ corresponds to the coefficient between the maximum size and that of the list in question.
+
+        Example :
+        common_meta_analysis_group_parser(
+        {"numerator": {"dimensions": "X:Y", "conditions": "barSpeed27ps:barSpeed30ps", "measurements": "VSDI",
+                        "analyses": "peak_amplitude", "flag": "internal_flag"},
+        "denominator": {"dimensions": "Conditions", "conditions": "barSpeed27ps:barSpeed30ps", "measurements": "VSDI",
+                        "analyses": "peak_amplitude", "flag": "internal_flag"},
+        "output": {"dimensions": "X:Y", "conditions": "barSpeed27ps:barSpeed30ps", "measurements": "VSDI",
+                        "analyses": "peak_amplitude"},
+        "params": {"factor": 8})
+
+        > {"numerator": [("X", "barSpeed27ps", "VSDI", "peak_amplitude", "internal_flag"),
+                        ("X", "barSpeed27ps", "VSDI", "peak_amplitude", "internal_flag")
+                        ("Y", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+                        ("Y", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag")],
+        "denominator": [("Conditions", "barSpeed27ps", "VSDI", "peak_amplitude", "internal_flag"),
+                        ("Conditions", "barSpeed27ps", "VSDI", "peak_amplitude", "internal_flag"),
+                        ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+                        ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag")],
+        "output": [("X", "barSpeed27ps", "VSDI", "peak_amplitudes_division"),
+                   ("X", "barSpeed27ps", "VSDI", "peak_amplitudes_division"),
+                   ("Y", "barSpeed30dps", "VSDI", "peak_amplitudes_division"),
+                   ("Y", "barSpeed30dps", "VSDI", "peak_amplitudes_division")],
+        "params": {"factor": 8}}
+
+        Parameters
+        ----------
+        common_meta_analysis_group_dictionary : dict of dict
+            Dictionary of a common meta-analysis group where keys are meta-analysis function arguments and values are
+            common analysis group dictionaries.
+
+            The dictionary of the common meta-analysis group consists of keys corresponding to the arguments to be
+            passed to the meta-analysis function. Each key is associated with the dictionary of the common analysis
+            group whose argument will take the values.
+
+        Returns
+        ----------
+        parsed_dictionary : dict of list
+            Dictionary of a common meta-analysis group with lists of tuples of level names characterising each analysis
+            associated with each of the meta-analysis arguments.
+        """
+        # Initialisation of the dictionary containing the lists of levels tuples of the common meta-analysis group.
+        parsed_dictionary = {}
+
+        # Initialisation of the maximum length of the level lists for common analysis groups.
+        common_meta_analysis_group_max_length = 1
+        # Loop through all argument names for the meta-analysis function in its dictionary.
+        for meta_analysis_argument in common_meta_analysis_group_dictionary:
+            # Copy the parameter dictionary to the parsed dictionary of common meta-analysis group.
+            if meta_analysis_argument == "params":
+                parsed_dictionary["params"] = common_meta_analysis_group_dictionary[meta_analysis_argument].copy()
+            # Initialisation of the list of levels of one common analysis group for one meta-analysis argument.
+            else:
+                argument_common_group_analysis = common_meta_analysis_group_dictionary[meta_analysis_argument]
+                if "output" in meta_analysis_argument:
+                    # Creation of levels generator for the common analysis group of the current output argument.
+                    argument_common_analysis_group_generator = MacularAnalysisDataframes.common_analysis_group_parser(
+                        [argument_common_group_analysis["dimensions"], argument_common_group_analysis["conditions"],
+                         argument_common_group_analysis["measurements"], argument_common_group_analysis["analyses"]])
+                else:
+                    # Creation of levels generator for the common analysis group of the current not output argument.
+                    argument_common_analysis_group_generator = MacularAnalysisDataframes.common_analysis_group_parser(
+                        [argument_common_group_analysis["dimensions"], argument_common_group_analysis["conditions"],
+                         argument_common_group_analysis["measurements"], argument_common_group_analysis["analyses"],
+                         argument_common_group_analysis["flag"]])
+                # Transformation of levels generator into a list of levels of the common analysis group.
+                parsed_dictionary[meta_analysis_argument] = [analysis_levels for analysis_levels in
+                                                             argument_common_analysis_group_generator]
+                # Calculate the maximum length of the level lists for each argument.
+                if len(parsed_dictionary[meta_analysis_argument]) > common_meta_analysis_group_max_length:
+                    common_meta_analysis_group_max_length = len(parsed_dictionary[meta_analysis_argument])
+
+        # Adjusting the length of levels lists of common analysis group that were too small.
+        for meta_analysis_argument in parsed_dictionary:
+            if meta_analysis_argument != "params":
+                parsed_dictionary[meta_analysis_argument] = (MacularAnalysisDataframes.
+                resizing_common_analysis_group_levels(
+                    parsed_dictionary[meta_analysis_argument],
+                    common_meta_analysis_group_max_length))
+
+        return parsed_dictionary
+
+    @staticmethod
+    def resizing_common_analysis_group_levels(common_analysis_group_levels_list, expected_length):
+        """Function for adjusting the size of the list of levels for a group of common analyses so that it corresponds
+        to an expected length.
+
+        The resizing can only work if the current length of the list is proportional to the expected size. If this is
+        the case, each element in the current list is repeated "n" times to reach the correct length. The number of
+        repetitions ‘n’ corresponds to the multiplier factor between the length of the list and the expected length.
+        When multiple items are repeated in this way, the first item is repeated first, then the second, and so on.
+        Example : [element1, element2, element3] for expected_length = 2
+        > [element1, element1, element2, element2, element3, element3]
+
+        Parameters
+        ----------
+        common_analysis_group_levels_list : list of tuples
+            List containing tuples of level names from a common analysis group.
+
+        expected_length : int
+            Expected length that you want to reach with the list of levels in the common analysis group.
+
+        Returns
+        ----------
+        resized_levels_list : list of tuples
+            List of level tuples of a common analysis group adjusted in size to achieve the expected size.
+        """
+        levels_list_length = len(common_analysis_group_levels_list)
+        # Cases where the length of the level list is smaller than expected.
+        if levels_list_length < expected_length and not (expected_length % levels_list_length):
+            resized_levels_list = []
+            # Correct the length by repeating each element in the list in an equivalent way.
+            for levels in common_analysis_group_levels_list:
+                resized_levels_list += [levels] * (expected_length // levels_list_length)
+        # Case where the length of the level list is equal to the expected size.
+        else:
+            resized_levels_list = common_analysis_group_levels_list
+
+        return resized_levels_list
+
+    def make_common_group_meta_analysis(self, meta_analysis_function, common_meta_analysis_group_dictionary,
+                                        meta_analysis, dict_index):
+        """Function performing all meta-analyses present in a group of decondensed common meta-analyses.
+
+        The decondensed group of common meta-analyses is structured as a dictionary associating the names of the
+        meta-analysis arguments with lists of tuples of all analyses levels for which the argument will take the value.
+
+        A meta-analysis groups together all the analyses located at the same index in all the lists of arguments of
+        meta-analyses. Therefore, all the arguments in a dictionary of common meta-analyses have a list of the same
+        length, each element of which represents the sequence of values that the argument will take during the common
+        meta-analysis.
+
+        The function iterates over the arguments (except ‘params’) of all meta-analyses defined in the common
+        meta-analysis group. The level tuples associated with all these arguments are stored as is in a first dictionary
+        that is used after the loop to construct the names of all output arguments of the meta-analysis. The level
+        tuples of the non-output arguments are also used to extract the arrays of analyses they describe into a second
+        dictionary. This dictionary also contains the analysis levels defined in the output arguments. This dictionary
+        is finally used in the execution of the current meta-analysis function.
+
+        Parameters
+        ----------
+        meta_analysis_function : function
+            Analysis function to apply to calculate the current meta-analysis.
+
+            This meta-analysis function changes between each meta-analysis, so they must all have the same three input
+            arguments: the data, the index and the analysis parameters. However, the data may be in different forms
+            depending on the function of the meta-analysis.
+
+        common_meta_analysis_group_dictionary : dict of dict
+            Dictionary of a decondensed common meta-analysis group where keys are meta-analysis function arguments and
+            values are decondensed common analysis group dictionaries.
+
+            The dictionary of the common meta-analysis group consists of keys corresponding to the arguments to be
+            passed to the meta-analysis function. Each key is associated with the list of each analysis levels whose
+            argument will take the values.
+
+        meta_analysis : str
+            Name of the current meta-analysis type.
+
+        dict_index : dict of dict
+            Dictionary of all indexes present in the multiple macular dict array used in the current
+            MacularAnalysisDataframes.
+        """
+        # Initiate the dictionary containing all the information of one meta-analysis.
+        current_meta_analysis_dictionary = {}
+
+        # Define a list of all argument names needed for the current meta-analysis.
+        meta_analysis_arguments_list = list(common_meta_analysis_group_dictionary.keys())
+        meta_analysis_arguments_list.remove("params")
+
+        # Measurement of the number of meta-analyses to be performed in the current common meta-analysis group.
+        meta_analysis_arguments_length = len(common_meta_analysis_group_dictionary[meta_analysis_arguments_list[0]])
+
+        # Loop on the indexes of all meta-analyses contained in the common meta-analysis group.
+        for analysis_levels_index in range(meta_analysis_arguments_length):
+            # Loop over the arguments of the current meta-analysis function.
+            for meta_analysis_argument in meta_analysis_arguments_list:
+                # Store the levels defining the current meta-analysis in the meta-analysis dictionary.
+                current_meta_analysis_dictionary[meta_analysis_argument] = (
+                    common_meta_analysis_group_dictionary)[meta_analysis_argument][analysis_levels_index]
+
+            # Creation of a dictionary of names for each output argument of the current meta-analysis.
+            current_meta_analysis_dictionary.update(MacularAnalysisDataframes.make_meta_analysis_outputs(
+                meta_analysis, current_meta_analysis_dictionary, common_meta_analysis_group_dictionary["params"]))
+
+            # Execution of the current meta-analysis function.
+            meta_analysis_function(self, current_meta_analysis_dictionary, dict_index,
+                                   common_meta_analysis_group_dictionary["params"].copy())
+
+    @staticmethod
+    def extract_all_analysis_array_from_dataframes(macular_analysis_dataframes, meta_analysis_dictionary):
+        """Function used to extract the value(s) associated with all analysis involved in the meta-analysis and
+        contained in a MacularAnalysisDataframes.
+
+        Parameters
+        ----------
+        macular_analysis_dataframes : MacularAnalysisDataframes
+            Macular Analyses Dataframes that the user wishes to use to extract a row from a given dataframe.
+
+        meta_analysis_dictionary : dict of tuple
+            Meta-analysis dictionary linking the names of arguments in a meta-analysis with the names of the levels
+            defining a given analysis (dimension, condition, measurements, analysis type, flag).
+        """
+        # Loop on meta-analysis arguments except output ones.
+        for meta_analysis_argument in meta_analysis_dictionary.keys():
+            if "output" not in meta_analysis_argument:
+                meta_analysis_dictionary[meta_analysis_argument] = (
+                    MacularAnalysisDataframes.extract_one_analysis_array_from_dataframes(
+                        macular_analysis_dataframes, meta_analysis_dictionary[meta_analysis_argument]))
+
+    @staticmethod
+    def extract_one_analysis_array_from_dataframes(macular_analysis_dataframes, analysis_levels):
+        """Function used to extract the value(s) associated with a given analysis and contained in a
+        MacularAnalysisDataframes.
+
+        Each analysis of a MacularAnalysisDataframes can be defined by the four hierarchical levels of a
+        MacularAnalysisDataframes. There is the dimension (‘X’, ‘Y’, “Conditions”), the condition (‘barSpeed30dps’,
+        ‘ampGang30Hz’), the measurement (‘VSDI’, ‘FiringRate_GanglionGainControl’) and the type of analysis (“latency”,
+        ‘peak_amplitude’). These four levels must therefore be used to locate and extract an analysis. In addition,
+        there is also the name of the flag, if there is one.
+
+        In the case of the ‘Conditions’ dimension, there is a single dataframe containing the data, whereas in the
+        other spatio-temporal dimensions there is one dataframe per condition. Therefore, two methods must be used to
+        extract values from these two types of dataframes.
+
+        Parameters
+        ----------
+        macular_analysis_dataframes : MacularAnalysisDataframes
+            Macular Analyses Dataframes that the user wishes to use to extract a row from a given dataframe.
+
+        analysis_levels : tuple
+            Names of the levels defining a given analysis (dimension, condition, measure, analysis type).
+
+        Returns
+        ----------
+        analysis_array : int, float or np.ndarray
+            Array of values or single value of the analysis to be extracted.
+        """
+        # Construction of the name of the analysis line to be extracted.
+        dataframe_row = f"{analysis_levels[3]}_{analysis_levels[2]}_{analysis_levels[4]}".strip("_")
+        # Case of the single conditions dataframe.
+        if analysis_levels[0] == "Conditions":
+            analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_levels[0]].loc[
+                dataframe_row, analysis_levels[1]]
+        # Case of multiple spatio-temporal dataframes.
+        else:
+            analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_levels[0]][
+                                 analysis_levels[1]].loc[
+                             dataframe_row, :]
+
+        return analysis_array
+
+    @staticmethod
+    def make_meta_analysis_outputs(meta_analysis_name, meta_analysis_dictionary, parameters_meta_analysis_dict):
+        """Function for formatting meta-analysis outputs names.
+
+        The name of the meta-analysis is primarily retrieved from the name defined among the arguments of the
+        meta-analysis function. All arguments containing the term ‘output’ will be used to retrieve as many names as
+        will be defined in a dictionary. If this is not the case, the name defined in the meta-analysis parameter
+        dictionary will be used. All parameters containing the term ‘output’ are retrieved again. Finally, the default
+        behaviour if no output exists is to format using the measurements and analysis types of each argument of the
+        meta-analysis. It is possible to slightly adapt this default case by adding a ‘flag’ parameter in the
+        meta-analysis parameter dictionary. This ‘flag’ character string will be added as last suffix.
+
+        Parameters
+        ----------
+        meta_analysis_name : str
+            Name of the meta-analysis for which a format is needed.
+
+        meta_analysis_dictionary : dict of tuples
+            Meta-analysis dictionary linking the names of arguments in a meta-analysis with the names of the levels
+            defining a given analysis (dimension, condition, measurements, analysis type, flag).
+
+            Among the arguments of the meta-analysis function, there may be one or more arguments used as output within
+            a MacularAnalysisDataframes. These arguments can be recognised by the presence of the term ‘output’ in
+            their key.
+
+        parameters_meta_analysis_dict : dict
+            Dictionary containing all the parameters of the meta-analysis to be formatted.
+
+            This dictionary can contain a ‘flag’ key associated with the final suffix to be added at the end of the
+            name of the dataframe row to be created. The dictionary may also contain ‘output’ keys corresponding to the
+            names of the rows to be used as output if no “output” key exists in the names of the arguments of the
+            meta-analysis function. These keys are characterised by the presence of the term ‘output’ in their name.
+
+        Returns
+        ----------
+        meta_analysis_outputs_dict : dict
+            Dictionary associating each output with the output name(s) of the current meta-analysis to use in a
+            dataframe.
+        """
+        meta_analysis_outputs_dict = {}
+
+        output = False
+        # Loop over all arguments of the meta-analysis function.
+        for meta_analysis_arguments in meta_analysis_dictionary:
+            # Cases where one or more outputs have been defined in the meta-analysis arguments.
+            if "output" in meta_analysis_arguments:
+                meta_analysis_outputs_dict[meta_analysis_arguments] = {
+                    "dimension": meta_analysis_dictionary[meta_analysis_arguments][0],
+                    "condition": meta_analysis_dictionary[meta_analysis_arguments][1],
+                    "name": f'{meta_analysis_dictionary[meta_analysis_arguments][3]}'
+                }
+                output = True
+
+        # Cases where no output has been defined in the meta-analysis arguments.
+        if not output:
+            # Cases where one or more outputs have been defined in the meta-analysis settings.
+            for params in parameters_meta_analysis_dict:
+                if "output" in params:
+                    meta_analysis_outputs_dict[params] = {"name": f'{parameters_meta_analysis_dict[params]}'}
+                    output = True
+
+        # Default case performing formatting based on the analysis information.
+        if not output:
+            dataframe_row_list = []
+
+            for meta_analysis_argument in sorted(list(meta_analysis_dictionary.keys())):
+                dataframe_row_list += [meta_analysis_dictionary[meta_analysis_argument][3],
+                                       meta_analysis_dictionary[meta_analysis_argument][2]]
+            dataframe_row_list += [meta_analysis_name, parameters_meta_analysis_dict["flag"]]
+            meta_analysis_outputs_dict["output"] = {"name": "_".join(dataframe_row_list).strip("_")}
+
+        return meta_analysis_outputs_dict
+
+    @staticmethod
+    def add_array_line_to_dataframes(macular_analysis_dataframes, dimension, condition, output, array_output):
+        """Function to add a new line within a dataframe of a MacularDictDataframes.
+
+        Creating a new line requires all the names of the levels in the MacularDictDataframes to identify the position
+        of the new line and its name.
+
+        Parameters
+        ----------
+        macular_analysis_dataframes : MacularAnalysisDataframes
+            Macular Analyses Dataframes that the user wishes to use to add a new row in a given dataframe.
+
+        dimension : str
+            Dimension of the dataframe in which to add the new row.
+
+        condition : str
+            Condition under which to add the new line.
+
+        output : str
+            Name of the new line to be created.
+
+        array_output : int, float or np.ndarray
+            Value of the new line to be created.
+        """
+        # Case of the conditions dataframe.
+        if dimension == "Conditions":
+            # Case of adding an array of values for all conditions in the conditions Dataframe.
+            if isinstance(array_output, np.ndarray):
+                macular_analysis_dataframes.dict_analysis_dataframes[dimension].loc[output, :] = array_output
+            # Case of adding a single value of a given condition to the condition dataframe.
+            else:
+                macular_analysis_dataframes.dict_analysis_dataframes[dimension].loc[output, condition] = array_output
+        # Case of spatio-temporal dataframes.
+        else:
+            macular_analysis_dataframes.dict_analysis_dataframes[dimension][condition].loc[output] = array_output
+
+    @staticmethod
+    @meta_analysis
+    def normalization_analyzing(macular_analysis_dataframes, meta_analysis_dictionary, index,
+                                parameters_meta_analysis_dict):
+        """Function that calculates a normalization between two given analyses and multiplies the result by a
+        multiplication factor.
+
+        To work, this meta-analysis requires two arguments: the numerator and the denominator, which must defined in
+        the meta-analysis dictionaries. A third key, ‘output’, must also be defined, which corresponds to the position
+        where you want to save the result of the operation. Finally, the last key, “params”, must contain the key
+        ‘factor’ with the value of the multiplication factor and the flag to be used as a suffix for the name of the
+        meta-analysis.
+
+        Parameters
+        ----------
+        macular_analysis_dataframes : MacularAnalysisDataframes
+            Macular Analyses Dataframes whose analyses the user wishes to use for meta-analysis.
+
+        meta_analysis_dictionary : dict of tuple and dict of dict
+            Meta-analysis dictionary linking the names of arguments in a meta-analysis with the associated array of
+            values. In the case of arguments containing the term ‘output’, the key is associated with the name of the
+            outputs created for the dataframe.
+
+        index : dict of dict
+            Dictionary of all indexes present in the multiple macular dict array used in the current
+            MacularAnalysisDataframes.
+
+        parameters_meta_analysis_dict : dict
+            Dictionary containing all the parameters of the meta-analysis to be formatted.
+
+            This dictionary must contain the ‘factor’ key associated with the value you want to use as the
+            multiplication factor.
+        """
+        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
+                                                                             meta_analysis_dictionary)
+
+        # Calculation of the division of the two analysis values and multiplication by the factor.
+        normalized_values = MetaAnalyser.normalization_computing(meta_analysis_dictionary["numerator"],
+                                                             meta_analysis_dictionary["denominator"],
+                                                             parameters_meta_analysis_dict["factor"])
+
+        # Adds the output value(s) to a new row in the output dataframe.
+        MacularAnalysisDataframes.add_array_line_to_dataframes(macular_analysis_dataframes,
+                                                               meta_analysis_dictionary["output"]["dimension"],
+                                                               meta_analysis_dictionary["output"]["condition"],
+                                                               meta_analysis_dictionary["output"]["name"],
+                                                               normalized_values)
