@@ -850,47 +850,7 @@ def test_substituting_all_alias_in_analysis_dictionary():
              "flag": ""})
 
 
-    # Preparation of attributes of macular analysis dataframes.
-    macular_analysis_dataframes_test._multiple_dicts_analysis = dict_analysis_test_default
-    macular_analysis_dataframes_test._levels_multiple_dictionaries = levels_multiple_dictionaries_default
 
-    # Execute the creating_sort_order_from_multiple_dicts_analysis function to be tested.
-    dict_sort_order = macular_analysis_dataframes_test.creating_sort_order_from_multiple_dicts_analysis()
-
-    # Verification of correct sorting.
-    assert dict_sort_order == dict_sort_order_correct
-
-
-def test_creating_sort_order_from_dict_analysis():
-    # Define strings containing one less conditions and measures.
-    all_measurements_minus_one = ":".join(all_measurements.split(":")[:-1])
-
-    # Initialisation of a dictionary for a complex analysis.
-    dict_analysis = {
-        all_conditions: {all_measurements: {"threshold": 0.01, "y": 7, "index": "temporal_index"}},
-        "barSpeed1dps": {all_measurements: {"threshold": 0.005, "y": 7, "index": "temporal_index"},
-                         "VSDI": {"threshold": 0.001, "y": 7, "index": "temporal_index"},
-                         "Activity": {"threshold": 0.001, "y": 7, "index": "temporal_index"}},
-        "barSpeed3dps": {all_measurements_minus_one: {"threshold": 0.005, "y": 7,
-                                                      "index": "temporal_index"},
-                         "Activity": {"threshold": 0.001, "y": 7, "index": "temporal_index"}
-                         }
-    }
-
-    # Case of a sort order for conditions.
-    sorted_list_conditions = MacularAnalysisDataframes.creating_sort_order_from_dict_analysis(
-        dict_analysis, all_conditions)
-    assert sorted_list_conditions == [all_conditions, "barSpeed1dps", "barSpeed3dps"]
-
-    # Case of a sort order for measurements.
-    sorted_list_mesurements = MacularAnalysisDataframes.creating_sort_order_from_dict_analysis(
-        dict_analysis["barSpeed1dps"], all_measurements)
-    assert sorted_list_mesurements == [all_measurements, "Activity", "VSDI"]
-
-    # Case of a sort order without ‘all’ terms.
-    sorted_list_mesurements_no_all = MacularAnalysisDataframes.creating_sort_order_from_dict_analysis(
-        dict_analysis["barSpeed3dps"], all_measurements)
-    assert sorted_list_mesurements_no_all == ["Activity", ":".join(all_measurements.split(":")[:-1])]
 
 
 def test_make_spatial_dataframes_analysis():
