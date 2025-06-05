@@ -778,7 +778,7 @@ class MacularAnalysisDataframes:
         available_spatial_analyses_dict = {
             "normalization": self.normalization_analyzing,
             "peak_speed": self.peak_speed_analyzing,
-            # "stationary_peak_delay": self.stationary_peak_delay_analyzing,
+            "stationary_peak_delay": self.stationary_peak_delay_analyzing,
             # "linear_fit": self.linear_fit_analyzing,
             # "maximal_latency": self.maximal_latency_analyzing,
             # "anticipation_range": self.anticipation_range_analyzing,
@@ -1661,9 +1661,10 @@ class MacularAnalysisDataframes:
 
         To work, this meta-analysis requires two arguments: the numerator and the denominator, which must defined in
         the meta-analysis dictionaries. A third key, ‘output’, must also be defined, which corresponds to the position
-        where you want to save the result of the operation. Finally, the last key, “params”, must contain the key
-        ‘factor’ with the value of the multiplication factor and the flag to be used as a suffix for the name of the
-        meta-analysis.
+        where you want to save the result of the operation.
+
+        Finally, the last key, “params”, must contain the key ‘factor’ with the value of the multiplication factor and
+        the flag to be used as a suffix for the name of the meta-analysis.
 
         Parameters
         ----------
@@ -1691,8 +1692,8 @@ class MacularAnalysisDataframes:
 
         # Calculation of the division of the two analysis values and multiplication by the factor.
         normalized_values = MetaAnalyser.normalization_computing(meta_analysis_dictionary["numerator"],
-                                                             meta_analysis_dictionary["denominator"],
-                                                             parameters_meta_analysis_dict["factor"])
+                                                                 meta_analysis_dictionary["denominator"],
+                                                                 parameters_meta_analysis_dict["factor"])
 
         # Adds the output value(s) to a new row in the output dataframe.
         MacularAnalysisDataframes.add_array_line_to_dataframes(macular_analysis_dataframes,
@@ -1700,3 +1701,60 @@ class MacularAnalysisDataframes:
                                                                meta_analysis_dictionary["output"]["condition"],
                                                                meta_analysis_dictionary["output"]["name"],
                                                                normalized_values)
+
+    @staticmethod
+    @meta_analysis
+    def peak_speed_analyzing(macular_analysis_dataframes, meta_analysis_dictionary, index,
+                             parameters_meta_analysis_dict):
+        """Function that calculates the speed of movement of an object based on the movement of its peak in one of the
+        spatial dimensions.
+
+        To work, this meta-analysis requires 1 argument: the time to peak that needs to be fitted. It must be defined in
+        the meta-analysis dictionaries. This dictionary does not require an ‘output’ key to define the output to which
+        the peak speed should be sent. Instead, the output is automatically set to the conditions dataframe and directly
+        uses the conditions defined in the ‘time to peak’ analysis.
+
+        The dictionary also contains the ‘params’ parameters, whose dictionary must contain the ‘index’ parameter,
+        which corresponds to the name of the spatial index to be used (X or Y). The spatial index depends on the axis
+        of movement. Another key must be added to define the name of the output to be created in the condition
+        dataframe. The first key, ‘output’, allows you to define a specific name, while the second alternative key,
+        ‘flag’, allows you to use the default output name by simply adding a suffix.
+
+        Parameters
+        ----------
+        macular_analysis_dataframes : MacularAnalysisDataframes
+            Macular Analyses Dataframes whose analyses the user wishes to use for meta-analysis.
+
+        meta_analysis_dictionary : dict of tuple and dict of dict
+            Meta-analysis dictionary linking the names of arguments in a meta-analysis with the associated array of
+            values. In the case of arguments containing the term ‘output’, the key is associated with the name of the
+            outputs created for the dataframe.
+
+        index : dict of dict
+            Dictionary of all indexes present in the multiple macular dict array used in the current
+            MacularAnalysisDataframes.
+
+        parameters_meta_analysis_dict : dict
+            Dictionary containing all the parameters of the meta-analysis to be formatted.
+
+            This dictionary must contain the spatial index name to be used for fitting.
+        """
+        # Store dimensions and conditions of output.
+        meta_analysis_dictionary["output"]["dimension"] = "Conditions"
+        meta_analysis_dictionary["output"]["condition"] = meta_analysis_dictionary["time_to_peak"][1]
+
+        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
+                                                                             meta_analysis_dictionary)
+
+        # Calculation of the peak speed of the time to peak data array.
+        peak_speed_fit = MetaAnalyser.linear_fit_computing(
+            meta_analysis_dictionary["time_to_peak"], index[meta_analysis_dictionary["output"]["condition"]][
+                parameters_meta_analysis_dict["index"]], 1)
+
+        # Adds the output value(s) to a new row in the output dataframe.
+        MacularAnalysisDataframes.add_array_line_to_dataframes(macular_analysis_dataframes,
+                                                               meta_analysis_dictionary["output"]["dimension"],
+                                                               meta_analysis_dictionary["output"]["condition"],
+                                                               meta_analysis_dictionary["output"]["name"],
+                                                               peak_speed_fit["slopes"][0])
