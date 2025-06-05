@@ -139,22 +139,22 @@ multiple_dicts_analysis_default = {
     "Conditions": {"sorting": "NameValueUnit"},
     "X": {
         "activation_time": [{"conditions": "all_conditions", "measurements": "VSDI",
-                             "params": {"threshold": 0.001, "index": "temporal_ms", "y": 7, "flag": ""}}],
+                             "params": {"threshold": 0.001, "index": "temporal_ms", "y": 7, "flag": "ms"}}],
         "latency": [{"conditions": "all_conditions", "measurements": "VSDI",
                      "params": {"threshold": 0.001, "index": "temporal_centered_ms", "y": 7,
-                                "axis": "horizontal", "flag": ""}}],
+                                "axis": "horizontal", "flag": "ms"}}],
         "time_to_peak": [{"conditions": "all_conditions", "measurements": "all_measurements",
-                          "params": {"index": "temporal_ms", "y": 7, "flag": ""}}],
+                          "params": {"index": "temporal_ms", "y": 7, "flag": "ms"}}],
         "peak_delay": [{"conditions": "all_conditions", "measurements": "VSDI",
-                        "params": {"index": "temporal_centered_ms", "y": 7, "axis": "horizontal", "flag": ""}}],
+                        "params": {"index": "temporal_centered_ms", "y": 7, "axis": "horizontal", "flag": "ms"}}],
         "peak_amplitude": [{"conditions": "all_conditions", "measurements": "all_measurements",
                             "params": {"y": 7, "flag": ""}}],
     },
     "Y": {
         "activation_time": [{"conditions": "all_conditions", "measurements": "VSDI",
-                             "params": {"threshold": 0.001, "index": "temporal_ms", "x": 36, "flag": ""}}],
+                             "params": {"threshold": 0.001, "index": "temporal_ms", "x": 36, "flag": "ms"}}],
         "time_to_peak": [{"conditions": "all_conditions", "measurements": "all_measurements",
-                          "params": {"index": "temporal_ms", "x": 36, "flag": ""}}],
+                          "params": {"index": "temporal_ms", "x": 36, "flag": "ms"}}],
         "peak_amplitude": [{"conditions": "all_conditions", "measurements": "all_measurements",
                             "params": {"x": 36, "flag": ""}}],
     },
@@ -625,40 +625,40 @@ def test_get_levels_of_macular_analysis_dataframes():
           as file):
         mda_correct = pickle.load(file)
 
-    all_analyses_X = ('activation_time_VSDI:latency_VSDI:peak_amplitude_BipolarResponse_BipolarGainControl:'
+    all_analyses_X = ('activation_time_VSDI_ms:latency_VSDI_ms:peak_amplitude_BipolarResponse_BipolarGainControl:'
                       'peak_amplitude_FiringRate_GanglionGainControl:'
                       'peak_amplitude_FiringRate_GanglionGainControl_derivative:peak_amplitude_VSDI:'
                       'peak_amplitude_VSDI_derivative:peak_amplitude_V_Amacrine:'
                       'peak_amplitude_V_BipolarGainControl:peak_amplitude_V_GanglionGainControl:'
                       'peak_amplitude_muVn_CorticalExcitatory:peak_amplitude_muVn_CorticalInhibitory:'
-                      'peak_amplitude_v_e_CorticalExcitatory:peak_amplitude_v_i_CorticalInhibitory:peak_delay_VSDI:'
-                      'time_to_peak_BipolarResponse_BipolarGainControl:'
-                      'time_to_peak_FiringRate_GanglionGainControl:'
-                      'time_to_peak_FiringRate_GanglionGainControl_derivative:time_to_peak_VSDI:'
-                      'time_to_peak_VSDI_derivative:time_to_peak_V_Amacrine:'
-                      'time_to_peak_V_BipolarGainControl:time_to_peak_V_GanglionGainControl:'
-                      'time_to_peak_muVn_CorticalExcitatory:'
-                      'time_to_peak_muVn_CorticalInhibitory:time_to_peak_v_e_CorticalExcitatory:'
-                      'time_to_peak_v_i_CorticalInhibitory')
-    all_analyses_Y = ('activation_time_VSDI:peak_amplitude_BipolarResponse_BipolarGainControl:'
+                      'peak_amplitude_v_e_CorticalExcitatory:peak_amplitude_v_i_CorticalInhibitory:peak_delay_VSDI_ms:'
+                      'time_to_peak_BipolarResponse_BipolarGainControl_ms:'
+                      'time_to_peak_FiringRate_GanglionGainControl_derivative_ms:'
+                      'time_to_peak_FiringRate_GanglionGainControl_ms:time_to_peak_VSDI_derivative_ms:time_to_peak_VSDI_ms:'
+                      'time_to_peak_V_Amacrine_ms:'
+                      'time_to_peak_V_BipolarGainControl_ms:time_to_peak_V_GanglionGainControl_ms:'
+                      'time_to_peak_muVn_CorticalExcitatory_ms:'
+                      'time_to_peak_muVn_CorticalInhibitory_ms:time_to_peak_v_e_CorticalExcitatory_ms:'
+                      'time_to_peak_v_i_CorticalInhibitory_ms')
+    all_analyses_Y = ('activation_time_VSDI_ms:peak_amplitude_BipolarResponse_BipolarGainControl:'
                       'peak_amplitude_FiringRate_GanglionGainControl:'
                       'peak_amplitude_FiringRate_GanglionGainControl_derivative:peak_amplitude_VSDI:'
                       'peak_amplitude_VSDI_derivative:peak_amplitude_V_Amacrine:peak_amplitude_V_BipolarGainControl:'
                       'peak_amplitude_V_GanglionGainControl:peak_amplitude_muVn_CorticalExcitatory:'
                       'peak_amplitude_muVn_CorticalInhibitory:peak_amplitude_v_e_CorticalExcitatory:'
-                      'peak_amplitude_v_i_CorticalInhibitory:time_to_peak_BipolarResponse_BipolarGainControl:'
-                      'time_to_peak_FiringRate_GanglionGainControl:'
-                      'time_to_peak_FiringRate_GanglionGainControl_derivative:time_to_peak_VSDI:'
-                      'time_to_peak_VSDI_derivative:time_to_peak_V_Amacrine:time_to_peak_V_BipolarGainControl:'
-                      'time_to_peak_V_GanglionGainControl:time_to_peak_muVn_CorticalExcitatory:'
-                      'time_to_peak_muVn_CorticalInhibitory:time_to_peak_v_e_CorticalExcitatory:'
-                      'time_to_peak_v_i_CorticalInhibitory')
+                      'peak_amplitude_v_i_CorticalInhibitory:time_to_peak_BipolarResponse_BipolarGainControl_ms:'
+                      'time_to_peak_FiringRate_GanglionGainControl_derivative_ms:'
+                      'time_to_peak_FiringRate_GanglionGainControl_ms:time_to_peak_VSDI_derivative_ms:time_to_peak_VSDI_ms:'
+                      'time_to_peak_V_Amacrine_ms:time_to_peak_V_BipolarGainControl_ms:'
+                      'time_to_peak_V_GanglionGainControl_ms:time_to_peak_muVn_CorticalExcitatory_ms:'
+                      'time_to_peak_muVn_CorticalInhibitory_ms:time_to_peak_v_e_CorticalExcitatory_ms:'
+                      'time_to_peak_v_i_CorticalInhibitory_ms')
 
     # Creation of a dictionary of complex and filled macular analysis dataframe levels
     dict_levels_macular_analysis_dataframes_correct = {
         'dimensions': 'Conditions:Time:X:Y',
         'analyses': {
-            'Conditions': 'barSpeed (dps)',
+            'Conditions': 'barSpeed (dps):peak_amplitude_FiringRate_GanglionGainControl:peak_amplitude_VSDI',
             'X': {'barSpeed30dps': all_analyses_X,
                   'barSpeed28,5dps': all_analyses_X},
             'Y': {'barSpeed30dps': all_analyses_Y,
