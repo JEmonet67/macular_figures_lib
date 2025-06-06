@@ -187,6 +187,11 @@ multiple_dicts_analysis_default = {
                               "analyses": "time_to_peak", "flag": ""},
              "params": {"output": "horizontal_peak_speed", "index": "spatial_x"}}
         ],
+        "stationary_peak_delay": [
+            {"peak_delay": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                              "analyses": "peak_delay", "flag": "ms"},
+             "params": {"output": "horizontal_stationary_peak_delay_ms"}}
+        ],
         "normalization": [
             {"numerator": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
                            "analyses": "peak_amplitude", "flag": ""},
@@ -1797,6 +1802,58 @@ def test_peak_speed_analyzing():
     # Remove to verify that this addition is the only change made during the meta-analysis.
     macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].drop(
         "horizontal_peak_speed_dpms", inplace=True)
+
+    # Verify that the conditions dataframe is correct.
+    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"])
+
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
+            macular_analysis_dataframes_default.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
+            macular_analysis_dataframes_default.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
+            macular_analysis_dataframes_default.dict_analysis_dataframes["Time"][condition])
+
+
+def test_stationary_peak_delay_analyzing():
+    # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
+          as file_test):
+        macular_analysis_dataframes_default_test = pickle.load(file_test)
+
+    # Initialisation of the meta-analysis parameter dictionary for tests.
+    parameters_meta_analysis_dict = {"output": "horizontal_stationary_peak_delay_ms"}
+
+    # Definition of the meta-analysis dictionary for the first condition.
+    meta_analysis_dictionary = {"peak_delay": ("X", "barSpeed28,5dps", "VSDI", "peak_delay", "ms"),
+                                "output": {"name": "horizontal_stationary_peak_delay_ms"}}
+
+    # Performing stationary peak delay meta-analysis for the first condition.
+    MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+                                                               meta_analysis_dictionary, dict_index_default,
+                                                               parameters_meta_analysis_dict)
+
+    # Definition of the meta-analysis dictionary for the second condition.
+    meta_analysis_dictionary = {"peak_delay": ("X", "barSpeed30dps", "VSDI", "peak_delay", "ms"),
+                                "output": {"name": "horizontal_stationary_peak_delay_ms"}}
+
+    # Performing stationary peak delay meta-analysis for the second condition.
+    MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+                                                               meta_analysis_dictionary, dict_index_default,
+                                                               parameters_meta_analysis_dict)
+
+    # Getting the array calculated in the stationary peak delay meta-analysis.
+    output_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+        "horizontal_stationary_peak_delay_ms"].values
+
+    # Verification of stationary peak delay values.
+    assert np.array_equal(output_array, np.array([140.701, 139.815]))
+
+    # Remove to verify that this addition is the only change made during the meta-analysis.
+    macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].drop(
+        "horizontal_stationary_peak_delay_ms", inplace=True)
 
     # Verify that the conditions dataframe is correct.
     assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(

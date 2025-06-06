@@ -99,3 +99,6 @@ def test_linear_fit_computing():
         else:
             assert fitting_dict_multi_segment[key] == fitting_dict_multi_segment_correct[key]
 
+
+def test_mean_computing():
+    assert MetaAnalyser.mean_computing(np.array([i for i in range(11)])) == 5

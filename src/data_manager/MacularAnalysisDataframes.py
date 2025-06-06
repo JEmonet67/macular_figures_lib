@@ -1758,3 +1758,57 @@ class MacularAnalysisDataframes:
                                                                meta_analysis_dictionary["output"]["condition"],
                                                                meta_analysis_dictionary["output"]["name"],
                                                                peak_speed_fit["slopes"][0])
+
+    @staticmethod
+    @meta_analysis
+    def stationary_peak_delay_analyzing(macular_analysis_dataframes, meta_analysis_dictionary, index,
+                                        parameters_meta_analysis_dict):
+        """Function for calculating a stationary value at which the peak delay remains despite variation in the
+        spatial coordinate.
+
+        To work, this meta-analysis requires 1 argument: the peak delay that needs to be averaged. It must be defined in
+        the meta-analysis dictionaries. This dictionary does not require an ‘output’ key to define the output to which
+        the peak speed should be sent. Instead, the output is automatically set to the conditions dataframe and directly
+        uses the conditions defined in the ‘time to peak’ analysis.
+
+        The dictionary also contains the ‘params’ parameters, whose dictionary must contain a key to  define the name
+        of the output to be created in the condition dataframe. The first key, ‘output’, allows you to define a specific
+        name, while the second alternative key, ‘flag’, allows you to use the default output name by simply adding a
+        suffix.
+
+        Parameters
+        ----------
+        macular_analysis_dataframes : MacularAnalysisDataframes
+            Macular Analyses Dataframes whose analyses the user wishes to use for meta-analysis.
+
+        meta_analysis_dictionary : dict of tuple and dict of dict
+            Meta-analysis dictionary linking the names of arguments in a meta-analysis with the associated array of
+            values. In the case of arguments containing the term ‘output’, the key is associated with the name of the
+            outputs created for the dataframe.
+
+        index : dict of dict
+            Dictionary of all indexes present in the multiple macular dict array used in the current
+            MacularAnalysisDataframes.
+
+        parameters_meta_analysis_dict : dict
+            Dictionary containing all the parameters of the meta-analysis to be formatted.
+
+            This dictionary don't contain any parameters other than outputs ones.
+        """
+        # Store dimensions and conditions of output.
+        meta_analysis_dictionary["output"]["dimension"] = "Conditions"
+        meta_analysis_dictionary["output"]["condition"] = meta_analysis_dictionary["peak_delay"][1]
+
+        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
+                                                                             meta_analysis_dictionary)
+
+        # Calculation of the stationary peak delay
+        stationary_peak_delay_value = MetaAnalyser.mean_computing(meta_analysis_dictionary["peak_delay"])
+
+        # Adds the output value(s) to a new row in the output dataframe.
+        MacularAnalysisDataframes.add_array_line_to_dataframes(macular_analysis_dataframes,
+                                                               meta_analysis_dictionary["output"]["dimension"],
+                                                               meta_analysis_dictionary["output"]["condition"],
+                                                               meta_analysis_dictionary["output"]["name"],
+                                                               stationary_peak_delay_value)

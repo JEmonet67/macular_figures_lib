@@ -75,3 +75,21 @@ class MetaAnalyser:
             fitting_dict["inflexion_points_data"] = inflexion_points
 
         return fitting_dict
+
+    @staticmethod
+    def mean_computing(data_array):
+        """Calculating the average value of a set of data.
+
+        Parameters
+        ----------
+        data_array : np.ndarray
+            Data to average.
+
+        Returns
+        ----------
+        mean_value : int or float
+            Mean value of the data.
+        """
+        mean_value = data_array.mean().round(3)
+
+        return mean_value
