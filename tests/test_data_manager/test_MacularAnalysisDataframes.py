@@ -342,12 +342,7 @@ def test_analysis_dataframes_levels_getter():
                          'barSpeed30dps': 'BipolarResponse_BipolarGainControl:FiringRate_GanglionGainControl:'
                                           'V_Amacrine:V_BipolarGainControl:V_GanglionGainControl:'
                                           'muVn_CorticalExcitatory:muVn_CorticalInhibitory:v_e_CorticalExcitatory:'
-                                          'v_i_CorticalInhibitory'},
-        "dimensions": "Conditions:Time:X:Y",
-        "analyses": {'Conditions': 'barSpeed (dps)',
-                     'X': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''},
-                     'Y': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''},
-                     'Time': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''}}
+                                          'v_i_CorticalInhibitory'}
     }
 
     assert macular_analysis_dataframes_head100.analysis_dataframes_levels == analysis_dataframes_levels_correct
@@ -1539,43 +1534,43 @@ def test_common_meta_analysis_group_parser():
             ("Y", "barSpeed30dps", "FiringRate", "latency", "internal_flag")
         ],
         "arg2": [("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag")] * 16,
-        # TODO Régler le problème d'ordre des conditions dans l'arg3 comparé à l'arg1.
         "arg3": [
-            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
-            ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag")
+            ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("X", "barSpeed28,5dps", "VSDI", "latency", "internal_flag"),
+            ("X", "barSpeed28,5dps", "", "peak_amplitude", "internal_flag"),
+            ("X", "barSpeed28,5dps", "", "latency", "internal_flag"),
+            ("X", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("X", "barSpeed30dps", "VSDI", "latency", "internal_flag"),
+            ("X", "barSpeed30dps", "", "peak_amplitude", "internal_flag"),
+            ("X", "barSpeed30dps", "", "latency", "internal_flag"),
+
+            ("Y", "barSpeed28,5dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Y", "barSpeed28,5dps", "VSDI", "latency", "internal_flag"),
+            ("Y", "barSpeed28,5dps", "", "peak_amplitude", "internal_flag"),
+            ("Y", "barSpeed28,5dps", "", "latency", "internal_flag"),
+            ("Y", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
+            ("Y", "barSpeed30dps", "VSDI", "latency", "internal_flag"),
+            ("Y", "barSpeed30dps", "", "peak_amplitude", "internal_flag"),
+            ("Y", "barSpeed30dps", "", "latency", "internal_flag")
         ],
         "output": [
-            ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude_latency_normalization"),
-            ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude_latency_normalization"),
-            ("X", "barSpeed28,5dps", "FiringRate", "peak_amplitude_latency_normalization"),
-            ("X", "barSpeed28,5dps", "FiringRate", "peak_amplitude_latency_normalization"),
-            ("X", "barSpeed30dps", "VSDI", "peak_amplitude_latency_normalization"),
-            ("X", "barSpeed30dps", "VSDI", "peak_amplitude_latency_normalization"),
-            ("X", "barSpeed30dps", "FiringRate", "peak_amplitude_latency_normalization"),
-            ("X", "barSpeed30dps", "FiringRate", "peak_amplitude_latency_normalization"),
+            ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude_normalization"),
+            ("X", "barSpeed28,5dps", "VSDI", "latency_normalization"),
+            ("X", "barSpeed28,5dps", "FiringRate", "peak_amplitude_normalization"),
+            ("X", "barSpeed28,5dps", "FiringRate", "latency_normalization"),
+            ("X", "barSpeed30dps", "VSDI", "peak_amplitude_normalization"),
+            ("X", "barSpeed30dps", "VSDI", "latency_normalization"),
+            ("X", "barSpeed30dps", "FiringRate", "peak_amplitude_normalization"),
+            ("X", "barSpeed30dps", "FiringRate", "latency_normalization"),
 
-            ("Y", "barSpeed28,5dps", "VSDI", "peak_amplitude_latency_normalization"),
-            ("Y", "barSpeed28,5dps", "VSDI", "peak_amplitude_latency_normalization"),
-            ("Y", "barSpeed28,5dps", "FiringRate", "peak_amplitude_latency_normalization"),
-            ("Y", "barSpeed28,5dps", "FiringRate", "peak_amplitude_latency_normalization"),
-            ("Y", "barSpeed30dps", "VSDI", "peak_amplitude_latency_normalization"),
-            ("Y", "barSpeed30dps", "VSDI", "peak_amplitude_latency_normalization"),
-            ("Y", "barSpeed30dps", "FiringRate", "peak_amplitude_latency_normalization"),
-            ("Y", "barSpeed30dps", "FiringRate", "peak_amplitude_latency_normalization")
+            ("Y", "barSpeed28,5dps", "VSDI", "peak_amplitude_normalization"),
+            ("Y", "barSpeed28,5dps", "VSDI", "latency_normalization"),
+            ("Y", "barSpeed28,5dps", "FiringRate", "peak_amplitude_normalization"),
+            ("Y", "barSpeed28,5dps", "FiringRate", "latency_normalization"),
+            ("Y", "barSpeed30dps", "VSDI", "peak_amplitude_normalization"),
+            ("Y", "barSpeed30dps", "VSDI", "latency_normalization"),
+            ("Y", "barSpeed30dps", "FiringRate", "peak_amplitude_normalization"),
+            ("Y", "barSpeed30dps", "FiringRate", "latency_normalization")
         ],
         "params": {"factor": 8}}
 
@@ -1586,11 +1581,12 @@ def test_common_meta_analysis_group_parser():
                  "analyses": "peak_amplitude:latency", "flag": "internal_flag"},
         "arg2": {"dimensions": "Conditions", "conditions": "barSpeed30dps", "measurements": "VSDI",
                  "analyses": "peak_amplitude", "flag": "internal_flag"},
-        "arg3": {"dimensions": "Conditions", "conditions": "barSpeed28,5dps:barSpeed30dps", "measurements": "VSDI",
-                 "analyses": "peak_amplitude", "flag": "internal_flag"},
+        "arg3": {"dimensions": "X:Y", "conditions": "barSpeed28,5dps:barSpeed30dps", "measurements": "VSDI:",
+                 "analyses": "peak_amplitude:latency", "flag": "internal_flag"},
         "output": {"dimensions": "X:Y", "conditions": "barSpeed28,5dps:barSpeed30dps",
                    "measurements": "VSDI:FiringRate",
-                   "analyses": "peak_amplitude_latency_normalization"},
+                   "analyses": "peak_amplitude_normalization:"
+                               "latency_normalization"},
         "params": {"factor": 8}}
 
     # Parsing the dictionary of common meta-analysis groups.
