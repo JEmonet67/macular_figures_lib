@@ -1611,7 +1611,7 @@ def test_check_common_analysis_group_repeats():
         assert True
 
 
-def test_resizing_common_analysis_group_levels():
+def test_check_common_analysis_group_levels_size():
     # Initialisation of the list to be reproduced, consisting of an element repeated 4 times.
     common_analysis_group_levels_list_correct = [("dimension1", "conditions1", "measurement1", "analysis1"),
                                                  ("dimension1", "conditions1", "measurement1", "analysis1"),
@@ -1622,26 +1622,31 @@ def test_resizing_common_analysis_group_levels():
     common_analysis_group_levels_list = [("dimension1", "conditions1", "measurement1", "analysis1")]
 
     # Case of a list with a single element to be repeated 4 times.
-    assert MacularAnalysisDataframes.resizing_common_analysis_group_levels(
+    assert MacularAnalysisDataframes.check_common_analysis_group_levels_size(
         common_analysis_group_levels_list, 4) == common_analysis_group_levels_list_correct
 
-    # Initialisation of the list to be reproduced, consisting of 3 elements repeated twice.
-    common_analysis_group_levels_list_correct = [("dimension1", "conditions1", "measurement1", "analysis1"),
-                                                 ("dimension1", "conditions1", "measurement1", "analysis1"),
-                                                 ("dimension2", "conditions2", "measurement2", "analysis2"),
-                                                 ("dimension2", "conditions2", "measurement2", "analysis2"),
-                                                 ("dimension3", "conditions3", "measurement3", "analysis3"),
-                                                 ("dimension3", "conditions3", "measurement3", "analysis3")
-                                                 ]
+    # Initialisation of the list of 4 elements.
+    common_analysis_group_levels_list = [("dimension1", "conditions1", "measurement1", "analysis1"),
+                                         ("dimension2", "conditions2", "measurement2", "analysis2"),
+                                         ("dimension3", "conditions3", "measurement3", "analysis3"),
+                                         ("dimension4", "conditions4", "measurement4", "analysis4")]
+
+    # Case of a list whose number of elements matches the desired number.
+    assert MacularAnalysisDataframes.check_common_analysis_group_levels_size(
+        common_analysis_group_levels_list, 4) == common_analysis_group_levels_list
 
     # Initialisation of the list of 3 elements.
     common_analysis_group_levels_list = [("dimension1", "conditions1", "measurement1", "analysis1"),
                                          ("dimension2", "conditions2", "measurement2", "analysis2"),
                                          ("dimension3", "conditions3", "measurement3", "analysis3")]
 
-    # Case of a list of 3 elements to be repeated twice.
-    assert MacularAnalysisDataframes.resizing_common_analysis_group_levels(
-        common_analysis_group_levels_list, 6) == common_analysis_group_levels_list_correct
+    # Case of a list with fewer elements than desired and containing more than one element.
+    try:
+        MacularAnalysisDataframes.check_common_analysis_group_levels_size(
+            common_analysis_group_levels_list, 6) == common_analysis_group_levels_list_correct
+        assert False
+    except ValueError:
+        assert True
 
 
 def test_make_common_group_meta_analysis():

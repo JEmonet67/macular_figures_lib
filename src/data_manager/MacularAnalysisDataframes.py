@@ -1349,10 +1349,8 @@ class MacularAnalysisDataframes:
         contains a ‘params’ key associated with external parameters to be used for meta-analysis. This dictionary is not
         modified during parsing.
 
-        In the case where the lists of analysis level for each argument are of different sizes, their size will be
-        adjusted as far as possible to the maximum size observed. This can only be done if the size of the list is
-        proportional to the maximum size. Each item in the list will be repeated n times to fill the size. The value
-        ‘n’ corresponds to the coefficient between the maximum size and that of the list in question.
+        In the case where the lists of analysis level for each argument are of different sizes, en error will be raised
+        except a list of size 1, which will adjust to the maximum size observed.
 
         Example :
         common_meta_analysis_group_parser(
@@ -1432,7 +1430,7 @@ class MacularAnalysisDataframes:
         for meta_analysis_argument in parsed_dictionary:
             if meta_analysis_argument != "params":
                 parsed_dictionary[meta_analysis_argument] = (MacularAnalysisDataframes.
-                resizing_common_analysis_group_levels(
+                check_common_analysis_group_levels_size(
                     parsed_dictionary[meta_analysis_argument],
                     common_meta_analysis_group_max_length))
 
@@ -1468,16 +1466,15 @@ class MacularAnalysisDataframes:
                                            f"{common_meta_analysis_group_dictionary[argument][element]}")
 
     @staticmethod
-    def resizing_common_analysis_group_levels(common_analysis_group_levels_list, expected_length):
-        """Function for adjusting the size of the list of levels for a group of common analyses so that it corresponds
+    def check_common_analysis_group_levels_size(common_analysis_group_levels_list, expected_length):
+        """Function for checking the size of the list of levels for a group of common analyses so that it corresponds
         to an expected length.
 
-        The resizing can only work if the current length of the list is proportional to the expected size. If this is
-        the case, each element in the current list is repeated "n" times to reach the correct length. The number of
-        repetitions ‘n’ corresponds to the multiplier factor between the length of the list and the expected length.
-        When multiple items are repeated in this way, the first item is repeated first, then the second, and so on.
-        Example : [element1, element2, element3] for expected_length = 2
-        > [element1, element1, element2, element2, element3, element3]
+        If the length does not match, there are two possibilities. If the list is of size 1, it will be repeated as many
+        times as the expected length. However, if the size is greater than 1, an error will be raised.
+
+        Example : check_common_analysis_group_levels_size([(element1, element2, element3)], 2)
+        > [(element1, element2, element3), (element1, element2, element3)]
 
         Parameters
         ----------
@@ -1489,21 +1486,29 @@ class MacularAnalysisDataframes:
 
         Returns
         ----------
-        resized_levels_list : list of tuples
-            List of level tuples of a common analysis group adjusted in size to achieve the expected size.
+        checked_levels_list : list of tuples
+            List level tuples of a common analysis group checked in size.
+
+        Raises
+        ----------
+        ValueError
+            The length of the level list is smaller than expected and is also greater than 1.
         """
         levels_list_length = len(common_analysis_group_levels_list)
         # Cases where the length of the level list is smaller than expected.
-        if levels_list_length < expected_length and not (expected_length % levels_list_length):
-            resized_levels_list = []
+        if levels_list_length < expected_length and levels_list_length == 1:
+            checked_levels_list = []
             # Correct the length by repeating each element in the list in an equivalent way.
             for levels in common_analysis_group_levels_list:
-                resized_levels_list += [levels] * (expected_length // levels_list_length)
+                checked_levels_list += [levels] * (expected_length // levels_list_length)
         # Case where the length of the level list is equal to the expected size.
+        elif levels_list_length == expected_length:
+            checked_levels_list = common_analysis_group_levels_list
         else:
-            resized_levels_list = common_analysis_group_levels_list
+            raise ValueError(f"The length of the common analysis group level list does not match the maximum length"
+                             f" {expected_length}")
 
-        return resized_levels_list
+        return checked_levels_list
 
     def make_common_group_meta_analysis(self, meta_analysis_function, common_meta_analysis_group_dictionary,
                                         meta_analysis, dict_index):
