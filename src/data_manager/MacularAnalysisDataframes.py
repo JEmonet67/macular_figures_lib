@@ -217,6 +217,9 @@ class MacularAnalysisDataframes:
         y_index = self.get_maximal_index_multi_macular_dict_array(multi_macular_dict_array, "spatial_y")
         self.initialize_dict_analysis_dataframes(x_index, y_index, t_index)
 
+        # Implementation of the MacularAnalysisDataframes index dictionary.
+        dict_index = self.setup_index_dictionary(multi_macular_dict_array)
+
         # Make analysis
         self.make_spatial_dataframes_analysis(multiple_dicts_analysis_substituted["X"], "X",
                                               multi_macular_dict_array, dict_sort_order)
@@ -401,6 +404,13 @@ class MacularAnalysisDataframes:
             elif name_dataframe == "Time":
                 self.dict_analysis_dataframes[name_dataframe] = {condition: self.initialize_analysis_dataframe(
                     t_index, name_dataframe) for condition in self.dict_paths_pyb.keys()}
+            # Creation of the overall conditions dataframe.
+            elif name_dataframe == "MetaAnalysis":
+                name_dataframe = "MetaConditions"
+                sorted_conditions = ["overall"]
+                self.dict_analysis_dataframes[name_dataframe] = self.initialize_analysis_dataframe(
+                    sorted_conditions, name_dataframe)
+                self.setup_conditions_values_to_condition_dataframe()
 
     @staticmethod
     def initialize_analysis_dataframe(columns, name_columns):
@@ -611,7 +621,7 @@ class MacularAnalysisDataframes:
         # Create dictionary associating each multiple MacularDictArray conditions with their "all_conditions".
         all_analyses = {
             dimension: ":".join(sorted(list(self.dict_analysis_dataframes[dimension].index)))
-            if dimension == "Conditions"
+            if dimension == "Conditions" or dimension == "MetaConditions"
             else {condition: ":".join(sorted(list(self.dict_analysis_dataframes[dimension][condition].index)))
                   for condition in self.dict_analysis_dataframes[dimension]}
             for dimension in self.dict_analysis_dataframes.keys()}
@@ -1248,6 +1258,43 @@ class MacularAnalysisDataframes:
 
         return modified_meta_analysis_function
 
+    def setup_index_dictionary(self, multi_macular_dict_array):
+        """Function creating a dictionary containing all indexes describing a macular analysis dataframe and its
+        associated multiple macular dict array.
+
+        The dictionary is divided into sub-dictionaries for each condition. The keys of these sub-dictionaries are
+        the names of the indexes in the multiple macular dict array (‘temporal’, “spatial_x”, etc.). The index
+        dictionary also contains a special key called ‘overall’, which is composed of keys corresponding to each of
+        the conditions present in the macular analysis dataframes. These keys are used to contain the indexes for each
+        of these conditions.
+
+        Example :
+        {"barSpeed3dps": {"temporal": np.array(), "spatial_x": np.array(), "spatial_y": np.array()},
+        "barSpeed6dps": {"temporal": np.array(), "spatial_x": np.array(), "spatial_y": np.array()},
+        "barSpeed30dps": {"temporal": np.array(), "spatial_x": np.array(), "spatial_y": np.array()},
+        "overall": {"barSpeed": np.array(), "wAmaGang": np.array(), "hBip": np.array()}        }
+
+        Parameters
+        ----------
+        multi_macular_dict_array : dict of MacularDictArray
+            Dictionary associating specific conditions with different MacularDictArray.
+
+        Returns
+        ----------
+        dict_index : dict of dict
+            Dictionary containing all the indexes from a multiple macular dict array.
+        """
+        # Generation of dictionary keys from the multiple macular dict array.
+        dict_index = {condition: multi_macular_dict_array[condition].index for condition in multi_macular_dict_array}
+
+        # Generation of index keys for each condition in the MacularAnalysisDataframes.
+        dict_index["overall"] = {}
+        for condition in self.dict_analysis_dataframes["Conditions"].index.values:
+            dict_index["overall"][condition.split(" ")[0]] = self.dict_analysis_dataframes["Conditions"].loc[
+                condition].values.astype(float)
+
+        return dict_index
+
     @staticmethod
     def multiple_common_meta_analysis_group_parser(meta_analysis_dictionaries):
         """Function that transforms a list of condensed common meta-analysis dictionaries to detail all the
@@ -1647,6 +1694,8 @@ class MacularAnalysisDataframes:
             # Case of adding a single value of a given condition to the condition dataframe.
             else:
                 macular_analysis_dataframes.dict_analysis_dataframes[dimension].loc[output, condition] = array_output
+        elif dimension == "MetaConditions":
+            macular_analysis_dataframes.dict_analysis_dataframes[dimension].loc[output, condition] = array_output
         # Case of spatio-temporal dataframes.
         else:
             macular_analysis_dataframes.dict_analysis_dataframes[dimension][condition].loc[output] = array_output

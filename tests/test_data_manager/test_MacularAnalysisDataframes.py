@@ -103,9 +103,11 @@ multiple_dicts_preprocessings_head100 = {
 
 multiple_dicts_analysis_head100 = {
     "Conditions": {"sorting": "NameValueUnit"},
-    "X": {},
-    "Y": {},
-    "Time": {}
+    "X": {"test": "test"},
+    "Y": {"test": "test"},
+    "Time": {"test": "test"},
+    "MetaAnalysis": {"test": [{"arg_test": {"dimensions": "test", "conditions": "test", "measurements": "test",
+                                            "analyses": "test", "flag": "ms"}}]}
 }
 
 multiple_dicts_simulations_default = {
@@ -217,6 +219,11 @@ multiple_dicts_analysis_default = {
                                         "measurements": "VSDI",
                                         "analyses": "horizontal_data_to_fit_data_prediction"},
              "params": {"n_segments": 2, "index": "test_linear", "n_points": 100}}
+            {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "VSDI",
+                             "analyses": "peak_amplitude", "flag": ""},
+             "output_slopes": {"dimensions": "MetaConditions", "conditions": "overall", "measurements": "VSDI",
+                               "analyses": ["horizontal_slope_peak_amplitude"]},
+             "params": {"n_segments": 1, "index": "barSpeed", "n_points": 100}}
         ],
         "anticipation_fit": [
             {"activation_time": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
@@ -1365,6 +1372,31 @@ def test_meta_analysis():
             peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Y"][condition])
         assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
             peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Time"][condition])
+
+
+def test_setup_index_dictionary():
+    # Importing a correct index dictionary.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/index_dictionary_head100.pyb", "rb") as file:
+        dict_index_correct = pickle.load(file)
+
+    # Import of a MacularAnalysisDataframes based on reduced MacularDictArray (100 first rows).
+    with open(f"{path_data_test}/MacularAnalysisDataframes/initialized_macular_analysis_dataframe.pyb", "rb") as file:
+        macular_analysis_dataframes_head100_initialized = pickle.load(file)
+
+    # Two additional conditions have been added to assess the ability to manage multiple conditions.
+    macular_analysis_dataframes_head100_initialized.dict_analysis_dataframes["Conditions"].loc["hBip"] = (
+        np.array([3, 8, 9]))
+    macular_analysis_dataframes_head100_initialized.dict_analysis_dataframes["Conditions"].loc["wAmaGang (Hz)"] = (
+        np.array([2, 1, 10]))
+
+    # Creation of the index dictionary.
+    dict_index = macular_analysis_dataframes_head100_initialized.setup_index_dictionary(
+        multi_macular_dict_array_head100)
+
+    # Verification of the structure and arrays of the index dictionary.
+    for condition in dict_index:
+        for index in dict_index[condition]:
+            assert np.array_equal(dict_index[condition][index], dict_index_correct[condition][index])
 
 
 def test_multiple_common_meta_analysis_group_parser():
