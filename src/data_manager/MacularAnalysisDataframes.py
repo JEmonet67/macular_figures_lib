@@ -1343,10 +1343,11 @@ class MacularAnalysisDataframes:
         characterised by the presence of a list of the levels defining each analyses containing in meta-analyses
         arguments: its dimension, condition, measure, type of analysis and any associated flag.
 
-        Parsing will replace each of meta-analysis arguments dictionaries with the list of tuples of level names that
-        define the different analyses to be extracted from the MacularAnalysisDataframes. The dictionary also contains
-        a ‘params’ key associated with external parameters to be used for meta-analysis. This dictionary is not modified
-        during parsing.
+        To perform this process, dictionaries of common analysis groups must not contain duplicate names among their
+        levels. Parsing will replace each of meta-analysis arguments dictionaries with the list of tuples of level names
+        that define the different analyses to be extracted from the MacularAnalysisDataframes. The dictionary also
+        contains a ‘params’ key associated with external parameters to be used for meta-analysis. This dictionary is not
+        modified during parsing.
 
         In the case where the lists of analysis level for each argument are of different sizes, their size will be
         adjusted as far as possible to the maximum size observed. This can only be done if the size of the list is
@@ -1393,6 +1394,9 @@ class MacularAnalysisDataframes:
             Dictionary of a common meta-analysis group with lists of tuples of level names characterising each analysis
             associated with each of the meta-analysis arguments.
         """
+        # Verification that there are no duplicates in the dictionaries of common analysis groups.
+        MacularAnalysisDataframes.check_common_analysis_group_repeats(common_meta_analysis_group_dictionary)
+
         # Initialisation of the dictionary containing the lists of levels tuples of the common meta-analysis group.
         parsed_dictionary = {}
 
@@ -1433,6 +1437,35 @@ class MacularAnalysisDataframes:
                     common_meta_analysis_group_max_length))
 
         return parsed_dictionary
+
+    @staticmethod
+    def check_common_analysis_group_repeats(common_meta_analysis_group_dictionary):
+        """Function that checks that no level is repeated multiple times within the keys of a common analysis group
+        dictionary (dimension, conditions, measures, analyses).
+
+        Parameters
+        ----------
+        common_meta_analysis_group_dictionary : dict of dict
+            Dictionary of a common meta-analysis group where keys are meta-analysis function arguments and values are
+            common analysis group dictionaries.
+
+        Raises
+        ----------
+        KeyError
+            A level of the common analysis group is repeated at least once.
+        """
+        # Loop through the arguments of a common analysis group dictionary except ‘params’.
+        for argument in common_meta_analysis_group_dictionary:
+            if argument != "params":
+                # Loop through the levels of a common analysis group dictionary except ‘flag’.
+                for element in common_meta_analysis_group_dictionary[argument]:
+                    if element != "flag":
+                        # Verify that no duplicate level names are present.
+                        if (len(common_meta_analysis_group_dictionary[argument][element].split(":")) !=
+                                len(set(common_meta_analysis_group_dictionary[argument][element].split(":")))):
+                            raise KeyError(f"A {element} is repeated several times in the argument {argument} of the "
+                                           f"common analysis group dictionary : "
+                                           f"{common_meta_analysis_group_dictionary[argument][element]}")
 
     @staticmethod
     def resizing_common_analysis_group_levels(common_analysis_group_levels_list, expected_length):

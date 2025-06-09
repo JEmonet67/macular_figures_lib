@@ -1588,6 +1588,29 @@ def test_common_meta_analysis_group_parser():
     assert parsed_dictionary == parsed_dictionary_correct
 
 
+def test_check_common_analysis_group_repeats():
+    # Initialisation of an unparsed complex dictionary of common meta-analysis groups.
+    common_meta_analysis_group_dictionary = {
+        "arg1": {"dimensions": "X:Y", "conditions": "barSpeed28,5dps:barSpeed30dps",
+                 "measurements": "VSDI:FiringRate",
+                 "analyses": "peak_amplitude:latency", "flag": ""},
+        "params": {"factor": 8}}
+
+    try:
+        MacularAnalysisDataframes.check_common_analysis_group_repeats(common_meta_analysis_group_dictionary)
+        assert True
+    except KeyError:
+        assert False
+
+    common_meta_analysis_group_dictionary["arg1"]["measurements"] = "VSDI:VSDI"
+
+    try:
+        MacularAnalysisDataframes.check_common_analysis_group_repeats(common_meta_analysis_group_dictionary)
+        assert False
+    except KeyError:
+        assert True
+
+
 def test_resizing_common_analysis_group_levels():
     # Initialisation of the list to be reproduced, consisting of an element repeated 4 times.
     common_analysis_group_levels_list_correct = [("dimension1", "conditions1", "measurement1", "analysis1"),
