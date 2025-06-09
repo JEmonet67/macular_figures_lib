@@ -2041,3 +2041,65 @@ class MacularAnalysisDataframes:
             macular_analysis_dataframes, meta_analysis_dictionary["output_prediction"]["dimension"],
             meta_analysis_dictionary["output_prediction"]["condition"],
             meta_analysis_dictionary["output_data_prediction"]["name"], linear_fit["data_prediction"])
+
+    @staticmethod
+    @meta_analysis
+    def maximal_latency_analyzing(macular_analysis_dataframes, meta_analysis_dictionary, index,
+                                  parameters_meta_analysis_dict):
+        """Function to calculate the maximal latency at which latency begins to saturate for a distance between cell and
+        object motion origin that exceeds the anticipation range.
+
+        The calculation is performed by obtaining the latency values and then extracting only the stationary portion.
+        This stationary portion is located beyond the anticipation range value. To use this meta-analysis, you must
+        first perform an ‘anticipation_fit_analyzing’ meta-analysis.
+
+        To work, this meta-analysis requires 2 arguments: the "latency" that needs to be averaged and
+        ‘anticipation_range’ which should be used to isolate the stationary portion. This dictionary does not require an
+        ‘output’ key to define the output to which the maximal latency should be sent. Instead, the output is
+        automatically set to the conditions dataframe and directly uses the conditions defined in the ‘latency’
+        analysis.
+
+        The dictionary also contains the ‘params’ parameters, whose dictionary must contain a key to  define the name
+        of the output to be created in the condition dataframe. The first key, ‘output’, allows you to define a specific
+        name, while the second alternative key, ‘flag’, allows you to use the default output name by simply adding a
+        suffix.
+
+        Parameters
+        ----------
+        macular_analysis_dataframes : MacularAnalysisDataframes
+            Macular Analyses Dataframes whose analyses the user wishes to use for meta-analysis.
+
+        meta_analysis_dictionary : dict of tuple and dict of dict
+            Meta-analysis dictionary linking the names of arguments in a meta-analysis with the associated array of
+            values. In the case of arguments containing the term ‘output’, the key is associated with the name of the
+            outputs created for the dataframe.
+
+        index : dict of dict
+            Dictionary of all indexes present in the multiple macular dict array used in the current
+            MacularAnalysisDataframes.
+
+        parameters_meta_analysis_dict : dict
+            Dictionary containing all the parameters of the meta-analysis to be formatted.
+
+            This dictionary don't contain any parameters other than output one.
+        """
+        # Store dimensions and conditions of output.
+        meta_analysis_dictionary["output"]["dimension"] = "Conditions"
+        meta_analysis_dictionary["output"]["condition"] = meta_analysis_dictionary["latency"][1]
+
+        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
+                                                                             meta_analysis_dictionary)
+
+        stationary_latency = meta_analysis_dictionary["latency"].values[np.where(
+            meta_analysis_dictionary["latency"].index.values > meta_analysis_dictionary["anticipation_range"])[0][0]:]
+
+        # Calculation of the maximal latency
+        maximal_latency_value = MetaAnalyser.mean_computing(stationary_latency)
+
+        # Adds the output value(s) to a new row in the output dataframe.
+        MacularAnalysisDataframes.add_array_line_to_dataframes(macular_analysis_dataframes,
+                                                               meta_analysis_dictionary["output"]["dimension"],
+                                                               meta_analysis_dictionary["output"]["condition"],
+                                                               meta_analysis_dictionary["output"]["name"],
+                                                               maximal_latency_value)

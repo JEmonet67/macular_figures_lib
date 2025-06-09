@@ -228,6 +228,14 @@ multiple_dicts_analysis_default = {
                         "output_data_prediction": "horizontal_anticipation_data_prediction",
                         "n_segments": 2, "index": "spatial_x", "n_points": 100}}
         ],
+        "maximal_latency": [
+            {"latency": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                         "analyses": "latency", "flag": "ms"},
+             "anticipation_range": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                    "measurements": "",
+                                    "analyses": "horizontal_anticipation_range", "flag": ""},
+             "params": {"output": "horizontal_maximal_latency_ms"}}
+        ],
         "normalization": [
             {"numerator": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
                            "analyses": "peak_amplitude", "flag": ""},
@@ -2126,4 +2134,66 @@ def test_anticipation_fit_analyzing():
             macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["Y"][condition])
         assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
             macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["Time"][condition])
+
+
+def test_maximal_latency_analyzing():
+    # Import of a fitted anticipation of a default MacularAnalysisDataframes to test meta-analysis.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_anticipation_fitted.pyb",
+               "rb") as file_anticipation):
+        macular_analysis_dataframes_anticipation_test = pickle.load(file_anticipation)
+
+    # Import of a copy of the fitted anticipation of a default MacularAnalysisDataframes to compare.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_anticipation_fitted.pyb",
+               "rb") as file_anticipation):
+        macular_analysis_dataframes_anticipation_test_copy = pickle.load(file_anticipation)
+
+    # Initialisation of the meta-analysis parameter dictionary for tests.
+    parameters_meta_analysis_dict = {"output": "horizontal_maximal_latency"}
+
+    # Definition of the meta-analysis dictionary for the first condition.
+    meta_analysis_dictionary = {"latency": ("X", "barSpeed28,5dps", "VSDI", "latency", "ms"),
+                                "anticipation_range": (
+                                    "Conditions", "barSpeed28,5dps", "", "horizontal_anticipation_range",
+                                    ""),
+                                "output": {"name": "horizontal_maximal_latency_ms"}}
+
+    # Performing maximal latency meta-analysis for the first condition.
+    MacularAnalysisDataframes.maximal_latency_analyzing.__wrapped__(macular_analysis_dataframes_anticipation_test,
+                                                                    meta_analysis_dictionary, dict_index_default,
+                                                                    parameters_meta_analysis_dict)
+
+    # Definition of the meta-analysis dictionary for the second condition.
+    meta_analysis_dictionary = {"latency": ("X", "barSpeed30dps", "VSDI", "latency", "ms"),
+                                "anticipation_range": ("Conditions", "barSpeed30dps", "",
+                                                       "horizontal_anticipation_range", ""),
+                                "output": {"name": "horizontal_maximal_latency_ms"}}
+
+    # Performing maximal latency meta-analysis for the second condition.
+    MacularAnalysisDataframes.maximal_latency_analyzing.__wrapped__(macular_analysis_dataframes_anticipation_test,
+                                                                    meta_analysis_dictionary, dict_index_default,
+                                                                    parameters_meta_analysis_dict)
+
+    # Getting the array calculated in the maximal latency meta-analysis.
+    output_array = macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["Conditions"].loc[
+        "horizontal_maximal_latency_ms"].values
+
+    # Verification of maximal latency values.
+    assert np.array_equal(output_array, np.array([-48.141, -41.743]))
+
+    # Remove to verify that this addition is the only change made during the meta-analysis.
+    macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["Conditions"].drop(
+        "horizontal_maximal_latency_ms", inplace=True)
+
+    # Verify that the conditions dataframe is correct.
+    assert macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_anticipation_test_copy.dict_analysis_dataframes["Conditions"])
+
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_anticipation_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["X"][condition].equals(
+            macular_analysis_dataframes_anticipation_test_copy.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["Y"][condition].equals(
+            macular_analysis_dataframes_anticipation_test_copy.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["Time"][condition].equals(
+            macular_analysis_dataframes_anticipation_test_copy.dict_analysis_dataframes["Time"][condition])
 
