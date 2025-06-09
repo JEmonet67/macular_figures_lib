@@ -32,6 +32,9 @@ def test_normalization_computing():
 
 
 def test_linear_fit_computing():
+    # Set the randomness of the fitting for testing.
+    np.random.seed(2)
+
     # Initialisation of an index for fitting tests.
     index = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
 

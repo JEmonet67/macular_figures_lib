@@ -4,6 +4,7 @@ import pickle
 import re
 
 import numpy as np
+import pandas as pd
 
 from src.data_manager.MacularDictArray import MacularDictArray
 from src.data_manager.MacularAnalysisDataframes import MacularAnalysisDataframes
@@ -89,10 +90,14 @@ multiple_dicts_simulations_head100 = {
         "speed": 30
     }
 }
-multiple_dicts_simulations_head100_nopyb = copy.deepcopy(multiple_dicts_simulations_head100)
-del multiple_dicts_simulations_head100_nopyb["barSpeed6dps"]["path_pyb"]
-del multiple_dicts_simulations_head100_nopyb["barSpeed15dps"]["path_pyb"]
-del multiple_dicts_simulations_head100_nopyb["barSpeed30dps"]["path_pyb"]
+
+multiple_dicts_simulations_head100_nopyb = {
+    'barSpeed6dps': {'n_cells_x': 83, 'n_cells_y': 15, 'dx': 0.225, 'delta_t': 0.0167, 'end': 'max', 'size_bar': 0.67,
+                     'axis': 'horizontal', 'speed': 6},
+    'barSpeed15dps': {'n_cells_x': 83, 'n_cells_y': 15, 'dx': 0.225, 'delta_t': 0.0167, 'end': 'max', 'size_bar': 0.67,
+                      'axis': 'horizontal', 'speed': 15},
+    'barSpeed30dps': {'n_cells_x': 83, 'n_cells_y': 15, 'dx': 0.225, 'delta_t': 0.0167, 'end': 'max', 'size_bar': 0.67,
+                      'axis': 'horizontal', 'speed': 30}}
 
 multiple_dicts_preprocessings_head100 = {
     "global": {},
@@ -189,14 +194,10 @@ multiple_dicts_analysis_default = {
                             "params": {"x": 36, "flag": ""}}],
     },
     "Time": {"test": "test"},
-    "Multidimensional": {
-        "multi_analysis": [{"conditions": "all_conditions", "measurements": "VSDI",
-                            "params": {"main_dimension": "X", "secondary_dimension": "Conditions", "flag": ""}}]
-    },
     "MetaAnalysis": {
         "peak_speed": [
             {"time_to_peak": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
-                              "analyses": "time_to_peak", "flag": ""},
+                              "analyses": "time_to_peak", "flag": "ms"},
              "params": {"output": "horizontal_peak_speed", "index": "spatial_x"}}
         ],
         "stationary_peak_delay": [
@@ -1806,7 +1807,8 @@ def test_make_meta_analysis_outputs():
     # Added two outputs to the meta-analysis function arguments.
     meta_analysis_dictionary["output_test_2"] = (
         "X", "barSpeed28,5dps", "VSDI", "latency_peak_amplitude_normalization", "")
-    meta_analysis_dictionary["output_test_3"] = ("X", "barSpeed28,5dps", "VSDI", "normalization", "")
+    meta_analysis_dictionary["output_test_3"] = (
+        "X", "barSpeed28,5dps", "VSDI", ["normalization1", "normalization2"], "")
 
     # Case of formatting from the outputs in the arguments of the meta-analysis function.
     dataframe_name_dict = MacularAnalysisDataframes.make_meta_analysis_outputs(meta_analysis_name,
@@ -1815,7 +1817,7 @@ def test_make_meta_analysis_outputs():
     assert dataframe_name_dict["output_test_2"] == {"dimension": "X", "condition": "barSpeed28,5dps",
                                                     "name": "latency_peak_amplitude_normalization"}
     assert dataframe_name_dict["output_test_3"] == {"dimension": "X", "condition": "barSpeed28,5dps",
-                                                    "name": "normalization"}
+                                                    "name": ["normalization1", "normalization2"]}
 
 
 def test_add_array_line_to_dataframes():
@@ -2127,15 +2129,15 @@ def test_linear_fit_analyzing():
                                 "output_data_intercepts": {"dimension": "Conditions",
                                                            "condition": "barSpeed28,5dps",
                                                            "name": ["horizontal_first_data_intercepts",
-                                                           "horizontal_second_data_intercepts",
-                                                           "horizontal_third_data_intercepts",
-                                                           "horizontal_fourth_data_intercepts"]},
+                                                                    "horizontal_second_data_intercepts",
+                                                                    "horizontal_third_data_intercepts",
+                                                                    "horizontal_fourth_data_intercepts"]},
                                 "output_index_intercepts": {"dimension": "Conditions",
-                                                          "condition": "barSpeed28,5dps",
-                                                          "name": ["horizontal_first_index_intercepts",
-                                                           "horizontal_second_index_intercepts",
-                                                           "horizontal_third_index_intercepts",
-                                                           "horizontal_fourth_index_intercepts"]
+                                                            "condition": "barSpeed28,5dps",
+                                                            "name": ["horizontal_first_index_intercepts",
+                                                                     "horizontal_second_index_intercepts",
+                                                                     "horizontal_third_index_intercepts",
+                                                                     "horizontal_fourth_index_intercepts"]
                                                             }
                                 }
 
@@ -2169,17 +2171,17 @@ def test_linear_fit_analyzing():
                                                            "condition": "barSpeed30dps",
                                                            "name": "horizontal_data_to_fit_data_prediction"},
                                 "output_data_intercepts": {"dimension": "Conditions",
-                                                          "condition": "barSpeed30dps",
-                                                          "name": ["horizontal_first_data_intercepts",
-                                                           "horizontal_second_data_intercepts",
-                                                           "horizontal_third_data_intercepts",
-                                                           "horizontal_fourth_data_intercepts"]},
-                                "output_index_intercepts": {"dimension": "Conditions",
                                                            "condition": "barSpeed30dps",
-                                                           "name": ["horizontal_first_index_intercepts",
-                                                           "horizontal_second_index_intercepts",
-                                                           "horizontal_third_index_intercepts",
-                                                           "horizontal_fourth_index_intercepts"]}
+                                                           "name": ["horizontal_first_data_intercepts",
+                                                                    "horizontal_second_data_intercepts",
+                                                                    "horizontal_third_data_intercepts",
+                                                                    "horizontal_fourth_data_intercepts"]},
+                                "output_index_intercepts": {"dimension": "Conditions",
+                                                            "condition": "barSpeed30dps",
+                                                            "name": ["horizontal_first_index_intercepts",
+                                                                     "horizontal_second_index_intercepts",
+                                                                     "horizontal_third_index_intercepts",
+                                                                     "horizontal_fourth_index_intercepts"]}
                                 }
 
     # Performing linear fit meta-analysis for the second condition.
@@ -2216,7 +2218,7 @@ def test_linear_fit_analyzing():
     # Definition of the meta-analysis dictionary for all conditions fitting.
     meta_analysis_dictionary = {"data_to_fit": ("Conditions", "overall", "", "speed", ""),
                                 "output_slopes": {"dimension": "MetaConditions", "condition": "overall",
-                                                  "name": ["horizontal_slope_speed"]}}
+                                                  "name": "horizontal_slope_speed"}}
 
     # Performing linear fit meta-analysis for all conditions fitting.
     MacularAnalysisDataframes.linear_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_test,

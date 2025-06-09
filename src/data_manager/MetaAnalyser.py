@@ -1,5 +1,6 @@
 import numpy as np
 import pwlf
+from scipy.stats import binned_statistic
 
 
 class MetaAnalyser:

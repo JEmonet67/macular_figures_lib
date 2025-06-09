@@ -946,6 +946,7 @@ class MacularAnalysisDataframes:
         for condition, measurement in common_analysis_group_generator:
             # Defines the name of the line where the current analysis is stored.
             dataframe_row = f"{analysis}_{measurement}_{common_parameters_analysis_dict['flag']}".strip("_")
+
             # Conducting an analysis of a given condition and measurement in the conditions dataframe.
             if dimension == "Conditions":
                 self.dict_analysis_dataframes[dimension].loc[dataframe_row, condition] = analysis_function(
@@ -1706,7 +1707,7 @@ class MacularAnalysisDataframes:
                 meta_analysis_outputs_dict[meta_analysis_arguments] = {
                     "dimension": meta_analysis_dictionary[meta_analysis_arguments][0],
                     "condition": meta_analysis_dictionary[meta_analysis_arguments][1],
-                    "name": f'{meta_analysis_dictionary[meta_analysis_arguments][3]}'
+                    "name": meta_analysis_dictionary[meta_analysis_arguments][3]
                 }
                 output = True
 
@@ -1715,7 +1716,7 @@ class MacularAnalysisDataframes:
             # Cases where one or more outputs have been defined in the meta-analysis settings.
             for params in parameters_meta_analysis_dict:
                 if "output" in params:
-                    meta_analysis_outputs_dict[params] = {"name": f'{parameters_meta_analysis_dict[params]}'}
+                    meta_analysis_outputs_dict[params] = {"name": parameters_meta_analysis_dict[params]}
                     output = True
 
         # Default case performing formatting based on the analysis information.
@@ -1775,7 +1776,7 @@ class MacularAnalysisDataframes:
         """Function that calculates a normalization between two given analyses and multiplies the result by a
         multiplication factor.
 
-        To work, this meta-analysis requires two arguments: the numerator and the denominator, which must defined in
+        To work, this meta-analysis requires two arguments: the "numerator" and the "denominator", which must defined in
         the meta-analysis dictionaries. A third key, ‘output’, must also be defined, which corresponds to the position
         where you want to save the result of the operation.
 
@@ -1825,10 +1826,10 @@ class MacularAnalysisDataframes:
         """Function that calculates the speed of movement of an object based on the movement of its peak in one of the
         spatial dimensions.
 
-        To work, this meta-analysis requires 1 argument: the time to peak that needs to be fitted. It must be defined in
-        the meta-analysis dictionaries. This dictionary does not require an ‘output’ key to define the output to which
-        the peak speed should be sent. Instead, the output is automatically set to the conditions dataframe and directly
-        uses the conditions defined in the ‘time to peak’ analysis.
+        To work, this meta-analysis requires 1 argument: the "time_to_peak" that needs to be fitted. This dictionary
+        does not require an ‘output’ key to define the output to which the peak speed should be sent. Instead, the
+        output is automatically set to the conditions dataframe and directly uses the conditions defined in the
+        ‘time_to_peak’ analysis.
 
         The dictionary also contains the ‘params’ parameters, whose dictionary must contain the ‘index’ parameter,
         which corresponds to the name of the spatial index to be used (X or Y). The spatial index depends on the axis
@@ -1882,10 +1883,10 @@ class MacularAnalysisDataframes:
         """Function for calculating a stationary value at which the peak delay remains despite variation in the
         spatial coordinate.
 
-        To work, this meta-analysis requires 1 argument: the peak delay that needs to be averaged. It must be defined in
-        the meta-analysis dictionaries. This dictionary does not require an ‘output’ key to define the output to which
-        the peak speed should be sent. Instead, the output is automatically set to the conditions dataframe and directly
-        uses the conditions defined in the ‘time to peak’ analysis.
+        To work, this meta-analysis requires 1 argument: the "peak_delay" that needs to be averaged. This dictionary
+        does not require an ‘output’ key to define the output to which the peak speed should be sent. Instead, the
+        output is automatically set to the conditions dataframe and directly uses the conditions defined in the
+        ‘peak_delay’ analysis.
 
         The dictionary also contains the ‘params’ parameters, whose dictionary must contain a key to  define the name
         of the output to be created in the condition dataframe. The first key, ‘output’, allows you to define a specific
