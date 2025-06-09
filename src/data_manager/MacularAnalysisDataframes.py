@@ -1811,3 +1811,127 @@ class MacularAnalysisDataframes:
                                                                meta_analysis_dictionary["output"]["condition"],
                                                                meta_analysis_dictionary["output"]["name"],
                                                                stationary_peak_delay_value)
+
+    @staticmethod
+    @meta_analysis
+    def linear_fit_analyzing(macular_analysis_dataframes, meta_analysis_dictionary, index,
+                             parameters_meta_analysis_dict):
+        """Function that calculates all properties of a linear fit along one dimension of the dataframe.
+
+        In the case of the ‘conditions’ dimension of the dataframe, the calculated global values can be stored in the
+        ‘MetaAnalysis’ dataframe, which summarises all the general meta-analyses calculated on the conditions.
+
+        To work, this meta-analysis requires 1 argument: the "data_to_fit" that needs to be fitted. This dictionary
+        requires an ‘output’ key to define an output to which each property of the fit is sent. The ‘output_slopes’ key
+        is created if you want to retrieve the slopes of the fits. The “output_inflection_points_data” and
+        ‘output_inflection_points_index’ keys are used if you want to retrieve the abscissa or ordinate of the
+        inflection points of the fit. The keys ‘data_intercepts’ and ‘index_intercepts’ contain the ordinate and
+        abscissa at the origin of the lines corresponding to each of the linear segments of the fit. Finally, the keys
+        ‘output_data_prediction’ and ‘output_index_prediction’ are applied to obtain the values of the index and the
+        data predicted by the fit.
+
+        The dictionary also contains the ‘params’ parameters, whose dictionary must contain the ‘index’ parameter,
+        which corresponds to the name of the index to be used. The second key in the dictionary is ‘n_segments’, which
+        indicates the number of linear segments that the fit must analyse. This number will influence the number of
+        slopes and inflection points obtained. The last parameter, ‘n_points’, is used to select the resolution of the
+        fit. It is important to note that regardless of this resolution, the data predictions and fit indexes within a
+        given dataframe will be binning to ensure the correct size.
+
+        Parameters
+        ----------
+        macular_analysis_dataframes : MacularAnalysisDataframes
+            Macular Analyses Dataframes whose analyses the user wishes to use for meta-analysis.
+
+        meta_analysis_dictionary : dict of tuple and dict of dict
+            Meta-analysis dictionary linking the names of arguments in a meta-analysis with the associated array of
+            values. In the case of arguments containing the term ‘output’, the key is associated with the name of the
+            outputs created for the dataframe.
+
+        index : dict of dict
+            Dictionary of all indexes present in the multiple macular dict array used in the current
+            MacularAnalysisDataframes.
+
+        parameters_meta_analysis_dict : dict
+            Dictionary containing all the parameters of the meta-analysis to be formatted.
+
+            This dictionary must contain the index name, the number of segments and the resolution to be used for
+            fitting.
+        """
+        # Store dimensions and conditions of output.
+        meta_analysis_dictionary["index"] = {"condition": meta_analysis_dictionary["data_to_fit"][1]}
+
+        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
+                                                                             meta_analysis_dictionary)
+
+        # Getting the index to use for the fitting.
+        current_index = index[meta_analysis_dictionary["index"]["condition"]][parameters_meta_analysis_dict["index"]]
+
+        # Fit of the variable to be fitted, respecting the number of segments given in the parameters.
+        linear_fit = MetaAnalyser.linear_fit_computing(current_index, meta_analysis_dictionary["data_to_fit"],
+                                                       parameters_meta_analysis_dict["n_segments"],
+                                                       n_points=parameters_meta_analysis_dict["n_points"])
+
+        # Binning of prediction arrays from data and index arrays to obtain the size of the fitted arrays.
+        linear_fit["data_prediction"], linear_fit["index_prediction"] = MetaAnalyser.statistic_binning(
+            linear_fit["data_prediction"], linear_fit["index_prediction"], current_index.shape[0])
+
+        # Adds the output slopes value(s) to a new row in the output dataframe.
+        if "output_slopes" in meta_analysis_dictionary.keys():
+            for slope, output_name in zip(linear_fit["slopes"], meta_analysis_dictionary["output_slopes"]["name"]):
+                print("slope", slope)
+                MacularAnalysisDataframes.add_array_line_to_dataframes(
+                    macular_analysis_dataframes, meta_analysis_dictionary["output_slopes"]["dimension"],
+                    meta_analysis_dictionary["output_slopes"]["condition"], output_name, slope)
+
+        # Adds the output inflection points data value(s) to a new row in the output dataframe.
+        if "output_inflection_points_data" in meta_analysis_dictionary.keys():
+            for inflection_points_data, output_name in zip(linear_fit["inflection_points_data"],
+                                                           meta_analysis_dictionary["output_inflection_points_data"][
+                                                               "name"]):
+                MacularAnalysisDataframes.add_array_line_to_dataframes(
+                    macular_analysis_dataframes, meta_analysis_dictionary["output_inflection_points_data"]["dimension"],
+                    meta_analysis_dictionary["output_inflection_points_data"]["condition"], output_name,
+                    inflection_points_data)
+
+        # Adds the output inflection point index value(s) to a new row in the output dataframe.
+        if "output_inflection_points_index" in meta_analysis_dictionary.keys():
+            for inflection_points_index, output_name in zip(linear_fit["inflection_points_index"],
+                                                            meta_analysis_dictionary["output_inflection_points_index"][
+                                                                "name"]):
+                MacularAnalysisDataframes.add_array_line_to_dataframes(
+                    macular_analysis_dataframes,
+                    meta_analysis_dictionary["output_inflection_points_index"]["dimension"],
+                    meta_analysis_dictionary["output_inflection_points_index"]["condition"], output_name,
+                    inflection_points_index)
+
+        # Adds the output index prediction value(s) to a new row in the output dataframe.
+        if "output_index_prediction" in meta_analysis_dictionary.keys():
+            print("fit", linear_fit["index_prediction"])
+            MacularAnalysisDataframes.add_array_line_to_dataframes(
+                macular_analysis_dataframes, meta_analysis_dictionary["output_index_prediction"]["dimension"],
+                meta_analysis_dictionary["output_index_prediction"]["condition"],
+                meta_analysis_dictionary["output_index_prediction"]["name"], linear_fit["index_prediction"])
+
+        # Adds the output data prediction value(s) to a new row in the output dataframe.
+        if "output_data_prediction" in meta_analysis_dictionary.keys():
+            MacularAnalysisDataframes.add_array_line_to_dataframes(
+                macular_analysis_dataframes, meta_analysis_dictionary["output_data_prediction"]["dimension"],
+                meta_analysis_dictionary["output_data_prediction"]["condition"],
+                meta_analysis_dictionary["output_data_prediction"]["name"], linear_fit["data_prediction"])
+
+        # Adds the output data intercept to a new row in the output dataframe.
+        if "output_data_intercepts" in meta_analysis_dictionary.keys():
+            for intercept, output_name in zip(linear_fit["data_intercepts"], meta_analysis_dictionary[
+                "output_data_intercepts"]["name"]):
+                MacularAnalysisDataframes.add_array_line_to_dataframes(
+                    macular_analysis_dataframes, meta_analysis_dictionary["output_data_intercepts"]["dimension"],
+                    meta_analysis_dictionary["output_data_intercepts"]["condition"], output_name, intercept)
+
+        # Adds the output index intercept to a new row in the output dataframe.
+        if "output_index_intercepts" in meta_analysis_dictionary.keys():
+            for intercept, output_name in zip(linear_fit["index_intercepts"], meta_analysis_dictionary[
+                "output_index_intercepts"]["name"]):
+                MacularAnalysisDataframes.add_array_line_to_dataframes(
+                    macular_analysis_dataframes, meta_analysis_dictionary["output_index_intercepts"]["dimension"],
+                    meta_analysis_dictionary["output_index_intercepts"]["condition"], output_name, intercept)

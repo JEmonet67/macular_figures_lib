@@ -189,8 +189,34 @@ multiple_dicts_analysis_default = {
         ],
         "stationary_peak_delay": [
             {"peak_delay": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
-                              "analyses": "peak_delay", "flag": "ms"},
+                            "analyses": "peak_delay", "flag": "ms"},
              "params": {"output": "horizontal_stationary_peak_delay_ms"}}
+        ],
+        "linear_fit": [
+            {"data_to_fit": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                             "analyses": "data_to_fit", "flag": ""},
+             "output_slopes": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
+                               "analyses": ["horizontal_first_slope_speed",
+                                            "horizontal_second_slope_speed",
+                                            "horizontal_third_slope_speed",
+                                            "horizontal_fourth_slope_speed"]},
+             "output_inflection_points_data": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                               "measurements": "VSDI",
+                                               "analyses": ["horizontal_first_inflection_point",
+                                                            "horizontal_second_inflection_point",
+                                                            "horizontal_third_inflection_point"]},
+             "output_inflection_points_index": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                                "measurements": "VSDI",
+                                                "analyses": ["horizontal_first_inflection_point_time",
+                                                             "horizontal_second_inflection_point_time",
+                                                             "horizontal_third_inflection_point_time"]},
+             "output_index_prediction": {"dimensions": "X", "conditions": "all_conditions",
+                                         "measurements": "VSDI",
+                                         "analyses": "horizontal_data_to_fit_index_prediction"},
+             "output_data_prediction": {"dimensions": "X", "conditions": "all_conditions",
+                                        "measurements": "VSDI",
+                                        "analyses": "horizontal_data_to_fit_data_prediction"},
+             "params": {"n_segments": 2, "index": "test_linear", "n_points": 100}}
         ],
         "normalization": [
             {"numerator": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
@@ -1870,4 +1896,159 @@ def test_stationary_peak_delay_analyzing():
         assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
             macular_analysis_dataframes_default.dict_analysis_dataframes["Y"][condition])
         assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default.dict_analysis_dataframes["Time"][condition])
+            macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"])
+
+
+def test_linear_fit_analyzing():
+    # Set the randomness of the fitting for testing.
+    np.random.seed(1)
+
+    # Import of a correctly linear fit for a default MacularAnalysisDataframes to test meta-analysis.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_linear_fitted.pyb", "rb")
+          as file_linear_fit):
+        macular_analysis_dataframes_default_correct_fit = pickle.load(file_linear_fit)
+
+    # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
+          as file_test):
+        macular_analysis_dataframes_default_test = pickle.load(file_test)
+
+    # Definition of an array consisting of 4 different linear segments.
+    array_multi_segment = np.array([i for i in range(1, 42)] + [i for i in range(42, 67, 3)] +
+                                   [i for i in range(86, 207, 20)] + [i for i in range(196, 45, -10)])
+
+    # Added the array consisting of 4 different linear segments to the spatial dataframes X.
+    for condition in ("barSpeed28,5dps", "barSpeed30dps"):
+        macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].loc["data_to_fit_VSDI"] = (
+            array_multi_segment)
+        dict_index_default[condition]["test_linear"] = np.array([i for i in range(73)])
+
+    # Initialisation of the meta-analysis parameter dictionary for tests.
+    parameters_meta_analysis_dict = {"n_segments": 4, "index": "test_linear", "n_points": 100}
+
+    # Definition of the meta-analysis dictionary for the first condition.
+    meta_analysis_dictionary = {"data_to_fit": ("X", "barSpeed28,5dps", "VSDI", "data_to_fit", ""),
+                                "output_slopes": {"dimension": "Conditions",
+                                                  "condition": "barSpeed28,5dps",
+                                                  "name": ["horizontal_first_slope_speed",
+                                                           "horizontal_second_slope_speed",
+                                                           "horizontal_third_slope_speed",
+                                                           "horizontal_fourth_slope_speed"]},
+                                "output_inflection_points_data": {"dimension": "Conditions",
+                                                                  "condition": "barSpeed28,5dps",
+                                                                  "name": ["horizontal_first_inflection_point",
+                                                                           "horizontal_second_inflection_point",
+                                                                           "horizontal_third_inflection_point"]},
+                                "output_inflection_points_index": {"dimension": "Conditions",
+                                                                   "condition": "barSpeed28,5dps",
+                                                                   "name": ["horizontal_first_inflection_point_time",
+                                                                            "horizontal_second_inflection_point_time",
+                                                                            "horizontal_third_inflection_point_time"]},
+                                "output_index_prediction": {"dimension": "X",
+                                                            "condition": "barSpeed28,5dps",
+                                                            "name": "horizontal_data_to_fit_index_prediction"},
+                                "output_data_prediction": {"dimension": "X",
+                                                           "condition": "barSpeed28,5dps",
+                                                           "name": "horizontal_data_to_fit_data_prediction"},
+                                "output_data_intercepts": {"dimension": "Conditions",
+                                                           "condition": "barSpeed28,5dps",
+                                                           "name": ["horizontal_first_data_intercepts",
+                                                           "horizontal_second_data_intercepts",
+                                                           "horizontal_third_data_intercepts",
+                                                           "horizontal_fourth_data_intercepts"]},
+                                "output_index_intercepts": {"dimension": "Conditions",
+                                                          "condition": "barSpeed28,5dps",
+                                                          "name": ["horizontal_first_index_intercepts",
+                                                           "horizontal_second_index_intercepts",
+                                                           "horizontal_third_index_intercepts",
+                                                           "horizontal_fourth_index_intercepts"]
+                                                            }
+                                }
+
+    # Performing linear fit meta-analysis for the first condition.
+    MacularAnalysisDataframes.linear_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+                                                               meta_analysis_dictionary, dict_index_default,
+                                                               parameters_meta_analysis_dict)
+
+    # Definition of the meta-analysis dictionary for the second condition.
+    meta_analysis_dictionary = {"data_to_fit": ("X", "barSpeed30dps", "VSDI", "data_to_fit", ""),
+                                "output_slopes": {"dimension": "Conditions",
+                                                  "condition": "barSpeed30dps",
+                                                  "name": ["horizontal_first_slope_speed",
+                                                           "horizontal_second_slope_speed",
+                                                           "horizontal_third_slope_speed",
+                                                           "horizontal_fourth_slope_speed"]},
+                                "output_inflection_points_data": {"dimension": "Conditions",
+                                                                  "condition": "barSpeed30dps",
+                                                                  "name": ["horizontal_first_inflection_point",
+                                                                           "horizontal_second_inflection_point",
+                                                                           "horizontal_third_inflection_point"]},
+                                "output_inflection_points_index": {"dimension": "Conditions",
+                                                                   "condition": "barSpeed30dps",
+                                                                   "name": ["horizontal_first_inflection_point_time",
+                                                                            "horizontal_second_inflection_point_time",
+                                                                            "horizontal_third_inflection_point_time"]},
+                                "output_index_prediction": {"dimension": "X",
+                                                            "condition": "barSpeed30dps",
+                                                            "name": "horizontal_data_to_fit_index_prediction"},
+                                "output_data_prediction": {"dimension": "X",
+                                                           "condition": "barSpeed30dps",
+                                                           "name": "horizontal_data_to_fit_data_prediction"},
+                                "output_data_intercepts": {"dimension": "Conditions",
+                                                          "condition": "barSpeed30dps",
+                                                          "name": ["horizontal_first_data_intercepts",
+                                                           "horizontal_second_data_intercepts",
+                                                           "horizontal_third_data_intercepts",
+                                                           "horizontal_fourth_data_intercepts"]},
+                                "output_index_intercepts": {"dimension": "Conditions",
+                                                           "condition": "barSpeed30dps",
+                                                           "name": ["horizontal_first_index_intercepts",
+                                                           "horizontal_second_index_intercepts",
+                                                           "horizontal_third_index_intercepts",
+                                                           "horizontal_fourth_index_intercepts"]}
+                                }
+
+    # Performing linear fit meta-analysis for the second condition.
+    MacularAnalysisDataframes.linear_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+                                                               meta_analysis_dictionary, dict_index_default,
+                                                               parameters_meta_analysis_dict)
+
+    # Verify that the conditions dataframe is correct.
+    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes["Conditions"])
+
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
+            macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
+            macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
+            macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes["Time"][condition])
+
+    # Modification of the conditions dataframe to include more columns.
+    macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"] = (
+        pd.DataFrame([], index=["speed"], columns=[f"BarSpeed{i}dps" for i in range(3, 30, 3)]))
+    macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc["speed"] = \
+        [i for i in range(3, 30, 3)]
+
+    # Define a new index for a fitting on the conditions dataframe.
+    dict_index_default["overall"] = {}
+    dict_index_default["overall"]["barSpeed"] = np.array([i for i in range(3, 30, 3)])
+
+    # Initialisation of the meta-analysis parameter dictionary for tests.
+    parameters_meta_analysis_dict = {"n_segments": 1, "index": "barSpeed", "n_points": 10}
+
+    # Definition of the meta-analysis dictionary for all conditions fitting.
+    meta_analysis_dictionary = {"data_to_fit": ("Conditions", "overall", "", "speed", ""),
+                                "output_slopes": {"dimension": "MetaConditions", "condition": "overall",
+                                                  "name": ["horizontal_slope_speed"]}}
+
+    # Performing linear fit meta-analysis for all conditions fitting.
+    MacularAnalysisDataframes.linear_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+                                                               meta_analysis_dictionary, dict_index_default,
+                                                               parameters_meta_analysis_dict)
+
+    # Verify that the MetaConditions dataframe is correct.
+    assert np.array_equal(macular_analysis_dataframes_default_test.dict_analysis_dataframes["MetaConditions"].loc[
+                              "horizontal_slope_speed"].values, np.array([1]))
