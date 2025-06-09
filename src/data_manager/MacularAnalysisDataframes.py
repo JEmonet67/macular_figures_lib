@@ -776,14 +776,13 @@ class MacularAnalysisDataframes:
         """
         # Dictionary containing all meta-analyses type currently implemented.
         available_spatial_analyses_dict = {
-            "normalization": self.normalization_analyzing,
             "peak_speed": self.peak_speed_analyzing,
             "stationary_peak_delay": self.stationary_peak_delay_analyzing,
-            # "linear_fit": self.linear_fit_analyzing,
-            # "maximal_latency": self.maximal_latency_analyzing,
-            # "anticipation_range": self.anticipation_range_analyzing,
-            # "short_range_anticipation_speed": self.short_range_anticipation_speed_analyzing,
-            # "long_range_anticipation_speed": self.long_range_anticipation_speed_analyzing
+            "linear_fit": self.linear_fit_analyzing,
+            "anticipation_fit": self.anticipation_fit_analyzing,
+            "maximal_latency": self.maximal_latency_analyzing,
+            "normalization": self.normalization_analyzing,
+            "subtraction": self.subtraction_analyzing
         }
 
         # Performs all meta-analyses type listed in the current analysis dictionary.

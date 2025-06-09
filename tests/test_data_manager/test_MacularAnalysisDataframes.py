@@ -461,7 +461,7 @@ def test_initialize_dict_analysis_dataframes():
 
     # Changed the multiple analysis dictionaries to prevent it from being empty.
     macular_analysis_dataframes_to_init._multiple_dicts_analysis = {"Conditions": {"sorting": "NameValueUnit"}, "X": {},
-                                                                    "Y": {}, "Time": {}}
+                                                                    "Y": {}, "Time": {}, "MetaAnalysis": {}}
 
     # Initialisation of Macular analysis dataframes.
     macular_analysis_dataframes_to_init.initialize_dict_analysis_dataframes(x_index, y_index, t_index)
@@ -469,6 +469,8 @@ def test_initialize_dict_analysis_dataframes():
     # Verify that the conditions dataframe is correct.
     assert macular_analysis_dataframes_head100.dict_analysis_dataframes["Conditions"].equals(
         macular_analysis_dataframes_to_init.dict_analysis_dataframes["Conditions"])
+    assert macular_analysis_dataframes_head100.dict_analysis_dataframes["MetaConditions"].equals(
+        macular_analysis_dataframes_to_init.dict_analysis_dataframes["MetaConditions"])
 
     # Verify that the X, Y, and T dataframes for each condition are equal.
     for condition in macular_analysis_dataframes_head100.dict_paths_pyb:
@@ -641,9 +643,10 @@ def test_get_levels_of_multi_macular_dict_array():
 def test_get_levels_of_macular_analysis_dataframes():
     # Creation of an empty dictionary of macular analysis dataframe levels.
     dict_levels_macular_analysis_dataframes_correct = {
-        'dimensions': 'Conditions:Time:X:Y',
+        'dimensions': 'Conditions:MetaConditions:Time:X:Y',
         'analyses': {
             'Conditions': 'barSpeed (dps)',
+            'MetaConditions': '',
             'X': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''},
             'Y': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''},
             'Time': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''}}}
@@ -687,9 +690,10 @@ def test_get_levels_of_macular_analysis_dataframes():
 
     # Creation of a dictionary of complex and filled macular analysis dataframe levels
     dict_levels_macular_analysis_dataframes_correct = {
-        'dimensions': 'Conditions:Time:X:Y',
+        'dimensions': 'Conditions:MetaConditions:Time:X:Y',
         'analyses': {
             'Conditions': 'barSpeed (dps):peak_amplitude_FiringRate_GanglionGainControl:peak_amplitude_VSDI',
+            'MetaConditions': '',
             'X': {'barSpeed30dps': all_analyses_X,
                   'barSpeed28,5dps': all_analyses_X},
             'Y': {'barSpeed30dps': all_analyses_Y,
