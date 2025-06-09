@@ -1642,13 +1642,18 @@ class MacularAnalysisDataframes:
 
         # Cases of conditions dataframe.
         if analysis_levels[0] == "Conditions":
-            analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_levels[0]].loc[
-                dataframe_row, analysis_levels[1]]
+            # Case of every condition in condition dataframe.
+            if analysis_levels[1] == "overall":
+                analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_levels[0]].loc[
+                                 dataframe_row, :].values.astype(float)
+            # Case of the single conditions in condition dataframe.
+            else:
+                analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_levels[0]].loc[
+                    dataframe_row, analysis_levels[1]]
         # Case of multiple spatio-temporal dataframes.
         else:
             analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_levels[0]][
-                                 analysis_levels[1]].loc[
-                             dataframe_row, :]
+                                 analysis_levels[1]].loc[dataframe_row, :]
 
         return analysis_array
 
