@@ -1740,11 +1740,11 @@ def test_extract_one_analysis_array_from_dataframes():
                                                       0.043, 0.042, 0.044, 0.042, 0.045, 0.043, 0.047, 0.043]))
 
     # Definition of level names for an analysis located in the conditions dataframe.
-    meta_analysis_dictionary_conditions = ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", "test")
+    meta_analysis_dictionary_conditions = ("Conditions", "barSpeed28,5dps", "", "peak_amplitude", "test")
 
     # Adding a new value line to the conditions dataframe.
     macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"].loc[
-        "peak_amplitude_VSDI_test"] = (1.8, 3.2)
+        "peak_amplitude_test"] = (1.8, 3.2)
 
     # Extraction of the analysis associated with the previously defined levels.
     analysis_array_conditions = MacularAnalysisDataframes.extract_one_analysis_array_from_dataframes(
@@ -1752,8 +1752,19 @@ def test_extract_one_analysis_array_from_dataframes():
 
     # Case of extracting the value of an analysis for a condition from the conditions dataframe.
     assert analysis_array_conditions == 1.8
+
+    # Definition of level names for an analysis located in the conditions dataframe and using all the conditions.
+    meta_analysis_dictionary_all_conditions = ("Conditions", "overall", "", "peak_amplitude", "test")
+
+    # Extraction of the analysis associated with the previously defined levels.
+    analysis_array_all_conditions = MacularAnalysisDataframes.extract_one_analysis_array_from_dataframes(
+        macular_analysis_dataframes_default, meta_analysis_dictionary_all_conditions)
+
+    # Case of extracting the array of an analysis using all conditions from the conditions dataframe.
+    assert np.array_equal(analysis_array_all_conditions, np.array([1.8, 3.2]))
+
     # Remove the new value row in the conditions dataframe.
-    macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"].drop("peak_amplitude_VSDI_test",
+    macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"].drop("peak_amplitude_test",
                                                                                     inplace=True)
 
 

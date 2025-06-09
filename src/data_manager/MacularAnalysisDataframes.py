@@ -1611,6 +1611,10 @@ class MacularAnalysisDataframes:
         ‘peak_amplitude’). These four levels must therefore be used to locate and extract an analysis. In addition,
         there is also the name of the flag, if there is one.
 
+        In some cases, an analysis to be extracted may be defined only by the dimension, condition and type of the
+        analysis, but not by the measurement. This can happen for analyses from meta-analyses. In this case, the
+        measurement value is set to an empty character string ‘’.
+
         In the case of the ‘Conditions’ dimension, there is a single dataframe containing the data, whereas in the
         other spatio-temporal dimensions there is one dataframe per condition. Therefore, two methods must be used to
         extract values from these two types of dataframes.
@@ -1629,8 +1633,14 @@ class MacularAnalysisDataframes:
             Array of values or single value of the analysis to be extracted.
         """
         # Construction of the name of the analysis line to be extracted.
-        dataframe_row = f"{analysis_levels[3]}_{analysis_levels[2]}_{analysis_levels[4]}".strip("_")
-        # Case of the single conditions dataframe.
+        if analysis_levels[2] == "":
+            # Cases that only include the analysis type in the name of the analysis to be extracted.
+            dataframe_row = f"{analysis_levels[3]}_{analysis_levels[4]}".strip("_")
+        else:
+            # Cases that include the analysis type and measurement in the name of the analysis to be extracted.
+            dataframe_row = f"{analysis_levels[3]}_{analysis_levels[2]}_{analysis_levels[4]}".strip("_")
+
+        # Cases of conditions dataframe.
         if analysis_levels[0] == "Conditions":
             analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_levels[0]].loc[
                 dataframe_row, analysis_levels[1]]
