@@ -218,6 +218,16 @@ multiple_dicts_analysis_default = {
                                         "analyses": "horizontal_data_to_fit_data_prediction"},
              "params": {"n_segments": 2, "index": "test_linear", "n_points": 100}}
         ],
+        "anticipation_fit": [
+            {"activation_time": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                                 "analyses": "activation_time", "flag": "ms"},
+             "params": {"output_slopes": ["horizontal_short_range_anticipation_speed_dpms",
+                                          "horizontal_long_range_anticipation_speed_dpms"],
+                        "output_anticipation_range": "horizontal_anticipation_range",
+                        "output_index_prediction": "horizontal_anticipation_index_prediction",
+                        "output_data_prediction": "horizontal_anticipation_data_prediction",
+                        "n_segments": 2, "index": "spatial_x", "n_points": 100}}
+        ],
         "normalization": [
             {"numerator": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
                            "analyses": "peak_amplitude", "flag": ""},
@@ -2052,3 +2062,68 @@ def test_linear_fit_analyzing():
     # Verify that the MetaConditions dataframe is correct.
     assert np.array_equal(macular_analysis_dataframes_default_test.dict_analysis_dataframes["MetaConditions"].loc[
                               "horizontal_slope_speed"].values, np.array([1]))
+
+
+def test_anticipation_fit_analyzing():
+    # Set the randomness of the fitting for testing.
+    np.random.seed(1)
+
+    # Import of a correctly fitted anticipation of a default MacularAnalysisDataframes to test meta-analysis.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_anticipation_fitted.pyb",
+               "rb") as file_anticipation):
+        macular_analysis_dataframes_default_correct_anticipation = pickle.load(file_anticipation)
+
+    # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
+          as file_test):
+        macular_analysis_dataframes_default_test = pickle.load(file_test)
+
+    # Initialisation of the meta-analysis parameter dictionary for tests.
+    parameters_meta_analysis_dict = {"output_slopes": ["horizontal_short_range_anticipation_speed_dpms",
+                                                       "horizontal_long_range_anticipation_speed_dpms"],
+                                     "output_anticipation_range": "horizontal_anticipation_range",
+                                     "output_index_prediction": "horizontal_anticipation_index_prediction_ms",
+                                     "output_data_prediction": "horizontal_anticipation_data_prediction",
+                                     "n_segments": 2, "index": "spatial_x", "n_points": 100}
+
+    # Definition of the meta-analysis dictionary for the first condition.
+    meta_analysis_dictionary = {"activation_time": ("X", "barSpeed28,5dps", "VSDI", "activation_time", "ms"),
+                                "output_slopes": {"name": ["horizontal_short_range_anticipation_speed_dpms",
+                                                           "horizontal_long_range_anticipation_speed_dpms"]},
+                                "output_anticipation_range": {"name": "horizontal_anticipation_range"},
+                                "output_index_prediction": {"name": "horizontal_anticipation_index_prediction_ms"},
+                                "output_data_prediction": {"name": "horizontal_anticipation_data_prediction"}
+                                }
+
+    # Performing linear fit meta-analysis for the first condition.
+    MacularAnalysisDataframes.anticipation_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+                                                                     meta_analysis_dictionary, dict_index_default,
+                                                                     parameters_meta_analysis_dict)
+
+    # Definition of the meta-analysis dictionary for the second condition.
+    meta_analysis_dictionary = {"activation_time": ("X", "barSpeed30dps", "VSDI", "activation_time", "ms"),
+                                "output_slopes": {"name": ["horizontal_short_range_anticipation_speed_dpms",
+                                                           "horizontal_long_range_anticipation_speed_dpms"]},
+                                "output_anticipation_range": {"name": "horizontal_anticipation_range"},
+                                "output_index_prediction": {"name": "horizontal_anticipation_index_prediction_ms"},
+                                "output_data_prediction": {"name": "horizontal_anticipation_data_prediction"}
+                                }
+
+    # Performing linear fit meta-analysis for the second condition.
+    MacularAnalysisDataframes.anticipation_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+                                                                     meta_analysis_dictionary, dict_index_default,
+                                                                     parameters_meta_analysis_dict)
+
+    # Verify that the conditions dataframe is correct.
+    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["Conditions"])
+
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
+            macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
+            macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
+            macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["Time"][condition])
+
