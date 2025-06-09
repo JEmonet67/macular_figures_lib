@@ -174,7 +174,7 @@ multiple_dicts_analysis_default = {
                     ],
         "time_to_peak": [{"conditions": "all_conditions", "measurements": "all_measurements",
                           "params": {"index": "temporal_ms", "y": 7, "flag": "ms"}}],
-        "peak_delay": [{"conditions": "all_conditions", "measurements": "VSDI",
+        "peak_delay": [{"conditions": "all_conditions", "measurements": "VSDI:FiringRate_GanglionGainControl",
                         "params": {"index": "temporal_centered_ms", "y": 7, "axis": "horizontal", "flag": "ms"}}],
         "peak_amplitude": [{"conditions": "all_conditions", "measurements": "all_measurements",
                             "params": {"y": 7, "flag": ""}}],
@@ -202,7 +202,11 @@ multiple_dicts_analysis_default = {
         "stationary_peak_delay": [
             {"peak_delay": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
                             "analyses": "peak_delay", "flag": "ms"},
-             "params": {"output": "horizontal_stationary_peak_delay_ms"}}
+             "params": {"output": "VSDI_horizontal_stationary_peak_delay_ms"}},
+            {"peak_delay": {"dimensions": "X", "conditions": "all_conditions",
+                            "measurements": "FiringRate_GanglionGainControl",
+                            "analyses": "peak_delay", "flag": "ms"},
+             "params": {"output": "ganglion_horizontal_stationary_peak_delay_ms"}}
         ],
         "linear_fit": [
             {"data_to_fit": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
@@ -734,8 +738,8 @@ def test_get_levels_of_macular_analysis_dataframes():
                       'peak_amplitude_VSDI_derivative:peak_amplitude_V_Amacrine:'
                       'peak_amplitude_V_BipolarGainControl:peak_amplitude_V_GanglionGainControl:'
                       'peak_amplitude_muVn_CorticalExcitatory:peak_amplitude_muVn_CorticalInhibitory:'
-                      'peak_amplitude_v_e_CorticalExcitatory:peak_amplitude_v_i_CorticalInhibitory:peak_delay_VSDI_ms:'
-                      'time_to_peak_BipolarResponse_BipolarGainControl_ms:'
+                      'peak_amplitude_v_e_CorticalExcitatory:peak_amplitude_v_i_CorticalInhibitory:peak_delay_FiringRate_GanglionGainControl_ms:'
+                      'peak_delay_VSDI_ms:time_to_peak_BipolarResponse_BipolarGainControl_ms:'
                       'time_to_peak_FiringRate_GanglionGainControl_derivative_ms:'
                       'time_to_peak_FiringRate_GanglionGainControl_ms:time_to_peak_VSDI_derivative_ms:time_to_peak_VSDI_ms:'
                       'time_to_peak_V_Amacrine_ms:'
@@ -2008,6 +2012,11 @@ def test_peak_speed_analyzing():
 
 
 def test_stationary_peak_delay_analyzing():
+    # Import of a correctly stationary peak delay computed in a default MacularAnalysisDataframes to test meta-analysis.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_"
+               f"stationary_peak_delay.pyb", "rb") as file_SPD):
+        macular_analysis_dataframes_default_correct_SPD = pickle.load(file_SPD)
+
     # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
     with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
           as file_test):
@@ -2018,45 +2027,54 @@ def test_stationary_peak_delay_analyzing():
 
     # Definition of the meta-analysis dictionary for the first condition.
     meta_analysis_dictionary = {"peak_delay": ("X", "barSpeed28,5dps", "VSDI", "peak_delay", "ms"),
-                                "output": {"name": "horizontal_stationary_peak_delay_ms"}}
+                                "output": {"name": "VSDI_horizontal_stationary_peak_delay_ms"}}
 
-    # Performing stationary peak delay meta-analysis for the first condition.
+    # Performing stationary peak delay meta-analysis for the VSDI of the first condition.
     MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
-                                                               meta_analysis_dictionary, dict_index_default,
-                                                               parameters_meta_analysis_dict)
+                                                                          meta_analysis_dictionary, dict_index_default,
+                                                                          parameters_meta_analysis_dict)
 
-    # Definition of the meta-analysis dictionary for the second condition.
+    # Definition of the meta-analysis dictionary for the VSDI of the second condition.
     meta_analysis_dictionary = {"peak_delay": ("X", "barSpeed30dps", "VSDI", "peak_delay", "ms"),
-                                "output": {"name": "horizontal_stationary_peak_delay_ms"}}
+                                "output": {"name": "VSDI_horizontal_stationary_peak_delay_ms"}}
 
-    # Performing stationary peak delay meta-analysis for the second condition.
+    # Performing stationary peak delay meta-analysis for the VSDI of the second condition.
     MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
-                                                               meta_analysis_dictionary, dict_index_default,
-                                                               parameters_meta_analysis_dict)
+                                                                          meta_analysis_dictionary, dict_index_default,
+                                                                          parameters_meta_analysis_dict)
 
-    # Getting the array calculated in the stationary peak delay meta-analysis.
-    output_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
-        "horizontal_stationary_peak_delay_ms"].values
+    # Definition of the meta-analysis dictionary for the ganglion firing rate of the first condition.
+    meta_analysis_dictionary = {
+        "peak_delay": ("X", "barSpeed28,5dps", "FiringRate_GanglionGainControl", "peak_delay", "ms"),
+        "output": {"name": "ganglion_horizontal_stationary_peak_delay_ms"}}
 
-    # Verification of stationary peak delay values.
-    assert np.array_equal(output_array, np.array([140.701, 139.815]))
+    # Performing stationary peak delay meta-analysis for the ganglion firing rate of the first condition.
+    MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+                                                                          meta_analysis_dictionary, dict_index_default,
+                                                                          parameters_meta_analysis_dict)
 
-    # Remove to verify that this addition is the only change made during the meta-analysis.
-    macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].drop(
-        "horizontal_stationary_peak_delay_ms", inplace=True)
+    # Definition of the meta-analysis dictionary for the ganglion firing rate of the second condition.
+    meta_analysis_dictionary = {
+        "peak_delay": ("X", "barSpeed30dps", "FiringRate_GanglionGainControl", "peak_delay", "ms"),
+        "output": {"name": "ganglion_horizontal_stationary_peak_delay_ms"}}
+
+    # Performing stationary peak delay meta-analysis for the ganglion firing rate of the second condition.
+    MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+                                                                          meta_analysis_dictionary, dict_index_default,
+                                                                          parameters_meta_analysis_dict)
 
     # Verify that the conditions dataframe is correct.
     assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"])
+        macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes["Conditions"])
 
     # Verify that the X, Y, and T dataframes for each condition are equal.
     for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
         assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default.dict_analysis_dataframes["X"][condition])
+            macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes["X"][condition])
         assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default.dict_analysis_dataframes["Y"][condition])
+            macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes["Y"][condition])
         assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"])
+            macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes["Time"][condition])
 
 
 def test_linear_fit_analyzing():
