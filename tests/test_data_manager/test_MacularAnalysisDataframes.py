@@ -2197,3 +2197,73 @@ def test_maximal_latency_analyzing():
         assert macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["Time"][condition].equals(
             macular_analysis_dataframes_anticipation_test_copy.dict_analysis_dataframes["Time"][condition])
 
+
+def test_subtraction_analyzing():
+    # Import of a default MacularAnalysisDataframes with stationary peak delay to test meta-analysis.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_"
+               f"stationary_peak_delay.pyb", "rb") as file_SPD):
+        macular_analysis_dataframes_default_SPD_test = pickle.load(file_SPD)
+
+    # Import a copy of the default MacularAnalysisDataframes with stationary peak delay to test meta-analysis.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_"
+               f"stationary_peak_delay.pyb", "rb") as file_SPD):
+        macular_analysis_dataframes_default_SPD_copy = pickle.load(file_SPD)
+
+    # Initialisation of the meta-analysis parameter dictionary for tests.
+    parameters_meta_analysis_dict = {}
+
+    # Initialisation of a dictionary of argument associated to 2 arrays of values in numerator and denominator.
+    meta_analysis_dictionary = {
+        "initial_value": ("Conditions", "barSpeed28,5dps", "", "VSDI_horizontal_stationary_peak_delay", "ms"),
+        "values_subtracted": ("Conditions", "barSpeed28,5dps", "", "ganglion_horizontal_stationary_peak_delay", "ms"),
+        "output": {"dimension": "Conditions", "condition": "barSpeed28,5dps",
+                   "name": "horizontal_cortex_ganglion_stationary_peak_delay_diff"}}
+
+    # Performing division meta-analysis with arrays as numerators and denominators.
+    MacularAnalysisDataframes.subtraction_analyzing.__wrapped__(macular_analysis_dataframes_default_SPD_test,
+                                                                meta_analysis_dictionary, dict_index_default,
+                                                                parameters_meta_analysis_dict)
+
+    # Initialisation of a dictionary of argument associated to 2 arrays of values in numerator and denominator.
+    meta_analysis_dictionary = {
+        "initial_value": ("Conditions", "barSpeed30dps", "", "VSDI_horizontal_stationary_peak_delay", "ms"),
+        "values_subtracted": ("Conditions", "barSpeed30dps", "", "ganglion_horizontal_stationary_peak_delay", "ms"),
+        "output": {"dimension": "Conditions", "condition": "barSpeed30dps",
+                   "name": "horizontal_cortex_ganglion_stationary_peak_delay_diff"}}
+
+    # Performing division meta-analysis with arrays as numerators and denominators.
+    MacularAnalysisDataframes.subtraction_analyzing.__wrapped__(macular_analysis_dataframes_default_SPD_test,
+                                                                meta_analysis_dictionary, dict_index_default,
+                                                                parameters_meta_analysis_dict)
+
+    # Getting the array calculated in the division meta-analysis.
+    output_array = macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["Conditions"].loc[
+        "horizontal_cortex_ganglion_stationary_peak_delay_diff"].values
+
+    # Manual calculation of the expected array values of the meta-analysis division.
+    initial_value_array = macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["Conditions"].loc[
+        "VSDI_horizontal_stationary_peak_delay_ms"].values
+    values_subtracted_array = macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["Conditions"].loc[
+        "ganglion_horizontal_stationary_peak_delay_ms"].values
+    output_array_expected = initial_value_array - values_subtracted_array
+    output_array_expected = output_array_expected.astype(float).round(3)
+
+    # Case of division meta-analysis with arrays as numerator and denominator values.
+    assert np.array_equal(output_array, output_array_expected)
+
+    # Remove to verify that these additions are the only changes made during the meta-analysis.
+    macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["Conditions"].drop(
+        "horizontal_cortex_ganglion_stationary_peak_delay_diff", inplace=True)
+
+    # Verify that the conditions dataframe is correct.
+    assert macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_default_SPD_copy.dict_analysis_dataframes["Conditions"])
+
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_default_SPD_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["X"][condition].equals(
+            macular_analysis_dataframes_default_SPD_copy.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["Y"][condition].equals(
+            macular_analysis_dataframes_default_SPD_copy.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["Time"][condition].equals(
+            macular_analysis_dataframes_default_SPD_copy.dict_analysis_dataframes["Time"][condition])

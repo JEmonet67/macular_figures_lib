@@ -2103,3 +2103,54 @@ class MacularAnalysisDataframes:
                                                                meta_analysis_dictionary["output"]["condition"],
                                                                meta_analysis_dictionary["output"]["name"],
                                                                maximal_latency_value)
+
+    @staticmethod
+    @meta_analysis
+    def subtraction_analyzing(macular_analysis_dataframes, meta_analysis_dictionary, index,
+                              parameters_meta_analysis_dict):
+        """Function that calculates a subtraction of one value by one or multiple values.
+
+        To work, this meta-analysis requires two arguments: the "numerator" and the "denominator", which must defined in
+        the meta-analysis dictionaries. A third key, ‘output’, must also be defined, which corresponds to the position
+        where you want to save the result of the operation.
+
+        Finally, the last key, “params”, must contain the key ‘factor’ with the value of the multiplication factor and
+        the flag to be used as a suffix for the name of the meta-analysis.
+
+        Parameters
+        ----------
+        macular_analysis_dataframes : MacularAnalysisDataframes
+            Macular Analyses Dataframes whose analyses the user wishes to use for meta-analysis.
+
+        meta_analysis_dictionary : dict of tuple and dict of dict
+            Meta-analysis dictionary linking the names of arguments in a meta-analysis with the associated array of
+            values. In the case of arguments containing the term ‘output’, the key is associated with the name of the
+            outputs created for the dataframe.
+
+        index : dict of dict
+            Dictionary of all indexes present in the multiple macular dict array used in the current
+            MacularAnalysisDataframes.
+
+        parameters_meta_analysis_dict : dict
+            Dictionary containing all the parameters of the meta-analysis to be formatted.
+
+            This dictionary don't contain any parameters.
+        """
+        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
+                                                                             meta_analysis_dictionary)
+
+        values_subtracted = [meta_analysis_dictionary[argument] for argument in meta_analysis_dictionary
+                             if "values_subtracted" in argument]
+
+        # Calculation of the subctraction of the multiple analysis values.
+        subtraction = MetaAnalyser.subtraction_computing(meta_analysis_dictionary["initial_value"],
+                                                         values_subtracted)
+
+        # Adds the output value(s) to a new row in the output dataframe.
+        MacularAnalysisDataframes.add_array_line_to_dataframes(macular_analysis_dataframes,
+                                                               meta_analysis_dictionary["output"]["dimension"],
+                                                               meta_analysis_dictionary["output"]["condition"],
+                                                               meta_analysis_dictionary["output"]["name"],
+                                                               subtraction.astype(float)
+                                                               )
