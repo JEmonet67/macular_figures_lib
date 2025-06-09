@@ -159,10 +159,19 @@ multiple_dicts_analysis_default = {
     },
     "X": {
         "activation_time": [{"conditions": "all_conditions", "measurements": "VSDI",
-                             "params": {"threshold": 0.001, "index": "temporal_ms", "y": 7, "flag": "ms"}}],
+                             "params": {"threshold": 0.001, "threshold_type": "static", "index": "temporal_ms", "y": 7,
+                                        "flag": "ms"}},
+                            {"conditions": "all_conditions", "measurements": "VSDI",
+                             "params": {"threshold": 0.001, "threshold_type": "dynamic", "index": "temporal_ms", "y": 7,
+                                        "flag": "ms_dynamic"}}
+                            ],
         "latency": [{"conditions": "all_conditions", "measurements": "VSDI",
-                     "params": {"threshold": 0.001, "index": "temporal_centered_ms", "y": 7,
-                                "axis": "horizontal", "flag": "ms"}}],
+                     "params": {"threshold": 0.001, "threshold_type": "static", "index": "temporal_centered_ms",
+                                "y": 7, "axis": "horizontal", "flag": "ms"}},
+                    {"conditions": "all_conditions", "measurements": "VSDI",
+                     "params": {"threshold": 0.001, "threshold_type": "dynamic", "index": "temporal_centered_ms",
+                                "y": 7, "axis": "horizontal", "flag": "ms_dynamic"}}
+                    ],
         "time_to_peak": [{"conditions": "all_conditions", "measurements": "all_measurements",
                           "params": {"index": "temporal_ms", "y": 7, "flag": "ms"}}],
         "peak_delay": [{"conditions": "all_conditions", "measurements": "VSDI",
@@ -172,7 +181,8 @@ multiple_dicts_analysis_default = {
     },
     "Y": {
         "activation_time": [{"conditions": "all_conditions", "measurements": "VSDI",
-                             "params": {"threshold": 0.001, "index": "temporal_ms", "x": 36, "flag": "ms"}}],
+                             "params": {"threshold": 0.001, "threshold_type": "static", "index": "temporal_ms",
+                                        "x": 36, "flag": "ms"}}],
         "time_to_peak": [{"conditions": "all_conditions", "measurements": "all_measurements",
                           "params": {"index": "temporal_ms", "x": 36, "flag": "ms"}}],
         "peak_amplitude": [{"conditions": "all_conditions", "measurements": "all_measurements",
@@ -999,13 +1009,14 @@ def test_analysis():
         "X": {"activation_time":
             [
                 {"conditions": all_conditions, "measurements": all_measurements,
-                 "params": {"threshold": 0.01, "y": 7, "index": "temporal_ms", "flag": ""}},
+                 "params": {"threshold": 0.01, "threshold_type": "static", "y": 7, "index": "temporal_ms", "flag": ""}},
                 {"conditions": all_conditions, "measurements": "VSDI",
-                 "params": {"threshold": 0.001, "y": 7, "index": "temporal_ms", "flag": ""}},
+                 "params": {"threshold": 0.001, "threshold_type": "static", "y": 7, "index": "temporal_ms",
+                            "flag": ""}},
                 {"conditions": "barSpeed28,5dps", "measurements": "BipolarResponse_BipolarGainControl",
-                 "params": {"threshold": 0.005, "y": 7, "index": "temporal", "flag": ""}},
+                 "params": {"threshold": 0.005, "threshold_type": "static", "y": 7, "index": "temporal", "flag": ""}},
                 {"conditions": "barSpeed30dps", "measurements": all_measurements,
-                 "params": {"threshold": 0.001, "y": 7, "index": "temporal", "flag": ""}}
+                 "params": {"threshold": 0.001, "threshold_type": "static", "y": 7, "index": "temporal", "flag": ""}}
             ]
         },
         "Conditions": {"peak_amplitude":
@@ -1112,7 +1123,8 @@ def test_make_common_group_analysis():
     common_analysis_group_generator = (analysis_pair for analysis_pair in
                                        [("barSpeed28,5dps", "FiringRate_GanglionGainControl"),
                                         ("barSpeed30dps", "VSDI")])
-    parameters_analysis_dict_spatial_analysis = {"threshold": 0.001, "y": 7, "index": "temporal_ms",
+    parameters_analysis_dict_spatial_analysis = {"threshold": 0.001, "threshold_type": "static", "y": 7,
+                                                 "index": "temporal_ms",
                                                  "flag": "threshold0,001_y7"}
 
     # Make spatial common group analysis (activation time).
@@ -1163,7 +1175,8 @@ def test_make_common_group_analysis():
 
 def test_activation_time_analyzing():
     # Create analysis dictionary for case on X dimension dataframe.
-    parameters_analysis_dict_x = {"threshold": 0.001, "y": 7, "index": "temporal_ms", "flag": "threshold0,001_y7"}
+    parameters_analysis_dict_x = {"threshold": 0.001, "threshold_type": "static", "y": 7, "index": "temporal_ms",
+                                  "flag": "static_threshold0,001_y7"}
 
     # Create new activation time array for spatial dataframe of the X dimension.
     activation_time_array_x = MacularAnalysisDataframes.activation_time_analyzing.__wrapped__(
@@ -1179,7 +1192,8 @@ def test_activation_time_analyzing():
     assert np.array_equal(activation_time_array_x, activation_time_array_correct_x)
 
     # Create analysis dictionary for case on Y dimension dataframe.
-    parameters_analysis_dict_y = {"threshold": 0.001, "x": 36, "index": "temporal_ms", "flag": "threshold0,001_x36"}
+    parameters_analysis_dict_y = {"threshold": 0.001, "threshold_type": "static", "x": 36, "index": "temporal_ms",
+                                  "flag": "static_threshold0,001_x36"}
 
     # Create new activation time array for spatial dataframe of the Y dimension.
     activation_time_array_y = MacularAnalysisDataframes.activation_time_analyzing.__wrapped__(
@@ -1194,30 +1208,79 @@ def test_activation_time_analyzing():
     # Verification of the validity of the spatial array Y of the activation time.
     assert np.array_equal(activation_time_array_y, activation_time_array_correct_y)
 
+    # Create analysis dictionary for dynamic threshold case on X dimension dataframe.
+    parameters_analysis_dict_dynamic = {"threshold": 0.001, "threshold_type": "dynamic", "y": 7, "index": "temporal_ms",
+                                        "flag": "dynamic_threshold0,001_y7"}
+
+    # Create new activation time array with dynamic thresholding for spatial dataframe of the X dimension.
+    activation_time_array_dynamic = MacularAnalysisDataframes.activation_time_analyzing.__wrapped__(
+        multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
+        multi_macular_dict_array_default["barSpeed30dps"].index,
+        parameters_analysis_dict_dynamic)
+
+    # Creation of an array of correct activation times obtained by dynamic thresholding.
+    activation_time_array_dynamic_correct = [31.0, 34.2, 37.4, 40.6, 43.8, 47.0, 50.2, 53.4, 56.6, 59.8, 64.6, 67.8,
+                                             71.0, 75.8, 77.4, 82.2, 85.4, 90.2, 95.0, 98.2, 103.0, 107.8, 111.0, 115.8,
+                                             120.6, 123.8, 128.6, 133.4, 138.2, 143.0, 147.8, 152.6, 159.0, 165.4,
+                                             168.6, 176.6, 179.8, 187.8, 191.0, 200.6, 205.4, 211.8, 218.2, 223.0,
+                                             232.6, 237.4, 245.4, 250.2, 259.8, 266.2, 272.6, 280.6, 287.0, 295.0,
+                                             299.8, 309.4, 315.8, 325.4, 330.2, 339.8, 344.6, 352.6, 360.6, 367.0,
+                                             376.6, 381.4, 392.6, 397.4, 407.0, 411.8, 419.8, 426.2, 432.6]
+
+    # Verification of the proper functioning of dynamic thresholding.
+    assert np.array_equal(activation_time_array_dynamic, activation_time_array_dynamic_correct)
+
 
 def test_latency_analyzing():
     # Create analysis dictionary for latency case on X dimension dataframe.
-    parameters_analysis_dict_x = {"threshold": 0.001, "y": 7, "index": "temporal_centered_ms", "axis": "horizontal",
-                                  "flag": "threshold0,001_y7"}
+    parameters_analysis_dict_static = {"threshold": 0.001, "threshold_type": "static", "y": 7,
+                                       "index": "temporal_centered_ms", "axis": "horizontal",
+                                       "flag": "static_threshold0,001_y7"}
 
     # Create new latency array for spatial dataframe of the X dimension.
-    latency_array_x = MacularAnalysisDataframes.latency_analyzing.__wrapped__(
+    latency_array_static = MacularAnalysisDataframes.latency_analyzing.__wrapped__(
         multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
         multi_macular_dict_array_default["barSpeed30dps"].index,
-        parameters_analysis_dict_x)
+        parameters_analysis_dict_static)
 
     # Set correct latency array X to compare.
-    latency_array_x_correct = np.array([3.13, 3.63, 0.93, -0.17, -2.87, -5.57, -8.27, -10.97, -13.67, -16.37, -19.07,
-                                        -20.17, -22.87, -25.57, -26.67, -27.77, -30.47, -31.57, -32.67, -33.77, -34.87,
-                                        -35.97, -37.07, -36.57, -37.67, -38.77, -38.27, -39.37, -40.47, -39.97, -41.07,
-                                        -40.57, -40.07, -41.17, -40.67, -41.77, -41.27, -40.77, -41.87, -41.37, -42.47,
-                                        -41.97, -41.47, -42.57, -42.07, -41.57, -42.67, -42.17, -41.67, -41.17, -42.27,
-                                        -41.77, -42.87, -42.37, -41.87, -42.97, -42.47, -41.97, -43.07, -42.57, -42.07,
-                                        -43.17, -42.67, -43.77, -43.27, -42.77, -43.87, -43.37, -44.47, -45.57, -45.07,
-                                        -46.17, -45.67])
+    latency_array_static_correct = np.array(
+        [3.13, 3.63, 0.93, -0.17, -2.87, -5.57, -8.27, -10.97, -13.67, -16.37, -19.07,
+         -20.17, -22.87, -25.57, -26.67, -27.77, -30.47, -31.57, -32.67, -33.77, -34.87,
+         -35.97, -37.07, -36.57, -37.67, -38.77, -38.27, -39.37, -40.47, -39.97, -41.07,
+         -40.57, -40.07, -41.17, -40.67, -41.77, -41.27, -40.77, -41.87, -41.37, -42.47,
+         -41.97, -41.47, -42.57, -42.07, -41.57, -42.67, -42.17, -41.67, -41.17, -42.27,
+         -41.77, -42.87, -42.37, -41.87, -42.97, -42.47, -41.97, -43.07, -42.57, -42.07,
+         -43.17, -42.67, -43.77, -43.27, -42.77, -43.87, -43.37, -44.47, -45.57, -45.07,
+         -46.17, -45.67])
 
     # Verification of the validity of the spatial array X of the latency.
-    assert np.array_equal(latency_array_x, latency_array_x_correct)
+    assert np.array_equal(latency_array_static, latency_array_static_correct)
+
+    # Create analysis dictionary for latency case on X dimension dataframe.
+    parameters_analysis_dict_dynamic = {"threshold": 0.001, "threshold_type": "dynamic", "y": 7,
+                                        "index": "temporal_centered_ms", "axis": "horizontal",
+                                        "flag": "dynamic_threshold0,001_y7"}
+
+    # Create new latency array for spatial dataframe of the X dimension.
+    latency_array_dynamic = MacularAnalysisDataframes.latency_analyzing.__wrapped__(
+        multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
+        multi_macular_dict_array_default["barSpeed30dps"].index,
+        parameters_analysis_dict_dynamic)
+
+    # Set correct latency array X to compare.
+    latency_array_dynamic_correct = np.array([-17.67, -21.97, -26.27, -30.57, -34.87, -39.17, -43.47, -47.77, -52.07,
+                                              -56.37, -59.07, -63.37, -67.67, -70.37, -76.27, -78.97, -83.27, -85.97,
+                                              -88.67, -92.97, -95.67, -98.37, -102.67, -105.37, -108.07, -112.37,
+                                              -115.07, -117.77, -120.47, -123.17, -125.87, -128.57, -129.67, -130.77,
+                                              -135.07, -134.57, -138.87, -138.37, -142.67, -140.57, -143.27, -144.37,
+                                              -145.47, -148.17, -146.07, -148.77, -148.27, -150.97, -148.87, -149.97,
+                                              -151.07, -150.57, -151.67, -151.17, -153.87, -151.77, -152.87, -150.77,
+                                              -153.47, -151.37, -154.07, -153.57, -153.07, -154.17, -152.07, -154.77,
+                                              -151.07, -153.77, -151.67, -154.37, -153.87, -154.97, -156.07])
+
+    # Verification of the validity of the spatial array X of the latency.
+    assert np.array_equal(latency_array_dynamic, latency_array_dynamic_correct)
 
 
 def test_time_to_peak_analyzing():

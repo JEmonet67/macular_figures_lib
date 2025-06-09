@@ -18,7 +18,7 @@ class SpatialAnalyser:
         index_array : np.ndarray
             One-dimensional array containing the time index to be used.
 
-        threshold : floats
+        threshold : floats or np.ndarray
             Activation threshold used to calculate the activation time.
 
         Returns
@@ -44,6 +44,43 @@ class SpatialAnalyser:
                     activation_time_array[j][i] = np.nan
 
         return activation_time_array
+
+
+    @staticmethod
+    def dynamic_threshold_computing(data_array, threshold_ratio):
+        """Calculation of an array containing different dynamic thresholds proportional to the maximum local activity
+        value present in each array contained at each position of the main and secondary axes of a 3D array.
+
+        A threshold is calculated for each X and Y position of the 3D array by multiplying the maximum value of the
+        array contained there by the threshold ratio. This dynamic 2D threshold array is repeated as many times as the
+        size of the tertiary axis of the data array so that it can serve as a filter of the same size.
+
+        Parameters
+        ----------
+        data_array : np.ndarray
+            3D array containing activity data.
+
+        threshold_ratio : floats
+            Dynamic threshold ratio to be applied to each local maximum.
+
+        Returns
+        ----------
+        dynamic_threshold : np.ndarray
+            3D array containing a different dynamic threshold value for each position in X and Y.
+        """
+        # Initialisation of an empty array to hold the dynamic threshold.
+        dynamic_threshold = np.empty((data_array.shape[0], data_array.shape[1]))
+
+        # Loop through each position in the data array.
+        for i in range(data_array.shape[0]):
+            for j in range(data_array.shape[1]):
+                # Calculation of the dynamic threshold of the current position.
+                dynamic_threshold[i][j] = data_array[i][j].max() * threshold_ratio
+
+        dynamic_threshold_3d = np.repeat(dynamic_threshold[:, :, np.newaxis], data_array.shape[2], axis=2)
+
+        return dynamic_threshold_3d
+
 
     @staticmethod
     def latency_computing(data_array, index_array, threshold, axis):

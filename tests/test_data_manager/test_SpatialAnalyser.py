@@ -27,6 +27,23 @@ def test_activation_time_computing():
     assert np.array_equal(activation_time_array, activation_time_array_correct)
 
 
+def test_dynamic_threshold_computing():
+    # Creation of a correct dynamic threshold array.
+    dynamic_threshold_correct = np.array([[[0.03, 0.03, 0.03]], [[0.05, 0.05, 0.05]]])
+
+    # Initialisation of an empty array to contain an array of data.
+    data_array_test = np.empty((2, 1, 3))
+
+    # Filling the data array.
+    data_array_test[0][0] = np.array([1, 2, 3])
+    data_array_test[1][0] = np.array([3, 4, 5])
+
+    # Calculation of the dynamic threshold for the data array.
+    dynamic_threshold = SpatialAnalyser.dynamic_threshold_computing(data_array_test, 0.01)
+
+    # Verification of the correct functioning of the dynamic threshold calculation.
+    assert np.array_equal(dynamic_threshold, dynamic_threshold_correct)
+
 def test_latency_computing():
     # Import a 2D array of valid VSDI horizontal latency.
     with open(f"{path_data_test}/SpatialAnalyser/horizontal_latency_VSDI_array.pyb", "rb") as file:

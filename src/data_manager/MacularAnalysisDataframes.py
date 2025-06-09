@@ -964,7 +964,8 @@ class MacularAnalysisDataframes:
 
         The activation time is calculated in the 3D array and the index of a measurement of a condition. It is obtained
         in the form of a 2D array. From this array it's possible to only take the desired X or Y position to obtain a
-        1D array based on a single spatial dimension (spatial analysis decorator).
+        1D array based on a single spatial dimension (spatial analysis decorator). The activation time can be calculated
+        either from a fixed threshold value or dynamically by adjusting the threshold value for each spatial position.
 
         Parameters
         ----------
@@ -975,19 +976,26 @@ class MacularAnalysisDataframes:
             Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
 
         parameters_analysis_dict : dict
-            Dictionary of parameters to be used for activation time analysis. It must contain the threshold,
-            the name of the index to be taken from the dictionary (allows switching from the s index to the ms index),
-            and the x or y position to be analysed.
+            Dictionary of parameters to be used for activation time analysis. It must contain the threshold, the type of
+            threshold (dynamic or static), the name of the index to be taken from the dictionary (allows switching from
+            the s index to the ms index), and the x or y position to be analysed.
 
         Returns
         ----------
         activation_time_array : np.ndarray
-            2D or 1D array of activation times along a single spatial axis.
+            1D array of activation times along a single spatial axis.
         """
+        # Switch between static or dynamic thresholding.
+        if parameters_analysis_dict["threshold_type"] == "static":
+            threshold = parameters_analysis_dict["threshold"]
+
+        elif parameters_analysis_dict["threshold_type"] == "dynamic":
+            threshold = SpatialAnalyser.dynamic_threshold_computing(data, parameters_analysis_dict["threshold"])
+
         # Calculation of the 2D array of activation times.
         activation_time_2d_array = SpatialAnalyser.activation_time_computing(data,
                                                                              index[parameters_analysis_dict["index"]],
-                                                                             parameters_analysis_dict["threshold"])
+                                                                             threshold)
 
         # Extracting a single spatial dimension from the activation time array.
         if "x" in parameters_analysis_dict:
@@ -1004,7 +1012,8 @@ class MacularAnalysisDataframes:
 
         The latency is calculated in the 3D array and a centered index of a measurement of a condition. It is obtained
         in the form of a 2D array from which only the desired X or Y position can be taken to obtain a 1D array based
-        on a single spatial dimension.
+        on a single spatial dimension. The latency can be calculated either from a fixed threshold value or dynamically
+        by adjusting the threshold value for each spatial position.
 
         To use the centered index, the user have to specify the name of the time index in the analysis parameter
         dictionary associated with the ‘index’ key. For example: “index”: ‘temporal_centered’. This index will consist
@@ -1021,19 +1030,25 @@ class MacularAnalysisDataframes:
             Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
 
         parameters_analysis_dict : dict
-            Dictionary of parameters to be used for latency analysis. It must contain the threshold, the axis of the
-            object's movement, the name of the index to be taken from the dictionary (allows switching from the s index
-            to the ms index), and the x or y position to be analysed.
+            Dictionary of parameters to be used for latency analysis. It must contain the threshold, the type of
+            threshold (dynamic or static),the axis of the object's movement, the name of the index to be taken from the
+            dictionary (allows switching from the s index to the ms index), and the x or y position to be analysed.
 
         Returns
         ----------
-        activation_time_1d_array : np.ndarray
+        latency_1d_array : np.ndarray
             1D array of latency along a single spatial axis.
         """
+        # Switch between static or dynamic thresholding.
+        if parameters_analysis_dict["threshold_type"] == "static":
+            threshold = parameters_analysis_dict["threshold"]
+
+        elif parameters_analysis_dict["threshold_type"] == "dynamic":
+            threshold = SpatialAnalyser.dynamic_threshold_computing(data, parameters_analysis_dict["threshold"])
+
         # Calculation of the 2D array of latency.
         latency_2d_array = SpatialAnalyser.latency_computing(data, index[parameters_analysis_dict["index"]],
-                                                             parameters_analysis_dict["threshold"],
-                                                             parameters_analysis_dict["axis"])
+                                                             threshold, parameters_analysis_dict["axis"])
 
         # Extracting a single spatial dimension from the latency array.
         if "x" in parameters_analysis_dict:
