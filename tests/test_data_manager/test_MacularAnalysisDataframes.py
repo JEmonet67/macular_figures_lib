@@ -159,8 +159,10 @@ multiple_dicts_preprocessings_default = {
 multiple_dicts_analysis_default = {
     "Conditions": {
         "sorting": "NameValueUnit",
-        "peak_amplitude": [{"conditions": "all_conditions", "measurements": "FiringRate_GanglionGainControl:VSDI",
-                            "params": {"x": 36, "y": 7, "flag": ""}}]
+        "peak_amplitude": [{"conditions": "all_conditions",
+                            "measurements": "FiringRate_GanglionGainControl:VSDI:"
+                                            "muVn_CorticalExcitatory:muVn_CorticalInhibitory",
+                            "params": {"x": 36, "y": 7, "flag": ""}}],
         "initial_amplitude": [{"conditions": "all_conditions",
                                "measurements": "muVn_CorticalExcitatory:muVn_CorticalInhibitory",
                                "params": {"x": 36, "y": 7, "flag": ""}}]
@@ -269,29 +271,24 @@ multiple_dicts_analysis_default = {
                                     "analyses": "horizontal_anticipation_range", "flag": ""},
              "params": {"output": "horizontal_maximal_latency_ms"}}
         ],
-        "normalization": [
-            {"numerator": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
-                           "analyses": "peak_amplitude", "flag": ""},
-             "denominator": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements":
-                 "FiringRate_GanglionGainControl", "analyses": "peak_amplitude", "flag": ""},
-             "output": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
-                        "analyses": "spatial_peak_amplitudes_normalization"},
+        "subtraction": [
+            {"initial_value": {"dimensions": "Conditions", "conditions": "all_conditions",
+                               "measurements": "muVn_CorticalExcitatory", "analyses": "peak_amplitude",
+                               "flag": ""},
+             "values_subtracted": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                   "measurements": "muVn_CorticalExcitatory",
+                                   "analyses": "initial_amplitude", "flag": ""},
+             "output": {"dimensions": "Conditions", "conditions": "all_conditions",
+                        "measurements": "muVn_CorticalExcitatory", "analyses": "subtraction_excitatory_mean_voltage"},
              "params": {"factor": 8}},
-
-            {"numerator": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
-                           "analyses": "peak_amplitude", "flag": ""},
-             "denominator": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
-                             "analyses": "peak_amplitude", "flag": ""},
-             "output": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
-                        "analyses": "norm_peak_amplitudes_normalization"},
-             "params": {"factor": 8}},
-
-            {"numerator": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
-                           "analyses": "peak_amplitude", "flag": ""},
-             "denominator": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
-                             "analyses": "peak_amplitude", "flag": ""},
-             "output": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
-                        "analyses": "cond_peak_amplitudes_normalization"},
+            {"initial_value": {"dimensions": "Conditions", "conditions": "all_conditions",
+                               "measurements": "muVn_CorticalInhibitory", "analyses": "peak_amplitude",
+                               "flag": ""},
+             "values_subtracted": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                   "measurements": "muVn_CorticalInhibitory",
+                                   "analyses": "initial_amplitude", "flag": ""},
+             "output": {"dimensions": "Conditions", "conditions": "all_conditions",
+                        "measurements": "muVn_CorticalInhibitory", "analyses": "subtraction_inhibitory_mean_voltage"},
              "params": {"factor": 8}}
         ],
         "normalization": [
@@ -765,23 +762,25 @@ def test_get_levels_of_macular_analysis_dataframes():
           as file_test):
         macular_analysis_dataframes_default = pickle.load(file_test)
 
-    all_analyses_X = ('activation_time_VSDI_ms:latency_VSDI_ms:peak_amplitude_BipolarResponse_BipolarGainControl:'
-                      'peak_amplitude_FiringRate_GanglionGainControl:'
+    all_analyses_X = ('activation_time_VSDI_ms:activation_time_VSDI_ms_dynamic:latency_VSDI_ms:latency_VSDI_ms_dynamic:'
+                      'peak_amplitude_BipolarResponse_BipolarGainControl:peak_amplitude_FiringRate_GanglionGainControl:'
                       'peak_amplitude_FiringRate_GanglionGainControl_derivative:peak_amplitude_VSDI:'
                       'peak_amplitude_VSDI_derivative:peak_amplitude_V_Amacrine:'
                       'peak_amplitude_V_BipolarGainControl:peak_amplitude_V_GanglionGainControl:'
                       'peak_amplitude_muVn_CorticalExcitatory:peak_amplitude_muVn_CorticalInhibitory:'
-                      'peak_amplitude_v_e_CorticalExcitatory:peak_amplitude_v_i_CorticalInhibitory:peak_delay_FiringRate_GanglionGainControl_ms:'
+                      'peak_amplitude_v_e_CorticalExcitatory:peak_amplitude_v_i_CorticalInhibitory:'
+                      'peak_delay_FiringRate_GanglionGainControl_ms:'
                       'peak_delay_VSDI_ms:time_to_peak_BipolarResponse_BipolarGainControl_ms:'
                       'time_to_peak_FiringRate_GanglionGainControl_derivative_ms:'
-                      'time_to_peak_FiringRate_GanglionGainControl_ms:time_to_peak_VSDI_derivative_ms:time_to_peak_VSDI_ms:'
+                      'time_to_peak_FiringRate_GanglionGainControl_ms:'
+                      'time_to_peak_VSDI_derivative_ms:time_to_peak_VSDI_ms:'
                       'time_to_peak_V_Amacrine_ms:'
                       'time_to_peak_V_BipolarGainControl_ms:time_to_peak_V_GanglionGainControl_ms:'
                       'time_to_peak_muVn_CorticalExcitatory_ms:'
                       'time_to_peak_muVn_CorticalInhibitory_ms:time_to_peak_v_e_CorticalExcitatory_ms:'
                       'time_to_peak_v_i_CorticalInhibitory_ms')
-    all_analyses_Y = ('activation_time_VSDI_ms:peak_amplitude_BipolarResponse_BipolarGainControl:'
-                      'peak_amplitude_FiringRate_GanglionGainControl:'
+    all_analyses_Y = ('activation_time_VSDI_ms:'
+                      'peak_amplitude_BipolarResponse_BipolarGainControl:peak_amplitude_FiringRate_GanglionGainControl:'
                       'peak_amplitude_FiringRate_GanglionGainControl_derivative:peak_amplitude_VSDI:'
                       'peak_amplitude_VSDI_derivative:peak_amplitude_V_Amacrine:peak_amplitude_V_BipolarGainControl:'
                       'peak_amplitude_V_GanglionGainControl:peak_amplitude_muVn_CorticalExcitatory:'
@@ -800,7 +799,8 @@ def test_get_levels_of_macular_analysis_dataframes():
         'analyses': {
             'Conditions': 'barSpeed (dps):initial_amplitude_muVn_CorticalExcitatory:'
                           'initial_amplitude_muVn_CorticalInhibitory:peak_amplitude_FiringRate_GanglionGainControl:'
-                          'peak_amplitude_VSDI'
+                          'peak_amplitude_VSDI:peak_amplitude_muVn_CorticalExcitatory:'
+                          'peak_amplitude_muVn_CorticalInhibitory',
             'MetaConditions': '',
             'X': {'barSpeed30dps': all_analyses_X,
                   'barSpeed28,5dps': all_analyses_X},
