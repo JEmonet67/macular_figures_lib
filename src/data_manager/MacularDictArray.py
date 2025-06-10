@@ -828,10 +828,10 @@ class MacularDictArray:
         """
         bin_size, n_bin = DataPreprocessor.computing_binning_parameters(self.index["temporal"],
                                                                         self.dict_preprocessing["binning"])
-        self.index["temporal"] = DataPreprocessor.binning_index(self.index["temporal"], bin_size, n_bin)
+        self.index["temporal"] = DataPreprocessor.binning_unidimensional(self.index["temporal"], bin_size, n_bin)
         for measurement in self.data:
-            self.data[measurement] = DataPreprocessor.binning_data_array(self.data[measurement], bin_size,
-                                                                         n_bin)
+            self.data[measurement] = DataPreprocessor.binning_tridimensional(self.data[measurement], bin_size,
+                                                                             n_bin)
 
     def edge_cropping_preprocess(self):
         """Function to remove the edges of the cell area from the MacularDictArray.

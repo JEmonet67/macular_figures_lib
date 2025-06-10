@@ -72,11 +72,11 @@ class DataPreprocessor:
         return bin_size, n_bin
 
     @staticmethod
-    def binning_index(index, bin_size, n_bin):
+    def binning_unidimensional(index, bin_size, n_bin):
         return index[:bin_size * n_bin].reshape((n_bin, bin_size)).mean(axis=-1).round(5)
 
     @staticmethod
-    def binning_data_array(array, bin_size, n_bin):
+    def binning_tridimensional(array, bin_size, n_bin):
         return array[:, :, :bin_size * n_bin].reshape(
             (array.shape[0], array.shape[1], n_bin, bin_size)).mean(axis=-1)
 
