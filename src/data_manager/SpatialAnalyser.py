@@ -276,3 +276,27 @@ class SpatialAnalyser:
                     amplitude_array[j][i] = np.nan
 
         return amplitude_array
+
+    @staticmethod
+    def initial_amplitude_computing(data_array):
+        """Calculation of the initial amplitude of the response.
+
+        Parameters
+        ----------
+        data_array : np.ndarray
+            3D array containing activity data.
+
+        Returns
+        ----------
+        amplitude_array : np.ndarray
+            2D array containing the initial amplitude of the 3D array given as input.
+        """
+        # Initialises a 2D array with the same size as the spatial dimensions of the data array.
+        amplitude_array = np.empty((data_array.shape[0], data_array.shape[1]))
+
+        # Loops at each horizontal and vertical position of the 3D array.
+        for i in range(data_array.shape[1]):
+            for j in range(data_array.shape[0]):
+                amplitude_array[j][i] = data_array[j][i][0].round(3)
+
+        return amplitude_array

@@ -44,6 +44,7 @@ def test_dynamic_threshold_computing():
     # Verification of the correct functioning of the dynamic threshold calculation.
     assert np.array_equal(dynamic_threshold, dynamic_threshold_correct)
 
+
 def test_latency_computing():
     # Import a 2D array of valid VSDI horizontal latency.
     with open(f"{path_data_test}/SpatialAnalyser/horizontal_latency_VSDI_array.pyb", "rb") as file:
@@ -113,3 +114,21 @@ def test_peak_amplitude_computing():
     amplitude_array = SpatialAnalyser.peak_amplitude_computing(macular_dict_array_default.data["VSDI"])
 
     assert np.array_equal(amplitude_array, amplitude_array_correct)
+
+
+def test_initial_amplitude_computing():
+    # Initialisation of an empty array to contain an array of data.
+    data_array_test = np.empty((2, 3, 3))
+
+    # Filling the data array.
+    data_array_test[0][0] = np.array([4, 2, 3])
+    data_array_test[0][1] = np.array([3, 4, 5])
+    data_array_test[0][2] = np.array([4, 2, 3])
+    data_array_test[1][0] = np.array([3, 4, 5])
+    data_array_test[1][1] = np.array([4, 2, 3])
+    data_array_test[1][2] = np.array([3, 4, 5])
+
+    # Creation of a 2D amplitude array for test.
+    amplitude_array = SpatialAnalyser.initial_amplitude_computing(data_array_test)
+
+    assert np.array_equal(amplitude_array, np.array([[4, 3, 4], [3, 4, 3]]))

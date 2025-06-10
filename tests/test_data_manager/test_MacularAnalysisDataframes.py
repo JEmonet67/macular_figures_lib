@@ -161,6 +161,9 @@ multiple_dicts_analysis_default = {
         "sorting": "NameValueUnit",
         "peak_amplitude": [{"conditions": "all_conditions", "measurements": "FiringRate_GanglionGainControl:VSDI",
                             "params": {"x": 36, "y": 7, "flag": ""}}]
+        "initial_amplitude": [{"conditions": "all_conditions",
+                               "measurements": "muVn_CorticalExcitatory:muVn_CorticalInhibitory",
+                               "params": {"x": 36, "y": 7, "flag": ""}}]
     },
     "X": {
         "activation_time": [{"conditions": "all_conditions", "measurements": "VSDI",
@@ -761,7 +764,9 @@ def test_get_levels_of_macular_analysis_dataframes():
     dict_levels_macular_analysis_dataframes_correct = {
         'dimensions': 'Conditions:MetaConditions:Time:X:Y',
         'analyses': {
-            'Conditions': 'barSpeed (dps):peak_amplitude_FiringRate_GanglionGainControl:peak_amplitude_VSDI',
+            'Conditions': 'barSpeed (dps):initial_amplitude_muVn_CorticalExcitatory:'
+                          'initial_amplitude_muVn_CorticalInhibitory:peak_amplitude_FiringRate_GanglionGainControl:'
+                          'peak_amplitude_VSDI'
             'MetaConditions': '',
             'X': {'barSpeed30dps': all_analyses_X,
                   'barSpeed28,5dps': all_analyses_X},
@@ -1419,6 +1424,50 @@ def test_peak_amplitude_analyzing():
 
     # Verification of the validity of the value of the amplitude.
     assert amplitude_conditions == 0.038
+
+
+def test_initial_amplitude_analyzing():
+    # Create analysis dictionary for case on X dimension dataframe.
+    parameters_analysis_dict_x = {"y": 7}
+
+    # Create new amplitude array for spatial dataframe of the X dimension.
+    amplitude_array_x = MacularAnalysisDataframes.initial_amplitude_analyzing.__wrapped__(
+        multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
+        multi_macular_dict_array_default["barSpeed30dps"].index,
+        parameters_analysis_dict_x)
+
+    # Extract correct amplitude array X to compare.
+    amplitude_array_correct_x = multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"][7, :, 0]
+
+    # Verification of the validity of the spatial array X of the amplitude.
+    assert np.array_equal(amplitude_array_x, amplitude_array_correct_x)
+
+    # Create analysis dictionary for case on Y dimension dataframe.
+    parameters_analysis_dict_y = {"x": 36}
+
+    # Create new amplitude array for spatial dataframe of the Y dimension.
+    amplitude_array_y = MacularAnalysisDataframes.initial_amplitude_analyzing.__wrapped__(
+        multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
+        multi_macular_dict_array_default["barSpeed30dps"].index,
+        parameters_analysis_dict_y)
+
+    # Extract correct amplitude array Y to compare.
+    amplitude_array_correct_y = multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"][:, 36, 0]
+
+    # Verification of the validity of the spatial array Y of the amplitude.
+    assert np.array_equal(amplitude_array_y, amplitude_array_correct_y)
+
+    # Create analysis dictionary for case on Conditions dimension dataframe.
+    parameters_analysis_dict_conditions = {"x": 36, "y": 7}
+
+    # Create new amplitude array for spatial dataframe of the Y dimension.
+    amplitude_conditions = MacularAnalysisDataframes.initial_amplitude_analyzing.__wrapped__(
+        multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"],
+        multi_macular_dict_array_default["barSpeed30dps"].index,
+        parameters_analysis_dict_conditions)
+
+    # Verification of the validity of the value of the amplitude.
+    assert amplitude_conditions == multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"][7, 36, 0]
 
 
 def test_meta_analysis():
@@ -2218,7 +2267,7 @@ def test_linear_fit_analyzing():
     # Definition of the meta-analysis dictionary for all conditions fitting.
     meta_analysis_dictionary = {"data_to_fit": ("Conditions", "overall", "", "speed", ""),
                                 "output_slopes": {"dimension": "MetaConditions", "condition": "overall",
-                                                  "name": "horizontal_slope_speed"}}
+                                                  "name": ["horizontal_slope_speed"]}}
 
     # Performing linear fit meta-analysis for all conditions fitting.
     MacularAnalysisDataframes.linear_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_test,

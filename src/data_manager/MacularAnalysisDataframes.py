@@ -742,7 +742,8 @@ class MacularAnalysisDataframes:
             "latency": self.latency_analyzing,
             "time_to_peak": self.time_to_peak_analyzing,
             "peak_delay": self.peak_delay_analyzing,
-            "peak_amplitude": self.peak_amplitude_analyzing
+            "peak_amplitude": self.peak_amplitude_analyzing,
+            "initial_amplitude": self.initial_amplitude_analyzing
         }
 
         # Performs all spatial analyses listed in the current analysis dictionary.
@@ -768,7 +769,8 @@ class MacularAnalysisDataframes:
 
         # Dictionary containing all conditions analyses currently implemented.
         available_spatial_analyses_dict = {
-            "peak_amplitude": self.peak_amplitude_analyzing
+            "peak_amplitude": self.peak_amplitude_analyzing,
+            "initial_amplitude": self.initial_amplitude_analyzing
         }
 
         # Performs all conditions analyses listed in the current analysis dictionary.
@@ -1161,8 +1163,8 @@ class MacularAnalysisDataframes:
             Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
 
         parameters_analysis_dict : dict
-            Dictionary of parameters to be used for amplitude analysis. It must contain only the x and/or y position to
-            be analysed.
+            Dictionary of parameters to be used for peak amplitude analysis. It must contain only the x and/or y
+            position to be analysed.
 
         Returns
         ----------
@@ -1184,7 +1186,48 @@ class MacularAnalysisDataframes:
 
         return amplitude
 
-    # TODO
+    @staticmethod
+    @analysis
+    def initial_amplitude_analyzing(data, index, parameters_analysis_dict):
+        """Function that analyses initial amplitude based on a single spatial or conditions dimension.
+
+        The initial amplitude is calculated in the 3D array and the index of a measurement of a condition. It
+        corresponds to the time section at position 0 on the time axis. It is obtained in the form of a 2D array from
+        which only the desired X or Y positions can be taken. This can be a 1D array with a single spatial dimension or
+        a single value at a specific position.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            3D array containing the values of a measurement for a given condition.
+
+        index : dict of np.ndarray
+            Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
+
+        parameters_analysis_dict : dict
+            Dictionary of parameters to be used for initial amplitude analysis. It must contain only the x and/or y
+            position to be analysed.
+
+        Returns
+        ----------
+        initial_amplitude_computing : np.ndarray or float
+            1D array of amplitude along a single spatial axis or value of peak amplitude at a specific spatial position.
+        """
+        # Calculation of the 2D array of amplitude.
+        amplitude_2d_array = SpatialAnalyser.initial_amplitude_computing(data)
+
+        # Extracting a single spatial dimension from the amplitude array.
+        if "x" in parameters_analysis_dict and "y" not in parameters_analysis_dict:
+            initial_amplitude = amplitude_2d_array[:, parameters_analysis_dict["x"]]
+        elif "x" not in parameters_analysis_dict and "y" in parameters_analysis_dict:
+            initial_amplitude = amplitude_2d_array[parameters_analysis_dict["y"], :]
+
+        # Extracting a single spatial position from the amplitude array.
+        elif "x" in parameters_analysis_dict and "y" in parameters_analysis_dict:
+            initial_amplitude = amplitude_2d_array[parameters_analysis_dict["y"], parameters_analysis_dict["x"]]
+
+        return initial_amplitude
+
     @staticmethod
     def meta_analysis(meta_analysis_function):
         """Decorator for functions used to perform a specific meta-analysis of a multiple analysis dictionary.
@@ -1997,7 +2040,6 @@ class MacularAnalysisDataframes:
         # Adds the output slopes value(s) to a new row in the output dataframe.
         if "output_slopes" in meta_analysis_dictionary.keys():
             for slope, output_name in zip(linear_fit["slopes"], meta_analysis_dictionary["output_slopes"]["name"]):
-                print("slope", slope)
                 MacularAnalysisDataframes.add_array_line_to_dataframes(
                     macular_analysis_dataframes, meta_analysis_dictionary["output_slopes"]["dimension"],
                     meta_analysis_dictionary["output_slopes"]["condition"], output_name, slope)
@@ -2025,7 +2067,6 @@ class MacularAnalysisDataframes:
 
         # Adds the output index prediction value(s) to a new row in the output dataframe.
         if "output_index_prediction" in meta_analysis_dictionary.keys():
-            print("fit", linear_fit["index_prediction"])
             MacularAnalysisDataframes.add_array_line_to_dataframes(
                 macular_analysis_dataframes, meta_analysis_dictionary["output_index_prediction"]["dimension"],
                 meta_analysis_dictionary["output_index_prediction"]["condition"],
