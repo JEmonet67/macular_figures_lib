@@ -16,19 +16,19 @@ with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_a
 
 def test_normalization_computing():
     # Case with only integers.
-    assert MetaAnalyser.normalization_computing(4, 2, 1) == 2
+    assert MetaAnalyser.normalization_computing(4, 2, 1) == 1
 
-    # Case with an array in the numerator.
+    # Case with an array in the value_to_normalize.
     assert np.array_equal(MetaAnalyser.normalization_computing(np.array([2, 4, 6]), 2, 3),
-                          np.array([3, 6, 9]))
+                          np.array([0, 3, 6]))
 
-    # Case with an array in the denominator.
+    # Case with an array in the baseline.
     assert np.array_equal(MetaAnalyser.normalization_computing(10, np.array([2, 5, 10]), 2.5),
-                          np.array([12.5, 5, 2.5]))
+                          np.array([10, 2.5, 0]))
 
     # Multiplication factor to be used for normalization.
     assert np.array_equal(MetaAnalyser.normalization_computing(np.array([10, 8, 5]), np.array([10, 8, 5]), 1),
-                          np.array([1, 1, 1]))
+                          np.array([0, 0, 0]))
 
 
 def test_linear_fit_computing():

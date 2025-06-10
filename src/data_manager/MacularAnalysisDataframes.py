@@ -1398,19 +1398,19 @@ class MacularAnalysisDataframes:
 
         Example :
         common_meta_analysis_group_parser(
-        {"numerator": {"dimensions": "X:Y", "conditions": "barSpeed27ps:barSpeed30ps", "measurements": "VSDI",
+        {"value_to_normalize": {"dimensions": "X:Y", "conditions": "barSpeed27ps:barSpeed30ps", "measurements": "VSDI",
                         "analyses": "peak_amplitude", "flag": "internal_flag"},
-        "denominator": {"dimensions": "Conditions", "conditions": "barSpeed27ps:barSpeed30ps", "measurements": "VSDI",
+        "baseline": {"dimensions": "Conditions", "conditions": "barSpeed27ps:barSpeed30ps", "measurements": "VSDI",
                         "analyses": "peak_amplitude", "flag": "internal_flag"},
         "output": {"dimensions": "X:Y", "conditions": "barSpeed27ps:barSpeed30ps", "measurements": "VSDI",
                         "analyses": "peak_amplitude"},
         "params": {"factor": 8})
 
-        > {"numerator": [("X", "barSpeed27ps", "VSDI", "peak_amplitude", "internal_flag"),
+        > {"value_to_normalize": [("X", "barSpeed27ps", "VSDI", "peak_amplitude", "internal_flag"),
                         ("X", "barSpeed27ps", "VSDI", "peak_amplitude", "internal_flag")
                         ("Y", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
                         ("Y", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag")],
-        "denominator": [("Conditions", "barSpeed27ps", "VSDI", "peak_amplitude", "internal_flag"),
+        "baseline": [("Conditions", "barSpeed27ps", "VSDI", "peak_amplitude", "internal_flag"),
                         ("Conditions", "barSpeed27ps", "VSDI", "peak_amplitude", "internal_flag"),
                         ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag"),
                         ("Conditions", "barSpeed30dps", "VSDI", "peak_amplitude", "internal_flag")],
@@ -1639,7 +1639,7 @@ class MacularAnalysisDataframes:
         """
         # Loop on meta-analysis arguments except output ones.
         for meta_analysis_argument in meta_analysis_dictionary.keys():
-            if "output" not in meta_analysis_argument:
+            if "output" not in meta_analysis_argument and "index" not in meta_analysis_argument:
                 meta_analysis_dictionary[meta_analysis_argument] = (
                     MacularAnalysisDataframes.extract_one_analysis_array_from_dataframes(
                         macular_analysis_dataframes, meta_analysis_dictionary[meta_analysis_argument]))
@@ -1819,7 +1819,7 @@ class MacularAnalysisDataframes:
         """Function that calculates a normalization between two given analyses and multiplies the result by a
         multiplication factor.
 
-        To work, this meta-analysis requires two arguments: the "numerator" and the "denominator", which must defined in
+        To work, this meta-analysis requires two arguments: the "value_to_normalize" and the "baseline", which must defined in
         the meta-analysis dictionaries. A third key, ‘output’, must also be defined, which corresponds to the position
         where you want to save the result of the operation.
 
@@ -1851,8 +1851,8 @@ class MacularAnalysisDataframes:
                                                                              meta_analysis_dictionary)
 
         # Calculation of the division of the two analysis values and multiplication by the factor.
-        normalized_values = MetaAnalyser.normalization_computing(meta_analysis_dictionary["numerator"],
-                                                                 meta_analysis_dictionary["denominator"],
+        normalized_values = MetaAnalyser.normalization_computing(meta_analysis_dictionary["value_to_normalize"],
+                                                                 meta_analysis_dictionary["baseline"],
                                                                  parameters_meta_analysis_dict["factor"])
 
         # Adds the output value(s) to a new row in the output dataframe.
@@ -2269,7 +2269,7 @@ class MacularAnalysisDataframes:
                               parameters_meta_analysis_dict):
         """Function that calculates a subtraction of one value by one or multiple values.
 
-        To work, this meta-analysis requires two arguments: the "numerator" and the "denominator", which must defined in
+        To work, this meta-analysis requires two arguments: the "value_to_normalize" and the "baseline", which must defined in
         the meta-analysis dictionaries. A third key, ‘output’, must also be defined, which corresponds to the position
         where you want to save the result of the operation.
 

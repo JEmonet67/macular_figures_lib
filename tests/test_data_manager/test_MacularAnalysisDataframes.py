@@ -293,6 +293,40 @@ multiple_dicts_analysis_default = {
              "output": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
                         "analyses": "cond_peak_amplitudes_normalization"},
              "params": {"factor": 8}}
+        ],
+        "normalization": [
+            {"value_to_normalize": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
+                                    "analyses": "peak_amplitude", "flag": ""},
+             "baseline": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements":
+                 "FiringRate_GanglionGainControl", "analyses": "peak_amplitude", "flag": ""},
+             "output": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
+                        "analyses": "spatial_peak_amplitudes_normalization"},
+             "params": {"factor": 8}},
+
+            {"value_to_normalize": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                                    "analyses": "peak_amplitude", "flag": ""},
+             "baseline": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
+                          "analyses": "peak_amplitude", "flag": ""},
+             "output": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                        "analyses": "norm_peak_amplitudes_normalization"},
+             "params": {"factor": 8}},
+
+            {"value_to_normalize": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                    "measurements": "muVn_CorticalExcitatory", "analyses": "peak_amplitude",
+                                    "flag": ""},
+             "baseline": {"dimensions": "Conditions", "conditions": "all_conditions",
+                          "measurements": "muVn_CorticalExcitatory", "analyses": "initial_amplitude", "flag": ""},
+             "output": {"dimensions": "Conditions", "conditions": "all_conditions",
+                        "measurements": "muVn_CorticalExcitatory", "analyses": "normalized_excitatory_mean_voltage"},
+             "params": {"factor": 1}},
+            {"value_to_normalize": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                    "measurements": "muVn_CorticalInhibitory", "analyses": "peak_amplitude",
+                                    "flag": ""},
+             "baseline": {"dimensions": "Conditions", "conditions": "all_conditions",
+                          "measurements": "muVn_CorticalInhibitory", "analyses": "initial_amplitude", "flag": ""},
+             "output": {"dimensions": "Conditions", "conditions": "all_conditions",
+                        "measurements": "muVn_CorticalInhibitory", "analyses": "normalized_inhibitory_mean_voltage",
+                        "flag": ""}, "params": {"factor": 1}}
         ]
     }
 }
@@ -1727,9 +1761,14 @@ def test_make_common_group_meta_analysis():
         MacularAnalysisDataframes.normalization_analyzing.__wrapped__, common_meta_analysis_group_dictionaries[1],
         "normalization", dict_index_default)
 
-    # Execution of a group of common meta-analyses based only on condition dataframes.
+    # Execution of a first group of common meta-analyses based only on condition dataframes.
     macular_analysis_dataframes_default_test.make_common_group_meta_analysis(
         MacularAnalysisDataframes.normalization_analyzing.__wrapped__, common_meta_analysis_group_dictionaries[2],
+        "normalization", dict_index_default)
+
+    # Execution of a second group of common meta-analyses based only on condition dataframes.
+    macular_analysis_dataframes_default_test.make_common_group_meta_analysis(
+        MacularAnalysisDataframes.normalization_analyzing.__wrapped__, common_meta_analysis_group_dictionaries[3],
         "normalization", dict_index_default)
 
     # Verify that the conditions dataframe is correct.
@@ -1749,22 +1788,22 @@ def test_make_common_group_meta_analysis():
 def test_extract_all_analysis_array_from_dataframes():
     # Initialisation of a meta-analysis dictionary after extraction of the arrays from each analysis.
     correct_meta_analysis_dictionary = {
-        "numerator": np.array([0.041, 0.045, 0.041, 0.045, 0.041, 0.044, 0.041, 0.043, 0.041,
-                               0.041, 0.042, 0.041, 0.042, 0.04, 0.043, 0.04, 0.043, 0.039,
-                               0.043, 0.039, 0.043, 0.04, 0.043, 0.04, 0.042, 0.04, 0.041, 0.041,
-                               0.041, 0.042, 0.04, 0.042, 0.04, 0.042, 0.039, 0.042, 0.039,
-                               0.043, 0.039, 0.043, 0.04, 0.042, 0.04, 0.041, 0.041, 0.041,
-                               0.041, 0.04, 0.042, 0.04, 0.042, 0.039, 0.043, 0.04, 0.043, 0.04,
-                               0.043, 0.04, 0.043, 0.04, 0.042, 0.041, 0.042, 0.042, 0.042,
-                               0.043, 0.042, 0.044, 0.042, 0.045, 0.043, 0.047, 0.043]),
-        "denominator": 0.039,
+        "value_to_normalize": np.array([0.041, 0.045, 0.041, 0.045, 0.041, 0.044, 0.041, 0.043, 0.041,
+                                        0.041, 0.042, 0.041, 0.042, 0.04, 0.043, 0.04, 0.043, 0.039,
+                                        0.043, 0.039, 0.043, 0.04, 0.043, 0.04, 0.042, 0.04, 0.041, 0.041,
+                                        0.041, 0.042, 0.04, 0.042, 0.04, 0.042, 0.039, 0.042, 0.039,
+                                        0.043, 0.039, 0.043, 0.04, 0.042, 0.04, 0.041, 0.041, 0.041,
+                                        0.041, 0.04, 0.042, 0.04, 0.042, 0.039, 0.043, 0.04, 0.043, 0.04,
+                                        0.043, 0.04, 0.043, 0.04, 0.042, 0.041, 0.042, 0.042, 0.042,
+                                        0.043, 0.042, 0.044, 0.042, 0.045, 0.043, 0.047, 0.043]),
+        "baseline": 0.039,
         "output": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude")
     }
 
     # Initialisation of a meta-analysis dictionary before extracting the arrays from each analysis.
     meta_analysis_dictionary = {
-        "numerator": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", ""),
-        "denominator": ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", ""),
+        "value_to_normalize": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", ""),
+        "baseline": ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", ""),
         "output": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude")
     }
 
@@ -1832,8 +1871,8 @@ def test_make_meta_analysis_outputs():
 
     # Definition of a dictionary of argument levels without output for the default case.
     meta_analysis_dictionary = {
-        "numerator": ("X", "barSpeed28,5dps", "VSDI", "latency", ""),
-        "denominator": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", "")}
+        "value_to_normalize": ("X", "barSpeed28,5dps", "VSDI", "latency", ""),
+        "baseline": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", "")}
 
     # Definition of a meta-analysis parameter dictionary for tests.
     parameters_meta_analysis_dict = {"factor": 8, "flag": "external_flag"}
@@ -1905,82 +1944,82 @@ def test_normalization_analyzing():
     # Initialisation of the meta-analysis parameter dictionary for tests.
     parameters_meta_analysis_dict = {"factor": 8}
 
-    # Initialisation of a dictionary of argument associated to 2 arrays of values in numerator and denominator.
+    # Initialisation of a dictionary of argument associated to 2 arrays of values in value_to_normalize and baseline.
     meta_analysis_dictionary = {
-        "numerator": ("X", "barSpeed28,5dps", "VSDI", "latency", "ms"),
-        "denominator": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", ""),
+        "value_to_normalize": ("X", "barSpeed28,5dps", "VSDI", "latency", "ms"),
+        "baseline": ("X", "barSpeed28,5dps", "VSDI", "peak_amplitude", ""),
         "output": {"dimension": "X", "condition": "barSpeed28,5dps", "name": "latency_ms_peak_amplitude_normalization"}}
 
-    # Performing division meta-analysis with arrays as numerators and denominators.
+    # Performing normalization meta-analysis with arrays as numerators and denominators.
     MacularAnalysisDataframes.normalization_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
                                                                   meta_analysis_dictionary, dict_index_default,
                                                                   parameters_meta_analysis_dict)
 
-    # Getting the array calculated in the division meta-analysis.
+    # Getting the array calculated in the normalization meta-analysis.
     output_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
         "latency_ms_peak_amplitude_normalization"].values
 
-    # Manual calculation of the expected array values of the meta-analysis division.
-    denominator_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+    # Manual calculation of the expected array values of the meta-analysis normalization.
+    baseline_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
         "peak_amplitude_VSDI"].values
-    numerator_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+    array_to_normalize = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
         "latency_VSDI_ms"].values
-    output_array_expected = numerator_array / denominator_array * 8
+    output_array_expected = (array_to_normalize - baseline_array) / baseline_array * 8
 
-    # Case of division meta-analysis with arrays as numerator and denominator values.
+    # Case of normalization meta-analysis with arrays as value_to_normalize and baseline values.
     assert np.array_equal(output_array, output_array_expected)
 
-    # Initialisation of a dictionary of argument with a value in the denominator and an array in the numerator.
+    # Initialisation of a dictionary of argument with a value in the baseline and an array in the value_to_normalize.
     meta_analysis_dictionary = {
-        "numerator": ("X", "barSpeed28,5dps", "VSDI", "latency", "ms"),
-        "denominator": ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", ""),
+        "value_to_normalize": ("X", "barSpeed28,5dps", "VSDI", "latency", "ms"),
+        "baseline": ("Conditions", "barSpeed28,5dps", "VSDI", "peak_amplitude", ""),
         "output": {"dimension": "X", "condition": "barSpeed28,5dps",
                    "name": "cond_x_latency_ms_peak_amplitude_normalization"}}
 
-    # Performs the division meta-analysis with a value and an array of values in the arguments.
+    # Performs the normalization meta-analysis with a value and an array of values in the arguments.
     MacularAnalysisDataframes.normalization_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
                                                                   meta_analysis_dictionary, dict_index_default,
                                                                   parameters_meta_analysis_dict)
 
-    # Getting the array calculated in the division meta-analysis.
+    # Getting the array calculated in the normalization meta-analysis.
     output_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
         "cond_x_latency_ms_peak_amplitude_normalization"].values
 
-    # Manual calculation of the expected array values of the meta-analysis division.
-    denominator_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+    # Manual calculation of the expected array values of the meta-analysis normalization.
+    baseline_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
         "peak_amplitude_VSDI", "barSpeed28,5dps"]
-    numerator_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+    array_to_normalize = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
         "latency_VSDI_ms"].values
-    output_array_expected = numerator_array / denominator_array * 8
+    output_array_expected = (array_to_normalize - baseline_array) / baseline_array * 8
 
-    # Case of meta-analysis of division with a value in the denominator and an array in the numerator.
+    # Case of meta-analysis of normalization with a value in the baseline and an array in the value_to_normalize.
     assert np.array_equal(output_array, output_array_expected)
 
-    # Initialisation of a dictionary of argument associated to 2 values in numerator, denominator and in output.
+    # Initialisation of a dictionary of argument associated to 2 values in value_to_normalize, baseline and in output.
     meta_analysis_dictionary = {
-        "numerator": ("Conditions", "barSpeed28,5dps", "VSDI",
-                      "peak_amplitude", ""),
-        "denominator": ("Conditions", "barSpeed28,5dps", "FiringRate_GanglionGainControl", "peak_amplitude", ""),
-        "output": {"dimension": "Conditions", "condition": "barSpeed28,5dps", "name":
-            "vsdi_ganglion_peak_amplitude_normalization"}}
+        "value_to_normalize": ("Conditions", "barSpeed28,5dps", "VSDI",
+                               "peak_amplitude", ""),
+        "baseline": ("Conditions", "barSpeed28,5dps", "FiringRate_GanglionGainControl", "peak_amplitude", ""),
+        "output": {"dimension": "Conditions", "condition": "barSpeed28,5dps",
+                   "name": "vsdi_ganglion_peak_amplitude_normalization"}}
 
-    # Performing division meta-analysis with two unique values in the arguments.
+    # Performing normalization meta-analysis with two unique values in the arguments.
     MacularAnalysisDataframes.normalization_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
                                                                   meta_analysis_dictionary, dict_index_default,
                                                                   parameters_meta_analysis_dict)
 
-    # Getting the array calculated in the division meta-analysis.
+    # Getting the array calculated in the normalization meta-analysis.
     output_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
         "vsdi_ganglion_peak_amplitude_normalization"].values
 
-    # Manual calculation of the expected value of the meta-analysis division.
-    denominator_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+    # Manual calculation of the expected value of the meta-analysis normalization.
+    baseline_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
         "peak_amplitude_FiringRate_GanglionGainControl", "barSpeed28,5dps"]
-    numerator_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+    array_to_normalize = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
         "peak_amplitude_VSDI", "barSpeed28,5dps"]
-    output_array_expected = numerator_array / denominator_array * 8
+    output_array_expected = (array_to_normalize - baseline_array) / baseline_array * 8
 
-    # Case of meta-analysis of division with unique values in the numerator and denominator.
+    # Case of meta-analysis of normalization with unique values in the value_to_normalize and baseline.
     assert np.array_equal(output_array[0], output_array_expected)
     assert output_array[1] is np.nan
 
@@ -2419,7 +2458,7 @@ def test_subtraction_analyzing():
     # Initialisation of the meta-analysis parameter dictionary for tests.
     parameters_meta_analysis_dict = {}
 
-    # Initialisation of a dictionary of argument associated to 2 arrays of values in numerator and denominator.
+    # Initialisation of a dictionary of argument associated to 2 arrays of values in value_to_normalize and baseline.
     meta_analysis_dictionary = {
         "initial_value": ("Conditions", "barSpeed28,5dps", "", "VSDI_horizontal_stationary_peak_delay", "ms"),
         "values_subtracted": ("Conditions", "barSpeed28,5dps", "", "ganglion_horizontal_stationary_peak_delay", "ms"),
@@ -2431,7 +2470,7 @@ def test_subtraction_analyzing():
                                                                 meta_analysis_dictionary, dict_index_default,
                                                                 parameters_meta_analysis_dict)
 
-    # Initialisation of a dictionary of argument associated to 2 arrays of values in numerator and denominator.
+    # Initialisation of a dictionary of argument associated to 2 arrays of values in value_to_normalize and baseline.
     meta_analysis_dictionary = {
         "initial_value": ("Conditions", "barSpeed30dps", "", "VSDI_horizontal_stationary_peak_delay", "ms"),
         "values_subtracted": ("Conditions", "barSpeed30dps", "", "ganglion_horizontal_stationary_peak_delay", "ms"),
@@ -2455,7 +2494,7 @@ def test_subtraction_analyzing():
     output_array_expected = initial_value_array - values_subtracted_array
     output_array_expected = output_array_expected.astype(float).round(3)
 
-    # Case of division meta-analysis with arrays as numerator and denominator values.
+    # Case of division meta-analysis with arrays as value_to_normalize and baseline values.
     assert np.array_equal(output_array, output_array_expected)
 
     # Remove to verify that these additions are the only changes made during the meta-analysis.

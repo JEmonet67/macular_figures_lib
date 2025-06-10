@@ -10,17 +10,17 @@ class MetaAnalyser:
     """
 
     @staticmethod
-    def normalization_computing(numerator, denominator, factor):
+    def normalization_computing(value_to_normalize, baseline, factor):
         """Calculation of a normalization between two arrays, int or float with the possibility to multiply by a given
         factor.
 
         Parameters
         ----------
-        numerator : np.ndarray, int or float
-            Numerator of the division.
+        value_to_normalize : np.ndarray, int or float
+            Value to be normalized from a baseline.
 
-        denominator : np.ndarray, int or float
-            Denominator of the division.
+        baseline : np.ndarray, int or float
+            Baseline value to use for normalization.
 
         factor : float or int
             Multiplication factor to be used for normalization.
@@ -30,7 +30,7 @@ class MetaAnalyser:
         normalization_values : np.ndarray, int or float
             Value(s) obtained from the normalization.
         """
-        normalization_values = numerator / denominator * factor
+        normalization_values = ((value_to_normalize - baseline) / baseline) * factor
 
         return normalization_values
 
