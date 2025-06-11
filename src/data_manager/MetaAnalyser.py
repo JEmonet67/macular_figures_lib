@@ -35,8 +35,64 @@ class MetaAnalyser:
         return normalization_values
 
     @staticmethod
-    def linear_fit_computing(index_array, data_array, n_segments, n_points=100):
-        """Calculation of the linear fit of a linear segment or several successive linear segments.
+    def linear_fit_computing(index_array, data_array, n_segments, breaks, n_points):
+        """Calculation of the linear fit of a linear segment or several consecutive linear segments.
+
+        It is possible to perform the fit manually by specifying the limits of the segments to be fitted. At the same
+        time, an automatic fit can also be performed without specifying these limits. In the case of manual fitting,
+        the interval defined by the breaks must have two ends that are identical to those of the index so as not to
+        change the size of the latter. It is currently not possible to perform a fit on a sub-section of the index.
+
+        Parameters
+        ----------
+        index_array : np.ndarray
+            Index of data for the linear segment(s).
+
+        data_array : np.ndarray
+            Data for a quantity consisting of one or more linear segments.
+
+        n_segments : int
+            Number of different linear segments to search for in the data.
+
+        breaks : np.ndarray or list or str
+            Values of all indices that serve as index edges between each linear segment of the fit. It is also possible
+            to enter the term ‘auto’ if you do not want to define the breaks manually.
+
+        n_points : int
+            Number of points used to predict the fit.
+
+        Returns
+        ----------
+        fitting_dict : np.ndarray, int or float
+            Dictionary containing all the properties of the fit.
+        """
+        # Performing an automatic piecewise linear fit with automatically defined breaks.
+        if breaks == "auto":
+            fitting_dict, breaks = MetaAnalyser.automatically_defined_linear_fit_computing(
+                index_array, data_array, n_segments, n_points)
+        # Performing an automatic piecewise linear fit with manually defined breaks.
+        else:
+            fitting_dict = MetaAnalyser.manually_defined_linear_fit_computing(index_array, data_array, n_segments,
+                                                                              breaks, n_points)
+            breaks = np.array(list(breaks))
+
+        # Index intercepts computing.
+        fitting_dict["index_intercepts"] = (fitting_dict["data_intercepts"] / fitting_dict["slopes"]).round(4)
+
+        if n_segments > 1:
+            # Compute inflection points.
+            inflection_points = [float(fitting_dict["data_prediction"][np.where(
+                fitting_dict["index_prediction"] >= breaks[i + 1])[0][0]].round(3)) for i in range(n_segments - 1)]
+
+            # Updated the fit dictionary with the remaining properties.
+            fitting_dict["inflection_points_index"] = breaks[1:-1].round(3).tolist()
+            fitting_dict["inflection_points_data"] = inflection_points
+
+        return fitting_dict
+
+    @staticmethod
+    def automatically_defined_linear_fit_computing(index_array, data_array, n_segments, n_points):
+        """Computing a single or multiple consecutive linear fit using breaks defined automatically.
 
         Parameters
         ----------
@@ -55,28 +111,112 @@ class MetaAnalyser:
         Returns
         ----------
         fitting_dict : np.ndarray, int or float
-            Slope value obtained from the fitting.
+            Dictionary containing all the properties of the fit.
+
+        breaks : np.ndarray
+            Values of all indices that serve as edges between each linear segment of the fit.
         """
-        # Piecewise linear fit of latency time.
+        # Piecewise linear fit of the data.
         linear_fit = pwlf.PiecewiseLinFit(index_array, data_array)
-        breaks = linear_fit.fit(n_segments)
+
+        # Fitting properties computing.
+        breaks = linear_fit.fit(n_segments).round(3)
         slopes = linear_fit.calc_slopes().round(4).tolist()
         data_intercepts = linear_fit.intercepts.round(4)
-        index_intercepts = (data_intercepts/slopes).round(4)
 
         # Data prediction.
         index_prediction = np.linspace(index_array.min(), index_array.max(), n_points).round(3)
         data_prediction = linear_fit.predict(index_prediction).round(3)
 
+        # Fitting dictionary initialisation.
         fitting_dict = {"slopes": slopes, "index_prediction": index_prediction, "data_prediction": data_prediction,
-                        "data_intercepts": data_intercepts, "index_intercepts": index_intercepts}
+                        "data_intercepts": data_intercepts}
 
-        if n_segments > 1:
-            # Compute inflection points.
-            inflection_points = [float(data_prediction[np.where(index_prediction > breaks[i + 1])[0][0]].round(3)) for i
-                                in range(n_segments - 1)]
-            fitting_dict["inflection_points_index"] = breaks[1:-1].round(3).tolist()
-            fitting_dict["inflection_points_data"] = inflection_points
+        return fitting_dict, breaks
+
+    @staticmethod
+    def manually_defined_linear_fit_computing(index_array, data_array, n_segments, breaks, n_points):
+        """Computing a single or multiple consecutive linear fit using breaks defined manually by the user.
+
+        This function performs an individual linear fit for the number of segments and interval limits specified by the
+        user. The intervals for each segment are also defined by the user. It is therefore possible that the fit will
+        only be performed on a subset of the index and data. If the interval limits do not correspond exactly to a
+        specific position in the index, the closest position is used. For each fit, the sub-parts of the data and index
+        used are adjusted. The same applies to the prediction index, which is calculated in its entirety at the
+        beginning of the function. All fit properties are finally stored in lists or arrays. All of this is then added
+        to a dictionary.
+
+        Please note that the interval defined by the breaks must have two ends that are identical to those of the index
+        so as not to change the size of the latter. It is currently not possible to perform a fit on a sub-section of
+        the index.
+
+        Note :
+        We did not use the fit_by_breaks function of pwlf because it gave us incorrect results in the simple test cases.
+
+        Parameters
+        ----------
+        index_array : np.ndarray
+            Index of data for the linear segment(s).
+
+        data_array : np.ndarray
+            Data for a quantity consisting of one or more linear segments.
+
+        n_segments : int
+            Number of different consecutive linear segments to search for in the data.
+
+        breaks : np.ndarray or list
+            Values of all indices that serve as index edges between each linear segment of the fit.
+
+        n_points : int
+            Total number of points used to predict the fit.
+
+        Returns
+        ----------
+        fitting_dict : np.ndarray, int or float
+            Dictionary containing all the properties of the fit.
+        """
+        # Properties initialization.
+        breaks = np.array(list(breaks))
+        slopes = []
+        index_prediction = np.linspace(min(breaks), max(breaks), n_points).round(3)
+        data_prediction = np.array([])
+        data_intercepts = np.array([])
+
+        # Calculate the list of positions of the index values closest to the breaks.
+        index_breaks = [np.argmin(np.abs(index_array - break_value)) for break_value in breaks]
+
+        # Loop on segments.
+        for i_segment in range(n_segments):
+            # Gets the index that best matches the breaks in the current segment.
+            current_segment_index_array = index_array[index_breaks[i_segment]:index_breaks[i_segment+1]+1]
+            # Gets the data that best matches the breaks in the current segment.
+            current_segment_data_array = data_array[index_breaks[i_segment]:index_breaks[i_segment+1]+1]
+
+            # Piecewise linear fit of the data.
+            linear_fit = pwlf.PiecewiseLinFit(current_segment_index_array, current_segment_data_array)
+            linear_fit.fit(1)
+
+            # Fitting properties computing and incrementing the corresponding variables.
+            slopes += linear_fit.calc_slopes().round(4).tolist()
+            data_intercepts = np.concatenate((data_intercepts, linear_fit.intercepts.round(4)), axis=-1)
+
+            # Extract the prediction index interval delimited by the current segment breaks.
+            if i_segment < n_segments - 1:
+                # General case that does not include the highest-value break in the current segment index.
+                current_index_prediction = index_prediction[np.where((index_prediction < breaks[i_segment+1]) &
+                                                                     (index_prediction >= breaks[i_segment]))]
+            else:
+                # Case of the last segment including the break with the highest value in its index.
+                current_index_prediction = index_prediction[np.where((index_prediction <= breaks[i_segment+1]) &
+                                                                     (index_prediction >= breaks[i_segment]))]
+
+            # Data prediction for the current segment and incrementation in the data prediction array.
+            data_prediction = np.concatenate((data_prediction, linear_fit.predict(
+                current_index_prediction).round(3)), axis=-1)
+
+        # Filling fitting dictionary.
+        fitting_dict = {"slopes": slopes, "index_prediction": index_prediction, "data_prediction": data_prediction,
+                        "data_intercepts": data_intercepts}
 
         return fitting_dict
 

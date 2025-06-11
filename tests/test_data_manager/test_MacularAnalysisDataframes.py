@@ -2059,7 +2059,8 @@ def test_peak_speed_analyzing():
         macular_analysis_dataframes_default_test = pickle.load(file_test)
 
     # Initialisation of the meta-analysis parameter dictionary for tests.
-    parameters_meta_analysis_dict = {"output": "horizontal_peak_speed", "index": "spatial_x"}
+    parameters_meta_analysis_dict = {"output": "horizontal_peak_speed", "index": "spatial_x", "breaks": "auto",
+                                     "n_points": 100}
 
     # Definition of the meta-analysis dictionary for the first condition.
     meta_analysis_dictionary = {"time_to_peak": ("X", "barSpeed28,5dps", "VSDI", "time_to_peak", "ms"),
@@ -2195,7 +2196,8 @@ def test_linear_fit_analyzing():
         dict_index_default[condition]["test_linear"] = np.array([i for i in range(73)])
 
     # Initialisation of the meta-analysis parameter dictionary for tests.
-    parameters_meta_analysis_dict = {"n_segments": 4, "index": "test_linear", "n_points": 100}
+    parameters_meta_analysis_dict = {"n_segments": 4, "index": "test_linear", "breaks": [0, 41, 49, 56, 72],
+                                     "n_points": 100}
 
     # Definition of the meta-analysis dictionary for the first condition.
     meta_analysis_dictionary = {"data_to_fit": ("X", "barSpeed28,5dps", "VSDI", "data_to_fit", ""),
@@ -2308,7 +2310,7 @@ def test_linear_fit_analyzing():
     dict_index_default["overall"]["barSpeed"] = np.array([i for i in range(3, 30, 3)])
 
     # Initialisation of the meta-analysis parameter dictionary for tests.
-    parameters_meta_analysis_dict = {"n_segments": 1, "index": "barSpeed", "n_points": 10}
+    parameters_meta_analysis_dict = {"n_segments": 1, "index": "barSpeed", "breaks": "auto", "n_points": 10}
 
     # Definition of the meta-analysis dictionary for all conditions fitting.
     meta_analysis_dictionary = {"data_to_fit": ("Conditions", "overall", "", "speed", ""),
@@ -2345,7 +2347,7 @@ def test_anticipation_fit_analyzing():
                                      "output_anticipation_range": "horizontal_anticipation_range",
                                      "output_index_prediction": "horizontal_anticipation_index_prediction_ms",
                                      "output_data_prediction": "horizontal_anticipation_data_prediction",
-                                     "n_segments": 2, "index": "spatial_x", "n_points": 100}
+                                     "n_segments": 2, "index": "spatial_x", "breaks": "auto", "n_points": 100}
 
     # Definition of the meta-analysis dictionary for the first condition.
     meta_analysis_dictionary = {"activation_time": ("X", "barSpeed28,5dps", "VSDI", "activation_time", "ms"),

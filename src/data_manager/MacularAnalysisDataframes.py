@@ -1876,9 +1876,12 @@ class MacularAnalysisDataframes:
 
         The dictionary also contains the ‘params’ parameters, whose dictionary must contain the ‘index’ parameter,
         which corresponds to the name of the spatial index to be used (X or Y). The spatial index depends on the axis
-        of movement. Another key must be added to define the name of the output to be created in the condition
-        dataframe. The first key, ‘output’, allows you to define a specific name, while the second alternative key,
-        ‘flag’, allows you to use the default output name by simply adding a suffix.
+        of movement. Two important parameters must also be specified for the fit, namely the number of points ‘n_points’
+        for predicting the fit and the list “breaks” of the edges of the segments to be fitted. If the user do not want
+        to define this list, the user can instead associate the term “auto” with the key ‘breaks’. Another key must be
+        added to define the name of the output to be created in the condition dataframe. The first key, ‘output’,
+        allows you to define a specific name, while the second alternative key, ‘flag’, allows you to use the default
+        output name by simply adding a suffix.
 
         Parameters
         ----------
@@ -1910,7 +1913,8 @@ class MacularAnalysisDataframes:
         # Calculation of the peak speed of the time to peak data array.
         peak_speed_fit = MetaAnalyser.linear_fit_computing(
             meta_analysis_dictionary["time_to_peak"], index[meta_analysis_dictionary["output"]["condition"]][
-                parameters_meta_analysis_dict["index"]], 1)
+                parameters_meta_analysis_dict["index"]], 1, parameters_meta_analysis_dict["breaks"],
+            parameters_meta_analysis_dict["n_points"])
 
         # Adds the output value(s) to a new row in the output dataframe.
         MacularAnalysisDataframes.add_array_line_to_dataframes(macular_analysis_dataframes,
@@ -1994,9 +1998,14 @@ class MacularAnalysisDataframes:
         The dictionary also contains the ‘params’ parameters, whose dictionary must contain the ‘index’ parameter,
         which corresponds to the name of the index to be used. The second key in the dictionary is ‘n_segments’, which
         indicates the number of linear segments that the fit must analyse. This number will influence the number of
-        slopes and inflection points obtained. The last parameter, ‘n_points’, is used to select the resolution of the
-        fit. It is important to note that regardless of this resolution, the data predictions and fit indexes within a
-        given dataframe will be binning to ensure the correct size.
+        slopes and inflection points obtained. The third key is "breaks" that contains the list of the edges of the
+        segments to be fitted. If you do not want to define this list, you can instead associate the term “auto” with
+        the key ‘breaks’. The last parameter, ‘n_points’, is used to select the resolution of the fit. It is important
+        to note that regardless of this resolution, the data predictions and fit indexes within a given dataframe will
+        be binning to ensure the correct size.
+
+        Please note that breaks made within the parameter dictionary must correspond in size to the dataframe in which
+        they will be stored. It is therefore not possible at this time to perform fits on sub-parts of the dataframe.
 
         Parameters
         ----------
@@ -2015,8 +2024,8 @@ class MacularAnalysisDataframes:
         parameters_meta_analysis_dict : dict
             Dictionary containing all the parameters of the meta-analysis to be formatted.
 
-            This dictionary must contain the index name, the number of segments and the resolution to be used for
-            fitting.
+            This dictionary must contain the index name, the number of segments, the breaks and the resolution to be
+            used for fitting.
         """
         # Store dimensions and conditions of output.
         meta_analysis_dictionary["index"] = {"condition": meta_analysis_dictionary["data_to_fit"][1]}
@@ -2031,11 +2040,12 @@ class MacularAnalysisDataframes:
         # Fit of the variable to be fitted, respecting the number of segments given in the parameters.
         linear_fit = MetaAnalyser.linear_fit_computing(current_index, meta_analysis_dictionary["data_to_fit"],
                                                        parameters_meta_analysis_dict["n_segments"],
-                                                       n_points=parameters_meta_analysis_dict["n_points"])
+                                                       parameters_meta_analysis_dict["breaks"],
+                                                       parameters_meta_analysis_dict["n_points"])
 
         # Binning of prediction arrays from data and index arrays to obtain the size of the fitted arrays.
-        linear_fit["data_prediction"], linear_fit["index_prediction"] = MetaAnalyser.statistic_binning(
-            linear_fit["data_prediction"], linear_fit["index_prediction"], current_index.shape[0])
+        linear_fit["index_prediction"], linear_fit["data_prediction"] = MetaAnalyser.statistic_binning(
+            linear_fit["index_prediction"], linear_fit["data_prediction"], current_index.shape[0])
 
         # Adds the output slopes value(s) to a new row in the output dataframe.
         if "output_slopes" in meta_analysis_dictionary.keys():
@@ -2104,7 +2114,8 @@ class MacularAnalysisDataframes:
         The anticipation is calculated based on the activation time of the cortical columns on the trajectory of the
         movement. Therefore, only the dimension corresponding to the axis of the object's movement is taken into
         account here. The fit achieved is that of the graph of the distance of the cell from the origin of the movement
-        as a function of the activation time.
+        as a function of the activation time. Therefore, in the event of a manual fit, it is important to provide the
+        latency values.
 
         The process is based on a two-segment fit, which calculates and extracts the inflection point and the two slopes
         for each simulation condition and adds them to the condition dataframe. For both slopes, the speed of the object
@@ -2120,13 +2131,16 @@ class MacularAnalysisDataframes:
         which corresponds to the name of the spatial index to be used (X or Y). The spatial index depends on the axis
         of movement. The second key in the dictionary is ‘n_segments’, which indicates the number of linear segments
         that the fit must analyse. This number will influence the number of slopes and inflection points obtained. The
-        last parameter, ‘n_points’, is used to select the resolution of the fit. It is important to note that regardless
-        of this resolution, the data predictions and fit indexes within a given dataframe will be binning to ensure the
-        correct size.
+        third key is "breaks" that contains the list of the edges of the segments to be fitted. If you do not want to
+        define this list, you can instead associate the term “auto” with the key ‘breaks’. The last parameter,
+        ‘n_points’, is used to select the resolution of the fit. It is important to note that regardless of this
+        resolution, the data predictions and fit indexes within a given dataframe will be binning to ensure the correct
+        size. Another key must be added to define the name of the output to be created in the condition dataframe. The
+        first key, ‘output’, allows you to define a specific name, while the second alternative key, ‘flag’, allows you
+        to use the default output name by simply adding a suffix.
 
-        Another key must be added to define the name of the output to be created in the condition dataframe. The first
-        key, ‘output’, allows you to define a specific name, while the second alternative key, ‘flag’, allows you to use
-        the default output name by simply adding a suffix.
+        Please note that breaks made within the parameter dictionary must correspond in size to the dataframe in which
+        they will be stored. It is therefore not possible at this time to perform fits on sub-parts of the dataframe.
 
         Parameters
         ----------
@@ -2145,8 +2159,8 @@ class MacularAnalysisDataframes:
         parameters_meta_analysis_dict : dict
             Dictionary containing all the parameters of the meta-analysis to be formatted.
 
-            This dictionary must contain the spatial index name, the number of segments and the resolution to be used
-            for fitting.
+            This dictionary must contain the spatial index name, the number of segments, the breaks and the resolution
+            to be used for fitting.
         """
         # Store dimensions and conditions of output.
         meta_analysis_dictionary["output"] = {"dimension": "Conditions",
@@ -2171,7 +2185,8 @@ class MacularAnalysisDataframes:
         # Fit of the activation time, respecting the number of segments given in the parameters.
         linear_fit = MetaAnalyser.linear_fit_computing(meta_analysis_dictionary["activation_time"], current_index,
                                                        parameters_meta_analysis_dict["n_segments"],
-                                                       n_points=parameters_meta_analysis_dict["n_points"])
+                                                       parameters_meta_analysis_dict["breaks"],
+                                                       parameters_meta_analysis_dict["n_points"])
 
         # Binning of prediction arrays from data and index arrays to obtain the size of the fitted arrays.
         linear_fit["data_prediction"], linear_fit["index_prediction"] = MetaAnalyser.statistic_binning(
@@ -2218,10 +2233,10 @@ class MacularAnalysisDataframes:
         automatically set to the conditions dataframe and directly uses the conditions defined in the ‘latency’
         analysis.
 
-        The dictionary also contains the ‘params’ parameters, whose dictionary must contain a key to  define the name
-        of the output to be created in the condition dataframe. The first key, ‘output’, allows you to define a specific
-        name, while the second alternative key, ‘flag’, allows you to use the default output name by simply adding a
-        suffix.
+        The dictionary also contains the ‘params’ parameters, whose dictionary must contain a key "index" to define
+        which index to use. In addition, the dictionary needs also  the name of the output to be created in the
+        condition dataframe. The first key, ‘output’, allows you to define a specific name, while the second alternative
+        key, ‘flag’, allows you to use the default output name by simply adding a suffix.
 
         Parameters
         ----------
@@ -2240,7 +2255,7 @@ class MacularAnalysisDataframes:
         parameters_meta_analysis_dict : dict
             Dictionary containing all the parameters of the meta-analysis to be formatted.
 
-            This dictionary don't contain any parameters other than output one.
+            This dictionary must contain the spatial index name.
         """
         # Store dimensions and conditions of output.
         meta_analysis_dictionary["output"]["dimension"] = "Conditions"
@@ -2250,8 +2265,9 @@ class MacularAnalysisDataframes:
         MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
                                                                              meta_analysis_dictionary)
 
-        stationary_latency = meta_analysis_dictionary["latency"].values[np.where(
-            meta_analysis_dictionary["latency"].index.values > meta_analysis_dictionary["anticipation_range"])[0][0]:]
+        current_index = index[meta_analysis_dictionary["output"]["condition"]][parameters_meta_analysis_dict["index"]]
+        stationary_latency = meta_analysis_dictionary["latency"][np.where(
+            current_index > meta_analysis_dictionary["anticipation_range"])[0][0]:]
 
         # Calculation of the maximal latency
         maximal_latency_value = MetaAnalyser.mean_computing(stationary_latency)
