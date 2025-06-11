@@ -248,9 +248,14 @@ multiple_dicts_analysis_default = {
                                                       "second_horizontal_data_intercept_VSDI"]},
              "params": {"n_segments": 4, "index": "test_linear", "n_points": 100}},
             {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "VSDI",
-                             "analyses": "peak_amplitude", "flag": ""},
+                             "analyses": "horizontal_anticipation_range", "flag": ""},
              "output_slopes": {"dimensions": "MetaConditions", "conditions": "overall", "measurements": "VSDI",
-                               "analyses": ["horizontal_slope_peak_amplitude"]},
+                               "analyses": ["horizontal_slope_anticipation_range"]},
+             "params": {"n_segments": 1, "index": "barSpeed", "n_points": 100}},
+            {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "VSDI",
+                             "analyses": "horizontal_maximal_latency_ms", "flag": ""},
+             "output_slopes": {"dimensions": "MetaConditions", "conditions": "overall", "measurements": "VSDI",
+                               "analyses": ["horizontal_slope_maximal_latency_ms"]},
              "params": {"n_segments": 1, "index": "barSpeed", "n_points": 100}}
         ],
         "anticipation_fit": [
@@ -261,7 +266,15 @@ multiple_dicts_analysis_default = {
                         "output_anticipation_range": "horizontal_anticipation_range",
                         "output_index_prediction": "horizontal_anticipation_index_prediction",
                         "output_data_prediction": "horizontal_anticipation_data_prediction",
-                        "n_segments": 2, "index": "spatial_x", "n_points": 100}}
+                        "n_segments": 2, "index": "spatial_x", "n_points": 100, "breaks": "auto"}},
+            {"activation_time": {"dimensions": "X", "conditions": "barSpeed30dps", "measurements": "VSDI",
+                                 "analyses": "activation_time", "flag": "ms"},
+             "params": {"output_slopes": ["horizontal_short_range_anticipation_speed_dpms2",
+                                          "horizontal_long_range_anticipation_speed_dpms2"],
+                        "output_anticipation_range": "horizontal_anticipation_range2",
+                        "output_index_prediction": "horizontal_anticipation_index_prediction2",
+                        "output_data_prediction": "horizontal_anticipation_data_prediction2",
+                        "n_segments": 2, "index": "spatial_x", "n_points": 100, "breaks": [1.12, 4, 17.32]}}
         ],
         "maximal_latency": [
             {"latency": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
