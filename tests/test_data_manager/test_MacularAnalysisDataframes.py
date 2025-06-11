@@ -246,7 +246,7 @@ multiple_dicts_analysis_default = {
                                          "measurements": "VSDI",
                                          "analyses": ["first_horizontal_data_intercept_VSDI,5dps_VSDI",
                                                       "second_horizontal_data_intercept_VSDI"]},
-             "params": {"n_segments": 2, "index": "test_linear", "n_points": 100}},
+             "params": {"n_segments": 4, "index": "test_linear", "n_points": 100}},
             {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "VSDI",
                              "analyses": "peak_amplitude", "flag": ""},
              "output_slopes": {"dimensions": "MetaConditions", "conditions": "overall", "measurements": "VSDI",
@@ -269,7 +269,7 @@ multiple_dicts_analysis_default = {
              "anticipation_range": {"dimensions": "Conditions", "conditions": "all_conditions",
                                     "measurements": "",
                                     "analyses": "horizontal_anticipation_range", "flag": ""},
-             "params": {"output": "horizontal_maximal_latency_ms"}}
+             "params": {"output": "horizontal_maximal_latency_ms", "index": "spatial_x"}}
         ],
         "subtraction": [
             {"initial_value": {"dimensions": "Conditions", "conditions": "all_conditions",
@@ -1934,6 +1934,13 @@ def test_add_array_line_to_dataframes():
     assert np.isnan(macular_analysis_dataframes_head100.dict_analysis_dataframes["Conditions"].loc[
                         "test_conditions_2"][2])
 
+    # Adds a unique value to the meta-condition dataframe in the overall column, without any index.
+    MacularAnalysisDataframes.add_array_line_to_dataframes(macular_analysis_dataframes_head100, "MetaConditions",
+                                                           "overall", "test_metaconditions",
+                                                           10)
+    assert macular_analysis_dataframes_head100.dict_analysis_dataframes["MetaConditions"].loc[
+               "test_metaconditions", "overall"] == 10
+
 
 def test_normalization_analyzing():
     # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
@@ -2394,7 +2401,7 @@ def test_maximal_latency_analyzing():
         macular_analysis_dataframes_anticipation_test_copy = pickle.load(file_anticipation)
 
     # Initialisation of the meta-analysis parameter dictionary for tests.
-    parameters_meta_analysis_dict = {"output": "horizontal_maximal_latency"}
+    parameters_meta_analysis_dict = {"output": "horizontal_maximal_latency", "index": "spatial_x"}
 
     # Definition of the meta-analysis dictionary for the first condition.
     meta_analysis_dictionary = {"latency": ("X", "barSpeed28,5dps", "VSDI", "latency", "ms"),

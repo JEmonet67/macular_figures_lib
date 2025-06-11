@@ -99,7 +99,7 @@ class MetaAnalyser:
         return mean_value
 
     @staticmethod
-    def statistic_binning(data_array, index_array, n_bin):
+    def statistic_binning(index_array, data_array, n_bin):
         """Function to bin two arrays index and data to reduce them from their initial size to a new desired size.
 
         Here we use the binned_statistic function from the scipy stats module because it allows us to bin a data set
@@ -126,13 +126,13 @@ class MetaAnalyser:
             Binned index of size n_bin.
         """
         # Define the edges of the bins to divide n_bin times.
-        bins = np.linspace(index_array[0], index_array[-1], n_bin+1)
+        bins = np.linspace(index_array[0], index_array[-1], n_bin + 1)
 
         # Binning of the data array.
         binned_data_array = binned_statistic(index_array, data_array, statistic='mean', bins=bins)[0].round(3)
 
         # Binning the index array using the centre of each bin interval.
-        binned_index_array = np.linspace((bins[1]+bins[0])/2, (bins[-1]+bins[-2])/2, n_bin).round(3)
+        binned_index_array = np.linspace((bins[1] + bins[0]) / 2, (bins[-1] + bins[-2]) / 2, n_bin).round(3)
 
         return binned_index_array, binned_data_array
 

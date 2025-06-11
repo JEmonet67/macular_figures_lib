@@ -790,9 +790,9 @@ class MacularAnalysisDataframes:
         available_spatial_analyses_dict = {
             "peak_speed": self.peak_speed_analyzing,
             "stationary_peak_delay": self.stationary_peak_delay_analyzing,
-            "linear_fit": self.linear_fit_analyzing,
             "anticipation_fit": self.anticipation_fit_analyzing,
             "maximal_latency": self.maximal_latency_analyzing,
+            "linear_fit": self.linear_fit_analyzing,
             "normalization": self.normalization_analyzing,
             "subtraction": self.subtraction_analyzing
         }
@@ -1697,7 +1697,7 @@ class MacularAnalysisDataframes:
         # Case of multiple spatio-temporal dataframes.
         else:
             analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_levels[0]][
-                                 analysis_levels[1]].loc[dataframe_row, :]
+                                 analysis_levels[1]].loc[dataframe_row, :].values
 
         return analysis_array
 
