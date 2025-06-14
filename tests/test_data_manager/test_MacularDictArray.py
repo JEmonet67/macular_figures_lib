@@ -54,7 +54,6 @@ path_pyb_file_head3000_default = f"{path_data_test}/MacularDictArray/RC_RM_dSGpC
 with open(path_pyb_file_head3000_default, "rb") as file_default:
     macular_dict_array_default_head3000 = pickle.load(file_default)
 
-
 # Dictionaries generation.
 name_file_head100 = "RC_RM_dSGpCP0026_barSpeed6dps_head100_0f"
 dict_simulation_head100 = {
@@ -84,6 +83,52 @@ dict_simulation_head100_30dps = {
     "size_bar": 0.67,
     "axis": "horizontal"
 }
+
+dict_simulation_SMS = {
+    "path_csv": f"../data_test/data_manager/RC_RM_dSGpCP0134_barSpeed200dps_0f.csv",
+    "path_pyb": f"../data_test/data_manager/RC_RM_dSGpCP0134_barSpeed200dps_mean_sectioned_0f.pyb",
+    "n_cells_x": 83,
+    "n_cells_y": 15,
+    "dx": 0.225,
+    "delta_t": 0.0007,
+    "end": "max",
+    "speed": 200,
+    "size_bar": 1.08,
+    "axis": "horizontal"
+}
+
+dict_preprocessing_SMS = {
+    "temporal_centering": True,
+    "spatial_x_centering": True,
+    "spatial_y_centering": True,
+    "binning":0.0007,
+    "VSDI": True,
+    "derivative": {"VSDI": 31,
+                   "FiringRate_GanglionGainControl": 31},
+    "temporal_index_ms": 1000,
+    "spatial_index_mm_retina": 0.3,
+    "spatial_index_mm_cortex": 3,
+    "edge": (5, 0),
+    "mean_sections": {
+        "horizontal": [{"measurement": "VSDI", "cropping_type": "", "cropping_dict": {}},
+                       {"measurement": "VSDI", "cropping_type": "fixed_edge", "cropping_dict": {"x_min_edge": 13,
+                                                                                                "x_max_edge": 13}},
+                       {"measurement": "VSDI", "cropping_type": "threshold", "cropping_dict": {"threshold": 0.005}},
+                       {"measurement": "VSDI", "cropping_type": "max_ratio_threshold",
+                        "cropping_dict": {"ratio_threshold": 0.5}}],
+        "vertical": [{"measurement": "VSDI", "cropping_type": "", "cropping_dict": {}},
+                     {"measurement": "VSDI", "cropping_type": "fixed_edge", "cropping_dict": {"y_min_edge": 2,
+                                                                                              "y_max_edge": 2}},
+                     {"measurement": "VSDI", "cropping_type": "threshold", "cropping_dict": {"threshold": 0.005}},
+                     {"measurement": "VSDI", "cropping_type": "max_ratio_threshold",
+                      "cropping_dict": {"ratio_threshold": 0.5}}],
+        "temporal": [{"measurement": "VSDI", "cropping_type": "", "cropping_dict": {}}]
+    }
+}
+
+
+# def test_make():
+#     MacularDictArray(dict_simulation_SMS, dict_preprocessing_SMS)
 
 
 def test_init(monkeypatch):
@@ -175,7 +220,7 @@ def test_cleaning_dict_preprocessing():
 
     # Case of a dictionary without any preprocess.
     macular_dict_array_test._dict_preprocessing = {"temporal_centering": False, "binning": False, "derivative": False,
-                                       "edge": False}
+                                                   "edge": False}
     assert macular_dict_array_test.cleaning_dict_preprocessing(macular_dict_array_test.dict_preprocessing) == {}
 
     # Case of True and False values.
@@ -186,19 +231,20 @@ def test_cleaning_dict_preprocessing():
 
     # Case of a float.
     macular_dict_array_test._dict_preprocessing = {"temporal_centering": False, "binning": 0.0016, "derivative": False,
-                                       "edge": False}
+                                                   "edge": False}
     assert (macular_dict_array_test.cleaning_dict_preprocessing(macular_dict_array_test.dict_preprocessing) ==
             {"binning": 0.0016})
 
     # Case of a dictionary
     macular_dict_array_test._dict_preprocessing = {"temporal_centering": False, "binning": False,
-                                       "derivative": {"VSDI": 3, "FiringRate_GanglionGainControl": 1}, "edge": False}
+                                                   "derivative": {"VSDI": 3, "FiringRate_GanglionGainControl": 1},
+                                                   "edge": False}
     assert (macular_dict_array_test.cleaning_dict_preprocessing(macular_dict_array_test.dict_preprocessing) ==
             {"derivative": {"VSDI": 3, "FiringRate_GanglionGainControl": 1}})
 
     # Case of a tuple.
     macular_dict_array_test._dict_preprocessing = {"temporal_centering": False, "binning": False, "derivative": False,
-                                       "edge": (5, 0)}
+                                                   "edge": (5, 0)}
     assert (macular_dict_array_test.cleaning_dict_preprocessing(macular_dict_array_test.dict_preprocessing) ==
             {"edge": (5, 0)})
 
@@ -490,7 +536,8 @@ def test_save():
 
 def test_setup_data_index_dict_array():
     # Import of the initial MacularDictArray with empty data and index to be filled.
-    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_no_data_no_index_0f.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_no_data_no_index_0f.pyb",
+              "rb") as file:
         macular_dict_array_test = pickle.load(file)
 
     print(macular_dict_array_test)
@@ -507,7 +554,8 @@ def test_setup_data_index_dict_array():
 
 def test_extract_data_index_from_macular_csv():
     # Import of the initial MacularDictArray with empty data and index to be filled.
-    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_no_data_no_index_0f.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_no_data_no_index_0f.pyb",
+              "rb") as file:
         macular_dict_array_test = pickle.load(file)
 
     # Import of the control MacularDictArray for comparison.
@@ -535,7 +583,8 @@ def test_extract_data_index_from_macular_csv():
 
 def test_dataframe_chunk_processing():
     # Import of the initial MacularDictArray with empty data and index to be filled.
-    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_no_data_no_index_0f.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_no_data_no_index_0f.pyb",
+              "rb") as file:
         macular_dict_array_test = pickle.load(file)
 
     # Import of the first dataframe chunk to be processed.
@@ -584,11 +633,13 @@ def test_transient_extraction():
 
 def test_concatenate_data_index_dict_array():
     # Import of the initial MacularDictArray with empty data and index to be filled.
-    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_extractedDataIndex_0f.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_extractedDataIndex_0f.pyb",
+              "rb") as file:
         macular_dict_array_test = pickle.load(file)
 
     # Import of the control MacularDictArray for comparison.
-    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_concatenated_0f.pyb", "rb") as file:
+    with open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head3000_concatenated_0f.pyb",
+              "rb") as file:
         macular_dict_array_head3000_concatenated = pickle.load(file)
 
     # Use concatenate data index dict array to test it.
@@ -750,6 +801,87 @@ def test_temporal_centering_preprocess():
                            -0.31833, -0.35583, -0.39333, -0.43083, -0.46833, -0.50583])
 
 
+def test_mean_sectioning_preprocess():
+    # Import of a SMS MacularDictArray with 1440Hz frame rate and 200°/s bar speed with sections already averaged.
+    path_pyb_file_SMS_default = f"{path_data_test}/RC_RM_dSGpCP0134_barSpeed200dps_mean_sectioned_0f.pyb"
+    with open(f"{path_pyb_file_SMS_default}", "rb") as file_SMS:
+        macular_dict_array_SMS_mean_sectioned = pickle.load(file_SMS)
+
+    # Import of a SMS MacularDictArray with 1440Hz frame rate and 200°/s bar speed for test.
+    path_pyb_file_SMS_default = f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0134_barSpeed200dps_0f.pyb"
+    with open(f"{path_pyb_file_SMS_default}", "rb") as file_SMS:
+        macular_dict_array_SMS = pickle.load(file_SMS)
+
+    # Case of calculating all average sections of axes without cropping.
+    macular_dict_array_SMS.dict_preprocessing["mean_sections"] = {
+        "horizontal": [
+            {"measurement": "VSDI", "cropping_type": "", "cropping_dict": {}}],
+        "vertical": [
+            {"measurement": "VSDI", "cropping_type": "", "cropping_dict": {}}],
+        "temporal": [
+            {"measurement": "VSDI", "cropping_type": "", "cropping_dict": {}}]
+    }
+    macular_dict_array_SMS.mean_sectioning_preprocess()
+
+    assert np.array_equal(macular_dict_array_SMS.data["horizontal_mean_section"],
+                          macular_dict_array_SMS_mean_sectioned.data["horizontal_mean_section"])
+    assert np.array_equal(macular_dict_array_SMS.data["vertical_mean_section"],
+                          macular_dict_array_SMS_mean_sectioned.data["vertical_mean_section"])
+    assert np.array_equal(macular_dict_array_SMS.data["temporal_mean_section"],
+                          macular_dict_array_SMS_mean_sectioned.data["temporal_mean_section"])
+
+    # Case of calculating average sections of spatial axes with fixed cropping.
+    macular_dict_array_SMS.dict_preprocessing["mean_sections"] = {
+        "horizontal": [
+            {"measurement": "VSDI", "cropping_type": "fixed_edge", "cropping_dict": {"edge_start": 13, "edge_end": 13}}],
+        "vertical": [
+            {"measurement": "VSDI", "cropping_type": "fixed_edge", "cropping_dict": {"edge_start": 2, "edge_end": 2}}
+        ]
+    }
+    macular_dict_array_SMS.mean_sectioning_preprocess()
+
+    assert np.array_equal(macular_dict_array_SMS.data["horizontal_mean_section_fixed_edge"],
+                          macular_dict_array_SMS_mean_sectioned.data["horizontal_mean_section_fixed_edge"])
+    assert np.array_equal(macular_dict_array_SMS.data["vertical_mean_section_fixed_edge"],
+                          macular_dict_array_SMS_mean_sectioned.data["vertical_mean_section_fixed_edge"])
+
+    # Case of calculating average sections of spatial axes with threshold cropping.
+    macular_dict_array_SMS.dict_preprocessing["mean_sections"] = {
+        "horizontal": [
+            {"measurement": "VSDI", "cropping_type": "threshold", "cropping_dict": {"threshold": 0.005}}],
+        "vertical": [
+            {"measurement": "VSDI", "cropping_type": "threshold", "cropping_dict": {"threshold": 0.005}}
+        ]
+    }
+    macular_dict_array_SMS.mean_sectioning_preprocess()
+
+    assert np.array_equal(macular_dict_array_SMS.data['horizontal_mean_section_threshold'][
+                              ~np.isnan(macular_dict_array_SMS.data['horizontal_mean_section_threshold'])],
+                          macular_dict_array_SMS_mean_sectioned.data["horizontal_mean_section_threshold"][
+                              ~np.isnan(macular_dict_array_SMS_mean_sectioned.data["horizontal_mean_section_threshold"])])
+    assert np.array_equal(macular_dict_array_SMS.data['vertical_mean_section_threshold'][
+                              ~np.isnan(macular_dict_array_SMS.data['vertical_mean_section_threshold'])],
+                          macular_dict_array_SMS_mean_sectioned.data["vertical_mean_section_threshold"][
+                              ~np.isnan(macular_dict_array_SMS_mean_sectioned.data["vertical_mean_section_threshold"])])
+
+    # Case of calculating average sections of spatial axes with threshold ratio cropping.
+    macular_dict_array_SMS.dict_preprocessing["mean_sections"] = {
+        "horizontal": [
+            {"measurement": "VSDI", "cropping_type": "max_ratio_threshold",
+             "cropping_dict": {"ratio_threshold": 0.5}}],
+        "vertical": [
+            {"measurement": "VSDI", "cropping_type": "max_ratio_threshold",
+             "cropping_dict": {"ratio_threshold": 0.5}}
+        ]
+    }
+    macular_dict_array_SMS.mean_sectioning_preprocess()
+
+    assert np.array_equal(macular_dict_array_SMS.data["horizontal_mean_section_max_ratio_threshold"],
+                          macular_dict_array_SMS_mean_sectioned.data["horizontal_mean_section_max_ratio_threshold"])
+    assert np.array_equal(macular_dict_array_SMS.data["vertical_mean_section_max_ratio_threshold"],
+                          macular_dict_array_SMS_mean_sectioned.data["vertical_mean_section_max_ratio_threshold"])
+
+
 def test_make_all_indexes_units_conversion_preprocess():
     # Loading of a MacularDictArray with units conversion (mm retina, mm cortex and ms).
     with (open(f"{path_data_test}/MacularDictArray/RC_RM_dSGpCP0026_barSpeed6dps_head100_unitsConversion_0f.pyb", "rb")
@@ -762,12 +894,12 @@ def test_make_all_indexes_units_conversion_preprocess():
 
     # Addition of units conversion and centering in the macular dict array test.
     macular_dict_array_test._dict_preprocessing = {
-    "temporal_centering": True,
-    "spatial_x_centering": True,
-    "spatial_y_centering": True,
-    "temporal_index_ms": 1000,
-    "spatial_index_mm_retina": 0.3,
-    "spatial_index_mm_cortex": 3
+        "temporal_centering": True,
+        "spatial_x_centering": True,
+        "spatial_y_centering": True,
+        "temporal_index_ms": 1000,
+        "spatial_index_mm_retina": 0.3,
+        "spatial_index_mm_cortex": 3
     }
     macular_dict_array_test._path_pyb = macular_dict_array_head100_unitsConversion.path_pyb
     macular_dict_array_test.temporal_centering_preprocess()

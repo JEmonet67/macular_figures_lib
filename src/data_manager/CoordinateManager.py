@@ -109,25 +109,25 @@ class CoordinateManager:
         Returns
         ----------
         dict_edges : dict
-            Dictionary containing the cropped size for each edge of the spatial space (X_left, X_right, Y_bottom and
-            Y_top)
+            Dictionary containing the cropped size for each edge of the spatial space (x_min_edge, x_max_edge,
+            y_min_edge and y_max_edge)
         """
         # Completely symmetrical edge case.
         if isinstance(edge, int):
-            dict_edges = {"X_left": edge, "X_right": edge, "Y_bottom": edge, "Y_top": edge}
+            dict_edges = {"x_min_edge": edge, "x_max_edge": edge, "y_min_edge": edge, "y_max_edge": edge}
         elif isinstance(edge, tuple):
             # Partially symmetrical edge case, horizontal relative to vertical.
             if isinstance(edge[0], int) and isinstance(edge[1], int):
-                dict_edges = {"X_left": edge[0], "X_right": edge[0], "Y_bottom": edge[1], "Y_top": edge[1]}
+                dict_edges = {"x_min_edge": edge[0], "x_max_edge": edge[0], "y_min_edge": edge[1], "y_max_edge": edge[1]}
             # Partially symmetrical vertical and asymmetrical horizontal edge case.
             elif isinstance(edge[0], tuple) and isinstance(edge[1], int):
-                dict_edges = {"X_left": edge[0][0], "X_right": edge[0][1], "Y_bottom": edge[1], "Y_top": edge[1]}
+                dict_edges = {"x_min_edge": edge[0][0], "x_max_edge": edge[0][1], "y_min_edge": edge[1], "y_max_edge": edge[1]}
             # Partially symmetrical horizontal and asymmetrical vertical edge case.
             elif isinstance(edge[0], int) and isinstance(edge[1], tuple):
-                dict_edges = {"X_left": edge[0], "X_right": edge[0], "Y_bottom": edge[1][0], "Y_top": edge[1][1]}
+                dict_edges = {"x_min_edge": edge[0], "x_max_edge": edge[0], "y_min_edge": edge[1][0], "y_max_edge": edge[1][1]}
             # Completely asymmetrical edge case.
             elif isinstance(edge[0], tuple) and isinstance(edge[1], tuple):
-                dict_edges = {"X_left": edge[0][0], "X_right": edge[0][1], "Y_bottom": edge[1][0], "Y_top": edge[1][1]}
+                dict_edges = {"x_min_edge": edge[0][0], "x_max_edge": edge[0][1], "y_min_edge": edge[1][0], "y_max_edge": edge[1][1]}
 
         return dict_edges
 
@@ -154,8 +154,8 @@ class CoordinateManager:
         """
         dict_coord_numpy = {}
 
-        dict_coord_numpy["x"] = (n_cells[1] - 1) - dict_coord_macular[1]
-        dict_coord_numpy["y"] = dict_coord_macular[0]
+        dict_coord_numpy["x"] = (n_cells[1] - 1) - dict_coord_macular["x"]
+        dict_coord_numpy["y"] = dict_coord_macular["y"]
 
         return dict_coord_numpy
 
@@ -182,7 +182,7 @@ class CoordinateManager:
         """
         dict_coord_macular = {}
 
-        dict_coord_macular["x"] = dict_coord_numpy[1]
-        dict_coord_macular["y"] = (n_cells[0] - 1) - dict_coord_numpy[0]
+        dict_coord_macular["x"] = dict_coord_numpy["x"]
+        dict_coord_macular["y"] = (n_cells[0] - 1) - dict_coord_numpy["y"]
 
         return dict_coord_macular

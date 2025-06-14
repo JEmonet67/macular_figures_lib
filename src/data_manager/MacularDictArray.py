@@ -768,8 +768,8 @@ class MacularDictArray:
         """
         print("Preprocessing : ", end="")
 
-        process_order = ("binning", "edge", "VSDI", "derivative",
-                         "temporal_centering", "spatial_x_centering", "spatial_y_centering")
+        process_order = ("binning", "edge", "VSDI", "derivative", "temporal_centering", "spatial_x_centering",
+                         "spatial_y_centering", "mean_sections")
 
         for preprocess in process_order:
             # If the preprocess does not exist, move on to the next one.
@@ -815,6 +815,11 @@ class MacularDictArray:
                 self.index[f"spatial_y_centered"] = DataPreprocessor.spatial_centering(
                     self.index["spatial_y"], self.dict_simulation["n_cells_y"])
 
+            # Mean sectioning along one axis of index array.
+            elif preprocess == "mean_sections":
+                    print(f"Mean sectioning...", end="")
+                    self.mean_sectioning_preprocess()
+
         # All indexes units conversion
         print(f"Units converting...", end="")
         self.make_all_indexes_units_conversion_preprocess()
@@ -842,18 +847,16 @@ class MacularDictArray:
         cropping will also be performed asymmetrically between the two edges of the x or y axes.
 
         All cropping values to be applied to each edge of the spatial area are added to a dictionary containing the
-        keys: X_left, X_right, Y_bottom and Y_top.
+        keys: x_min_edge, x_max_edge, y_min_edge and y_max_edge.
         """
         dict_edges = CoordinateManager.edge_to_dict_edge(self.dict_preprocessing["edge"])
 
         for measurement in self.data:
-            self.data[measurement] = DataPreprocessor.crop_edge(self.data[measurement],
-                                                                dict_edges["X_left"], dict_edges["X_right"],
-                                                                dict_edges["Y_bottom"], dict_edges["Y_top"])
-        self.index["spatial_x"] = self.index["spatial_x"][dict_edges["X_left"]:
-                                                          len(self.index["spatial_x"]) - dict_edges["X_right"]]
-        self.index["spatial_y"] = self.index["spatial_y"][dict_edges["Y_bottom"]:
-                                                          len(self.index["spatial_y"]) - dict_edges["Y_top"]]
+            self.data[measurement] = DataPreprocessor.array_edge_cropping(self.data[measurement], dict_edges.copy())
+        self.index["spatial_x"] = self.index["spatial_x"][dict_edges["x_min_edge"]:
+                                                          len(self.index["spatial_x"]) - dict_edges["x_max_edge"]]
+        self.index["spatial_y"] = self.index["spatial_y"][dict_edges["y_min_edge"]:
+                                                          len(self.index["spatial_y"]) - dict_edges["y_max_edge"]]
 
     def derivating_preprocess(self):
         """Function for calculating the derivative of given measurements.
@@ -877,8 +880,8 @@ class MacularDictArray:
 
         If edges have been cropped from the current MacularDictArray, it is necessary to crop these edges also these
         edges in the list of arrival times in the bar in the centre of the receiver fields. All cropping values to be
-        applied to each edge of the spatial area are added to a dictionary containing the keys: X_left, X_right,
-        Y_bottom and Y_top.
+        applied to each edge of the spatial area are added to a dictionary containing the keys: x_min_edge, x_max_edge,
+        y_min_edge and y_max_edge
         """
         # List of arrival times of the bar on all cells of the MacularDictArray before any cropping.
         list_time_bar_center = CoordinateManager.get_list_time_motion_center(self.dict_simulation)
@@ -887,11 +890,11 @@ class MacularDictArray:
         try:
             dict_edges = CoordinateManager.edge_to_dict_edge(self.dict_preprocessing["edge"])
             if self.dict_simulation["axis"] == "horizontal":
-                list_time_bar_center = list_time_bar_center[dict_edges["X_left"]:
-                                                            len(list_time_bar_center) - dict_edges["X_right"]]
+                list_time_bar_center = list_time_bar_center[dict_edges["x_min_edge"]:
+                                                            len(list_time_bar_center) - dict_edges["x_max_edge"]]
             elif self.dict_simulation["axis"] == "vertical":
-                list_time_bar_center = list_time_bar_center[dict_edges["Y_bottom"]:
-                                                            len(list_time_bar_center) - dict_edges["Y_top"]]
+                list_time_bar_center = list_time_bar_center[dict_edges["y_min_edge"]:
+                                                            len(list_time_bar_center) - dict_edges["y_max_edge"]]
         # Case without edges cropped.
         except KeyError:
             pass
@@ -899,6 +902,43 @@ class MacularDictArray:
         # Centering the time index within its assigned index.
         self.index[f"temporal_centered"] = DataPreprocessor.temporal_centering(
             self.index["temporal"], list_time_bar_center)
+
+    def mean_sectioning_preprocess(self):
+        """Function using the 3D array of values along one of these axes.
+
+        Mean sectioning is performed based on the ‘mean_sections’ key in the preprocessing dictionary. It produces a
+        two-dimensional array in which the removed axis has been averaged. The ‘mean_sections’ key is associated with a
+        dictionary containing the names of the axes to be averaged. The corresponding values are lists of other
+        dictionaries containing the parameters of the mean section. Each element of the list will be the source of a
+        new array in the MacularDictArray. The parameter dictionary must contain the ‘measurement’ key, which is the
+        measurement to be averaged, the ‘cropping_type’ which defines how the array should be cropped or not in
+        preparation for averaging, and the ‘cropping_dict’ which groups the parameters specific to this cropping.
+
+        The function begins by scanning the names of the axes to be averaged and the measurements. For each of them,
+        it transforms the array into a imbricated array. This is a 2D array with the dimensions of the two axes not
+        averaged, and each position stores a 1D array corresponding to the axis to be averaged. This allows to isolate
+        values according to the axis to be averaged. This imbricated array is then cropped or not, depending on the
+        user's input. Only the isolated array corresponding to the axis to be averaged is cropped. Different cropping
+        methods are possible. The imbricated array structure was chosen because some of these methods can result in
+        different array sizes coexisting within the same array. Finally, the isolated array from the imbricated array is
+        averaged to obtain the average section.
+        """
+        # Loop on the axes to be averaged.
+        for averaging_axis in self.dict_preprocessing["mean_sections"]:
+            # Loop through the measurements of each axis to be averaged.
+            for mean_section_dictionary in self.dict_preprocessing["mean_sections"][averaging_axis]:
+                # Creation of a imbricated array isolating the axis to be averaged.
+                imbricated_array_data = DataPreprocessor.transform_3d_array_to_imbricated_arrays(
+                self.data[mean_section_dictionary["measurement"]], averaging_axis)
+
+                # Cut the axis to be averaged within the imbricated array to average only a portion.
+                imbricated_array_data = DataPreprocessor.crop_imbricated_array(
+                    imbricated_array_data, mean_section_dictionary["cropping_type"],
+                    mean_section_dictionary["cropping_dict"])
+
+                # Average of the current axis transforming the imbricated array into a 2D array.
+                self.data[f"{averaging_axis}_mean_section_{mean_section_dictionary['cropping_type']}".strip("_")] = (
+                    DataPreprocessor.imbricated_arrays_axis_averaging(imbricated_array_data))
 
     def make_all_indexes_units_conversion_preprocess(self):
         """Function that creates dictionary entries corresponding to conversions of temporal and spatial indexes.

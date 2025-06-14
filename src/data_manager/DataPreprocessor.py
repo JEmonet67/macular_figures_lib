@@ -4,23 +4,23 @@ import numpy as np
 class DataPreprocessor:
     """Summary
 
-        Explanation
+    Explanation
 
-        Note
-        ----------
+    Note
+    ----------
 
 
-        Parameters
-        ----------
-        param1 : type
-            Summary param1
+    Attributes
+    ----------
+    attr1 : type
+        Summary attr1
 
-            Explanation param1
+        Explanation attr1
 
-        Example
-        ----------
-        >> instruction
-        result instruction
+    Example
+    ----------
+    >>> instruction
+    result instruction
 
     """
 
@@ -57,7 +57,7 @@ class DataPreprocessor:
             elif len(array_to_normalize.shape) == 3:
                 # Extension of the initial voltages to have the same time dimension as the data to be normalised.
                 baseline_3d = np.repeat(baseline[:, :, np.newaxis],
-                                                     array_to_normalize.shape[-1], axis=2)
+                                        array_to_normalize.shape[-1], axis=2)
                 normalized_array = (array_to_normalize - baseline_3d) / baseline_3d
 
         return normalized_array
@@ -94,7 +94,7 @@ class DataPreprocessor:
     def spatial_centering(index, n_cells):
         # Odd n_cells.
         if n_cells // 2:
-            return index - index[int(n_cells/2)]
+            return index - index[int(n_cells / 2)]
         # Even n_cells.
         else:
             return index - (index[int(n_cells / 2)] + index[int(n_cells / 2) - 1]) / 2
@@ -116,18 +116,13 @@ class DataPreprocessor:
             elif i_derivate >= array.shape[2] - n:
                 df_dxdt[:, :, i_derivate] = (array[:, :, array.shape[2] - 1] - array[:, :, i_derivate - n])
                 df_dxdt[:, :, i_derivate] = df_dxdt[:, :, i_derivate] / (
-                            index[array.shape[2] - 1] - index[i_derivate - n])
+                        index[array.shape[2] - 1] - index[i_derivate - n])
             # Intermediate case where the n window fits within the neighbourhood of the current time index.
             else:
                 df_dxdt[:, :, i_derivate] = (array[:, :, i_derivate + n] - array[:, :, i_derivate - n])
                 df_dxdt[:, :, i_derivate] = df_dxdt[:, :, i_derivate] / (index[i_derivate + n] - index[i_derivate - n])
 
         return df_dxdt
-
-    @staticmethod
-    def crop_edge(array, x_left_edge, x_right_edge, y_bottom_edge, y_top_edge):
-        """Function to crop parts of an array."""
-        return array[y_bottom_edge:array.shape[0]-y_top_edge, x_left_edge:array.shape[1]-x_right_edge, :]
 
     @staticmethod
     def conversion_specific_arrays_unit_dict_array(dict_array, pattern, suffix_array, ratio):
@@ -143,3 +138,267 @@ class DataPreprocessor:
                 dict_array_new_units[f"{name_array}_{suffix_array}"] = dict_array_new_units[name_array] * ratio
 
         return dict_array_new_units
+
+    @staticmethod
+    def array_edge_cropping(array, cropping_dict={}):
+        """Function to crop the edges of each axis of a 3D array.
+
+        Parameters
+        ----------
+        array : np.ndarray
+            3D array to be cropped.
+
+        cropping_dict : dict
+            Dictionary of cropping settings.
+
+            It can contain a key for each extremity of each axis. We have ‘x_min_edge’ and ‘x_max_edge’ for the X
+            spatial dimension, ‘y_min_edge’ and ‘y_max_edge’ for the Y spatial dimension, “t_min_edge” and ‘t_max_edge’
+            for the T temporal dimension.
+
+        Returns
+        ----------
+        array : np.ndarray
+            3D array cropped based on the edges of the dictionary.
+        """
+        # Initialisation of the default dictionary.
+        default_cropping_dict = {"x_min_edge": 0, "x_max_edge": 0, "y_min_edge": 0, "y_max_edge": 0,
+                                 "t_min_edge": 0, "t_max_edge": 0}
+
+        # Merging of default dictionary keys not present in the crop dictionary provided as input.
+        for key, value in default_cropping_dict.items():
+            if key not in cropping_dict:
+                cropping_dict[key] = value
+
+        # Cropping each axis of the array with its new respective edges.
+        return array[cropping_dict["y_min_edge"]:array.shape[0] - cropping_dict["y_max_edge"],
+           cropping_dict["x_min_edge"]:array.shape[1] - cropping_dict["x_max_edge"],
+           cropping_dict["t_min_edge"]:array.shape[2] - cropping_dict["t_max_edge"]]
+
+    @staticmethod
+    def crop_imbricated_array(imbricated_array, cropping_type, cropping_dict):
+        """Function to use differents ways of cropping an imbricated array.
+
+        The crop of a imbricated array corresponds to cropping the isolated 1D array present at each position of the 2D
+        array. The purpose of this structure is to allow 1D arrays of different sizes to coexist after a certain
+        cropping method.
+
+        The different crop methods implemented are:
+        - The ‘fixed_edge’ crop removes edges of a fixed size specified by the user.
+        - The ‘threshold’ crop removes all positions below a given threshold.
+        - The ‘max_ratio_threshold’ crop removes all positions whose activity is less than a certain fraction of the
+        maximum response of the array to be cropped.
+
+        Parameters
+        ----------
+        imbricated_array : np.ndarray of np.ndarray
+            2D array containing isolated 1D arrays to be cropped.
+
+        cropping_type : str
+            Name of the cropping type to be applied to the isolated array of the imbricated array.
+
+        cropping_dict : dict
+            Dictionary of cropping settings. Settings depend on the type of cropping selected.
+
+        Returns
+        ----------
+        imbricated_array : np.ndarray of np.ndarray
+            Imbricated array whose isolated array has been cropped or not.
+        """
+        if cropping_type == "fixed_edge":
+            return DataPreprocessor.fixed_edge_cropping(imbricated_array, cropping_dict.copy())
+
+        elif cropping_type == "threshold":
+            return DataPreprocessor.threshold_cropping(imbricated_array, cropping_dict["threshold"])
+
+        elif cropping_type == "max_ratio_threshold":
+            return DataPreprocessor.max_ratio_threshold_cropping(imbricated_array, cropping_dict["ratio_threshold"])
+        else:
+            return imbricated_array
+
+    @staticmethod
+    def fixed_edge_cropping(imbricated_array, cropping_dict={}):
+        """Function to crop the edges of one axis of an imbricated array.
+
+        Parameters
+        ----------
+        imbricated_array : np.ndarray of np.ndarray
+            2D array containing isolated 1D arrays to be cropped.
+
+        cropping_dict : dict
+            Dictionary of cropping settings.
+
+            It can hold a key for each end of the axis to crop. We have ‘edge_start’ and ‘edge_end’ for the beginning
+            and end of the array on the axis, respectively.
+
+        Returns
+        ----------
+        imbricated_array : np.ndarray of np.ndarray
+            2D array containing isolated and cropped 1D arrays.
+        """
+        # Initialisation of the default dictionary.
+        default_cropping_dict = {"edge_start": 0, "edge_end": 0}
+
+        # Merging of default dictionary keys not present in the crop dictionary provided as input.
+        for key, value in default_cropping_dict.items():
+            if key not in cropping_dict:
+                cropping_dict[key] = value
+
+        # Cropping of all isolated arrays contained in the first 2D array.
+        for i in range(imbricated_array.shape[0]):
+            for j in range(imbricated_array.shape[1]):
+                imbricated_array[i, j] = imbricated_array[i, j][cropping_dict["edge_start"]:
+                                                                imbricated_array[i, j].shape[0] -
+                                                                cropping_dict["edge_end"]]
+
+        return imbricated_array
+
+
+    @staticmethod
+    def threshold_cropping(imbricated_array, threshold):
+        """Function that removes all values from an imbricated array that are less than a threshold.
+
+        Parameters
+        ----------
+        imbricated_array : np.ndarray of np.ndarray
+            2D array containing isolated 1D arrays to be cropped.
+
+        threshold : int or float
+            Threshold value to apply for array filtering.
+
+        Returns
+        ----------
+        imbricated_array : np.ndarray of np.ndarray
+            2D array containing isolated and threshold cropped 1D arrays.
+        """
+        # Initialises an array of the same size as the first imbricated array.
+        cropped_imbricated_array = np.empty((imbricated_array.shape[0], imbricated_array.shape[1]), dtype=object)
+
+        # Loop the coordinates on the two axes of the first imbricated array.
+        for i in range(imbricated_array.shape[0]):
+            for j in range(imbricated_array.shape[1]):
+                # Retrieves the 1D array from the current position to be cropped.
+                array_to_threshold = imbricated_array[i, j].astype(float)
+                # Crop of the current 1D array.
+                cropped_imbricated_array[i, j] = array_to_threshold[array_to_threshold >= threshold]
+
+        return cropped_imbricated_array
+
+    @staticmethod
+    def max_ratio_threshold_cropping(imbricated_array, ratio_threshold):
+        """Function that removes all values from an imbricated array that are less than a dynamic threshold calculated
+        from a fraction of the local maximum.
+
+        The threshold is calculated by multiplying the threshold ratio by the maximum value present within each isolated
+        array in the imbricated array. This ensures that only the local maximum present in a given axis is taken into
+        account.
+
+        Parameters
+        ----------
+        imbricated_array : np.ndarray of np.ndarray
+            2D array containing isolated 1D arrays to be cropped.
+
+        ratio_threshold : float
+            Threshold value corresponding to the local maximum ratio used as the effective threshold.
+
+        Returns
+        ----------
+        imbricated_array : np.ndarray of np.ndarray
+            2D array containing isolated and max ratio threshold cropped 1D arrays.
+        """
+        # Initialises an array of the same size as the first imbricated array.
+        cropped_imbricated_array = np.empty((imbricated_array.shape[0], imbricated_array.shape[1]), dtype=object)
+
+        # Loop the coordinates on the two axes of the first imbricated array.
+        for i in range(imbricated_array.shape[0]):
+            for j in range(imbricated_array.shape[1]):
+                # Retrieves the 1D array from the current position to be cropped.
+                array_to_threshold = imbricated_array[i, j]
+                # Calculation of the dynamic threshold depending on the maximum present in the array to be cropped.
+                threshold = ratio_threshold * array_to_threshold.max()
+                # Crop of the current 1D array.
+                cropped_imbricated_array[i, j] = array_to_threshold[array_to_threshold >= threshold]
+
+        return cropped_imbricated_array
+
+    @staticmethod
+    def transform_3d_array_to_imbricated_arrays(array, axis):
+        """Function that transforms a 3D array into a double imbricated array.
+
+        The imbricated array retains all the data from the 3D array but transforms its structure to isolate one of the
+        axes within a 1D array. This 1D array of the axis to be isolated is stored within a larger 2D array with the
+        same dimensions as the other two axes of the original array.
+
+        This process allows you to isolate the values of an array along a given axis, then crop them to create arrays
+        of variable sizes, and finally perform calculations on them, such as averaging.
+
+        Parameters
+        ----------
+        array : np.ndarray
+            3d array of data to convert into an imbricated array.
+
+        axis : str
+            Axis along which the process is performed, this is the axis included in the last array of imbricated array.
+
+        Returns
+        ----------
+        imbricated_array : np.ndarray of np.ndarray
+            Imbricated array reorganising values to isolate a given axis.
+        """
+        # Vertical case.
+        if axis == "vertical":
+            # Initialise the array with an appropriate size and allow it to store array.
+            imbricated_array = np.empty((array.shape[1], array.shape[2]), dtype=object)
+            # Loop the coordinates on the other two axes.
+            for x in range(array.shape[1]):
+                for t in range(array.shape[2]):
+                    # Fill the current position with the corresponding array represented according to the desired axis.
+                    imbricated_array[x, t] = array[:, x, t]
+
+        # Horizontal case.
+        elif axis == "horizontal":
+            # Initialise the array with an appropriate size and allow it to store array.
+            imbricated_array = np.empty((array.shape[0], array.shape[2]), dtype=object)
+            # Loop the coordinates on the other two axes.
+            for y in range(array.shape[0]):
+                for t in range(array.shape[2]):
+                    # Fill the current position with the corresponding array represented according to the desired axis.
+                    imbricated_array[y, t] = array[y, :, t]
+
+        # Temporal case.
+        elif axis == "temporal":
+            # Initialise the array with an appropriate size and allow it to store array.
+            imbricated_array = np.empty((array.shape[0], array.shape[1]), dtype=object)
+            # Loop the coordinates on the other two axes.
+            for y in range(array.shape[0]):
+                for x in range(array.shape[1]):
+                    # Fill the current position with the corresponding array represented according to the desired axis.
+                    imbricated_array[y, x] = array[y, x, :]
+
+        return imbricated_array
+
+    @staticmethod
+    def imbricated_arrays_axis_averaging(imbricated_array):
+        """Function for calculating average sections for a specific axis in an imbricated array.
+
+        Parameters
+        ----------
+        imbricated_array : np.ndarray of np.ndarray
+            2D array containing isolated 1D arrays to be averaged.
+
+        Returns
+        ----------
+        mean_section : np.ndarray
+            2D array corresponding to the average section along the axis contained in the isolated 1D array.
+        """
+        # Initialisation of the average section array with the two axes of the first imbricated array.
+        mean_section = np.empty((imbricated_array.shape[0], imbricated_array.shape[1]), dtype=object)
+
+        # Loop on both axes of the first imbricated array.
+        for i in range(imbricated_array.shape[0]):
+            for j in range(imbricated_array.shape[1]):
+                # Retrieves the 1D array from the current position to be cropped.
+                array_to_mean = imbricated_array[i, j]
+                # Average of the current 1D array.
+                mean_section[i, j] = array_to_mean.mean().round(4)
+
+        return mean_section.astype(float)
