@@ -188,6 +188,8 @@ multiple_dicts_analysis_default = {
                         "params": {"index": "temporal_centered_ms", "y": 7, "axis": "horizontal", "flag": "ms"}}],
         "peak_amplitude": [{"conditions": "all_conditions", "measurements": "all_measurements",
                             "params": {"y": 7, "flag": ""}}],
+        "spatial_mean": [{"conditions": "all_conditions", "measurements": "vertical_mean_section_max_ratio_threshold",
+                            "params": {"axis": 0}}]
     },
     "Y": {
         "activation_time": [{"conditions": "all_conditions", "measurements": "VSDI",
@@ -197,6 +199,8 @@ multiple_dicts_analysis_default = {
                           "params": {"index": "temporal_ms", "x": 36, "flag": "ms"}}],
         "peak_amplitude": [{"conditions": "all_conditions", "measurements": "all_measurements",
                             "params": {"x": 36, "flag": ""}}],
+        "spatial_mean": [{"conditions": "all_conditions", "measurements": "horizontal_mean_section_fixed_edge",
+                            "params": {"axis": 0}}]
     },
     "Time": {"test": "test"},
     "MetaAnalysis": {
@@ -1515,6 +1519,53 @@ def test_initial_amplitude_analyzing():
 
     # Verification of the validity of the value of the amplitude.
     assert amplitude_conditions == multi_macular_dict_array_default["barSpeed30dps"].data["VSDI"][7, 36, 0]
+
+
+def test_spatial_mean_analyzing():
+    # Correctly averaged arrays imported for comparison in this test.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/spatial_mean_arrays.pyb", "rb") as file_mean_arrays:
+        spatial_mean_arrays_correct = pickle.load(file_mean_arrays)
+
+    # Import of a SMS MacularDictArray with 1440Hz frame rate and 200°/s bar speed with sections already averaged.
+    path_pyb_file_SMS_default = f"{path_data_test}/RC_RM_dSGpCP0134_barSpeed200dps_mean_sectioned_0f.pyb"
+    with open(f"{path_pyb_file_SMS_default}", "rb") as file_SMS:
+        macular_dict_array_SMS_mean_sectioned = pickle.load(file_SMS)
+
+    # Create analysis dictionary.
+    parameters_analysis_dict = {"axis": 0}
+
+    # Create new spatial mean array for 3D dataframe.
+    spatial_mean_array = MacularAnalysisDataframes.spatial_mean_analyzing.__wrapped__(
+        macular_dict_array_SMS_mean_sectioned.data["VSDI"],
+        macular_dict_array_SMS_mean_sectioned.index,
+        parameters_analysis_dict)
+
+    # Verification of the validity of the spatial mean array for 3D dataframe.
+    assert np.array_equal(spatial_mean_array, spatial_mean_arrays_correct["spatial_mean_array_correct"])
+
+    # Create analysis dictionary.
+    parameters_analysis_dict = {"axis": 0}
+
+    # Create new horizontal-time mean array for 2D dataframe.
+    horizontal_temporal_mean_array = MacularAnalysisDataframes.spatial_mean_analyzing.__wrapped__(
+        macular_dict_array_SMS_mean_sectioned.data['horizontal_mean_section'],
+        macular_dict_array_SMS_mean_sectioned.index,
+        parameters_analysis_dict)
+
+    # Verification of the validity of the horizontal mean array for 2D dataframe.
+    assert np.array_equal(horizontal_temporal_mean_array, spatial_mean_arrays_correct["horizontal_temporal_mean_array"])
+
+    # Create analysis dictionary.
+    parameters_analysis_dict = {"axis": 0}
+
+    # Create new vertical mean array for 2D dataframe.
+    vertical_temporal_mean_array = MacularAnalysisDataframes.spatial_mean_analyzing.__wrapped__(
+        macular_dict_array_SMS_mean_sectioned.data['vertical_mean_section'],
+        macular_dict_array_SMS_mean_sectioned.index,
+        parameters_analysis_dict)
+
+    # Verification of the validity of the vertical mean array for 2D dataframe.
+    assert np.array_equal(vertical_temporal_mean_array, spatial_mean_arrays_correct["vertical_temporal_mean_array"])
 
 
 def test_meta_analysis():

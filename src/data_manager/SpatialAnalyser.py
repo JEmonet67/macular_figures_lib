@@ -300,3 +300,33 @@ class SpatialAnalyser:
                 amplitude_array[j][i] = data_array[j][i][0].round(3)
 
         return amplitude_array
+
+    @staticmethod
+    def spatial_mean_computing(data_array, axis):
+        """Calculates the average of the data array to represent it only along a single axis.
+
+        Parameters
+        ----------
+        data_array : np.ndarray
+            3D or 2D array containing activity data.
+
+        axis : int
+            Index of the axis along which the average of the other two axes is represented.
+
+        Returns
+        ----------
+        spatial_mean_array : np.ndarray
+            1D array containing the mean of the 3D or 2D array given as input.
+        """
+        if axis >= len(data_array.shape):
+            raise IndexError("L'index de l'axe entré en paramètre dépasse l'index maximal des axes.")
+        spatial_mean_array = data_array.copy()
+
+        default_index_axis_set = set([i for i in range(len(spatial_mean_array.shape))])
+
+        index_axis_to_average = sorted(list(default_index_axis_set - set([axis])))[::-1]
+
+        for index_axis in index_axis_to_average:
+            spatial_mean_array = spatial_mean_array.mean(axis=index_axis)
+
+        return spatial_mean_array.round(4)

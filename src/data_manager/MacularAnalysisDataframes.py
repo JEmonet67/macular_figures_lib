@@ -743,7 +743,8 @@ class MacularAnalysisDataframes:
             "time_to_peak": self.time_to_peak_analyzing,
             "peak_delay": self.peak_delay_analyzing,
             "peak_amplitude": self.peak_amplitude_analyzing,
-            "initial_amplitude": self.initial_amplitude_analyzing
+            "initial_amplitude": self.initial_amplitude_analyzing,
+            "spatial_mean": self.spatial_mean_analyzing
         }
 
         # Performs all spatial analyses listed in the current analysis dictionary.
@@ -1227,6 +1228,36 @@ class MacularAnalysisDataframes:
             initial_amplitude = amplitude_2d_array[parameters_analysis_dict["y"], parameters_analysis_dict["x"]]
 
         return initial_amplitude
+
+    @staticmethod
+    @analysis
+    def spatial_mean_analyzing(data, index, parameters_analysis_dict):
+        """Function that calculates and represents the average of a measurement along one spatial axis.
+
+        The input data can be two-dimensional or three-dimensional. Both cases are handled to produce either a single
+        average from the other axis or two averages if there are two axes.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            3D or 2D array containing the values of a measurement for a given condition.
+
+        index : dict of np.ndarray
+            Dictionary containing all the indexes of a MacularDictArray in the form of a 1D array.
+
+        parameters_analysis_dict : dict
+            Dictionary of parameters to be used for initial amplitude analysis. It only must contain the index of the
+            axis along which the average is to be represented.
+
+        Returns
+        ----------
+        spatial_mean_array : np.ndarray
+            1D array of mean along a single spatial axis.
+        """
+        # Calculation of the 1D array of the spatial mean.
+        spatial_mean_array = SpatialAnalyser.spatial_mean_computing(data, parameters_analysis_dict["axis"])
+
+        return spatial_mean_array
 
     @staticmethod
     def meta_analysis(meta_analysis_function):
@@ -1900,7 +1931,8 @@ class MacularAnalysisDataframes:
         parameters_meta_analysis_dict : dict
             Dictionary containing all the parameters of the meta-analysis to be formatted.
 
-            This dictionary must contain the spatial index name to be used for fitting.
+            This dictionary must contain the spatial index name, the breaks and the number of points to be used for
+            fitting.
         """
         # Store dimensions and conditions of output.
         meta_analysis_dictionary["output"]["dimension"] = "Conditions"
