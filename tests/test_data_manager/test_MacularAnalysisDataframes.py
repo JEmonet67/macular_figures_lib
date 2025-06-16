@@ -1046,7 +1046,33 @@ def test_make_conditions_dataframes_analysis():
         macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Conditions"])
 
 
+def test_make_meta_analysis_dataframes_analysis():
+    # Set the randomness of the fitting for testing.
+    np.random.seed(1)
 
+    # Import of a fully analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
+          as file_test):
+        macular_analysis_dataframes_default_analyzed_test = pickle.load(file_test)
+
+    # Use the make condition dataframes analysis on the test macular analysis dataframes.
+    macular_analysis_dataframes_default_analyzed_test.make_meta_analysis_dataframes_analysis(
+        dict_index_default)
+
+    # Verify that the conditions and MetaConditions dataframe are corrects.
+    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Conditions"])
+    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["MetaConditions"].equals(
+        macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["MetaConditions"])
+
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
+            macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
+            macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
+            macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Time"][condition])
 
 
 def test_make_spatial_dataframes_analysis():
