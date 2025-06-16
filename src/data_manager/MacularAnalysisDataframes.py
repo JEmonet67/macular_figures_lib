@@ -1650,12 +1650,15 @@ class MacularAnalysisDataframes:
                 current_meta_analysis_dictionary[meta_analysis_argument] = (
                     common_meta_analysis_group_dictionary)[meta_analysis_argument][analysis_levels_index]
 
+            # Make a copy of the current meta analysis dictionary to avoid modification of it during the process.
+            current_meta_analysis_dictionary_copy = current_meta_analysis_dictionary.copy()
+
             # Creation of a dictionary of names for each output argument of the current meta-analysis.
-            current_meta_analysis_dictionary.update(MacularAnalysisDataframes.make_meta_analysis_outputs(
-                meta_analysis, current_meta_analysis_dictionary, common_meta_analysis_group_dictionary["params"]))
+            current_meta_analysis_dictionary_copy.update(MacularAnalysisDataframes.make_meta_analysis_outputs(
+                meta_analysis, current_meta_analysis_dictionary_copy, common_meta_analysis_group_dictionary["params"]))
 
             # Execution of the current meta-analysis function.
-            meta_analysis_function(self, current_meta_analysis_dictionary, dict_index,
+            meta_analysis_function(self, current_meta_analysis_dictionary_copy, dict_index,
                                    common_meta_analysis_group_dictionary["params"].copy())
 
     @staticmethod
