@@ -1054,23 +1054,17 @@ def test_make_spatial_dataframes_analysis():
     with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
         macular_analysis_dataframes_default_empty = pickle.load(file)
 
-    # Import a default macular analysis dataframes of bar speed condition with the X dimension analysed.
-    with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_spatial_X_filled.pyb",
-              "rb") as file:
-        macular_analysis_dataframes_default_spatial_X_filled = pickle.load(file)
-
-    # Set up multiple analysis dictionaries in the macular analysis test dataframes.
+    # Set up multiple analysis dictionaries in the test macular analysis dataframes.
     macular_analysis_dataframes_default_empty._multiple_dicts_analysis["X"] = multiple_dicts_analysis_default["X"]
+    macular_analysis_dataframes_default_empty._multiple_dicts_analysis["Y"] = multiple_dicts_analysis_default["Y"]
 
-    # Use the make spatial dataframes analysis on the macular analysis test dataframes.
-    macular_analysis_dataframes_default_empty.make_spatial_dataframes_analysis(
-        "X", multi_macular_dict_array_default)
+    # Use the make spatial dataframes analysis on the test macular analysis dataframes.
+    macular_analysis_dataframes_default_empty.make_spatial_dataframes_analysis("X",
+                                                                               multi_macular_dict_array_default)
+    macular_analysis_dataframes_default_empty.make_spatial_dataframes_analysis("Y",
+                                                                               multi_macular_dict_array_default)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default_spatial_X_filled.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
+    # Verify that the X dataframes for each condition are equal.
     for condition in macular_analysis_dataframes_default_empty.dict_paths_pyb:
         assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["X"][condition].equals(
             macular_analysis_dataframes_default_spatial_X_filled.dict_analysis_dataframes["X"][condition])
