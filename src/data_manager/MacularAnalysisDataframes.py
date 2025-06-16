@@ -798,9 +798,13 @@ class MacularAnalysisDataframes:
             "subtraction": self.subtraction_analyzing
         }
 
+        # Order in which meta-analyses are performed.
+        available_spatial_analyses_dict_order = ("peak_speed", "stationary_peak_delay", "anticipation_fit",
+                                                 "maximal_latency", "linear_fit", "normalization", "subtraction")
+
         # Performs all meta-analyses type listed in the current analysis dictionary.
-        for meta_analysis_type in self.multiple_dicts_analysis["MetaAnalysis"]:
-            if meta_analysis_type in available_spatial_analyses_dict:
+        for meta_analysis_type in available_spatial_analyses_dict_order:
+            if meta_analysis_type in self.multiple_dicts_analysis["MetaAnalysis"]:
                 available_spatial_analyses_dict[meta_analysis_type](self, meta_analysis_type, dict_index)
 
     @staticmethod
