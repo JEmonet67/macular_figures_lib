@@ -1028,6 +1028,24 @@ def test_substituting_all_alias_in_analysis_dictionary():
              "flag": ""})
 
 
+def test_make_conditions_dataframes_analysis():
+    # Import an empty default macular analysis dataframes of bar speed condition for test.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
+        macular_analysis_dataframes_default_empty = pickle.load(file)
+
+    # Set up multiple analysis dictionaries in the test macular analysis dataframes.
+    macular_analysis_dataframes_default_empty._multiple_dicts_analysis["Conditions"] = multiple_dicts_analysis_default[
+        "Conditions"]
+
+    # Use the make condition dataframes analysis on the test macular analysis dataframes.
+    macular_analysis_dataframes_default_empty.make_conditions_dataframes_analysis(
+        multi_macular_dict_array_default)
+
+    # Verify that the conditions dataframe is correct.
+    assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Conditions"])
+
+
 
 
 
