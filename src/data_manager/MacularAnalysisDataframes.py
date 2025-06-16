@@ -1739,10 +1739,14 @@ class MacularAnalysisDataframes:
         The name of the meta-analysis is primarily retrieved from the name defined among the arguments of the
         meta-analysis function. All arguments containing the term ‘output’ will be used to retrieve as many names as
         will be defined in a dictionary. If this is not the case, the name defined in the meta-analysis parameter
-        dictionary will be used. All parameters containing the term ‘output’ are retrieved again. Finally, the default
-        behaviour if no output exists is to format using the measurements and analysis types of each argument of the
-        meta-analysis. It is possible to slightly adapt this default case by adding a ‘flag’ parameter in the
-        meta-analysis parameter dictionary. This ‘flag’ character string will be added as last suffix.
+        dictionary will be used. All parameters containing the term ‘output’ are retrieved again. Each output can be
+        associated with multiple output names to be used simultaneously in one meta-analysis. Each of these names is
+        separated by the symbol ‘;’ and are therefore divided in this function into a list for later use.
+
+        If no output is present in the arguments or parameter dictionary, a default behaviour is performed. Outputs are
+        created by formatting from measurements and analyses types of each argument of the meta-analysis. It is possible
+        to slightly adapt this default case by adding a ‘flag’ parameter in the meta-analysis parameter dictionary.
+        This ‘flag’ character string will be added as last suffix.
 
         Parameters
         ----------
@@ -1783,6 +1787,10 @@ class MacularAnalysisDataframes:
                     "condition": meta_analysis_dictionary[meta_analysis_arguments][1],
                     "name": meta_analysis_dictionary[meta_analysis_arguments][3]
                 }
+                # Separation into a list of multiple outputs of a single argument from a meta-analysis.
+                if ";" in meta_analysis_outputs_dict[meta_analysis_arguments]["name"]:
+                    meta_analysis_outputs_dict[meta_analysis_arguments]["name"] = meta_analysis_outputs_dict[
+                        meta_analysis_arguments]["name"].split(";")
                 output = True
 
         # Cases where no output has been defined in the meta-analysis arguments.
@@ -1791,6 +1799,10 @@ class MacularAnalysisDataframes:
             for params in parameters_meta_analysis_dict:
                 if "output" in params:
                     meta_analysis_outputs_dict[params] = {"name": parameters_meta_analysis_dict[params]}
+                    # Separation into a list of multiple outputs of a single argument from a meta-analysis.
+                    if ";" in meta_analysis_outputs_dict[params]["name"]:
+                        meta_analysis_outputs_dict[params]["name"] = meta_analysis_outputs_dict[params]["name"
+                        ].split(";")
                     output = True
 
         # Default case performing formatting based on the analysis information.

@@ -222,20 +222,18 @@ multiple_dicts_analysis_default = {
             {"data_to_fit": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
                              "analyses": "data_to_fit", "flag": ""},
              "output_slopes": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
-                               "analyses": ["horizontal_first_slope_speed",
-                                            "horizontal_second_slope_speed",
-                                            "horizontal_third_slope_speed",
-                                            "horizontal_fourth_slope_speed"]},
+                               "analyses": "horizontal_first_slope_speed;horizontal_second_slope_speed;"
+                                           "horizontal_third_slope_speed;horizontal_fourth_slope_speed"},
              "output_inflection_points_data": {"dimensions": "Conditions", "conditions": "all_conditions",
                                                "measurements": "VSDI",
-                                               "analyses": ["horizontal_first_inflection_point",
-                                                            "horizontal_second_inflection_point",
-                                                            "horizontal_third_inflection_point"]},
+                                               "analyses": "horizontal_first_inflection_point;"
+                                                           "horizontal_second_inflection_point;"
+                                                           "horizontal_third_inflection_point"},
              "output_inflection_points_index": {"dimensions": "Conditions", "conditions": "all_conditions",
                                                 "measurements": "VSDI",
-                                                "analyses": ["horizontal_first_inflection_point_time",
-                                                             "horizontal_second_inflection_point_time",
-                                                             "horizontal_third_inflection_point_time"]},
+                                                "analyses": "horizontal_first_inflection_point_time;"
+                                                            "horizontal_second_inflection_point_time;"
+                                                            "horizontal_third_inflection_point_time"},
              "output_index_prediction": {"dimensions": "X", "conditions": "all_conditions",
                                          "measurements": "VSDI",
                                          "analyses": "horizontal_data_to_fit_index_prediction"},
@@ -244,23 +242,29 @@ multiple_dicts_analysis_default = {
                                         "analyses": "horizontal_data_to_fit_data_prediction"},
              "output_data_intercepts": {"dimensions": "Conditions", "conditions": "all_conditions",
                                         "measurements": "VSDI",
-                                        "analyses": ["first_horizontal_data_intercept_VSDI",
-                                                     "second_horizontal_data_intercept_VSDI"]},
+                                        "analyses": "first_horizontal_data_intercept_VSDI;"
+                                                    "second_horizontal_data_intercept_VSDI;"
+                                                    "third_horizontal_data_intercept_VSDI;"
+                                                    "fourth_horizontal_data_intercept_VSDI"
+                                        },
              "output_index_intercepts": {"dimensions": "Conditions", "conditions": "all_conditions",
                                          "measurements": "VSDI",
-                                         "analyses": ["first_horizontal_data_intercept_VSDI,5dps_VSDI",
-                                                      "second_horizontal_data_intercept_VSDI"]},
              "params": {"n_segments": 4, "index": "test_linear", "n_points": 100}},
             {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "VSDI",
+                                         "analyses": "first_horizontal_data_intercept_VSDI;"
+                                                     "second_horizontal_data_intercept_VSDI;"
+                                                     "third_horizontal_data_intercept_VSDI;"
+                                                     "fourth_horizontal_data_intercept_VSDI"
+                                         },
                              "analyses": "horizontal_anticipation_range", "flag": ""},
              "output_slopes": {"dimensions": "MetaConditions", "conditions": "overall", "measurements": "VSDI",
-                               "analyses": ["horizontal_slope_anticipation_range"]},
              "params": {"n_segments": 1, "index": "barSpeed", "n_points": 100}},
             {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "VSDI",
+                               "analyses": "horizontal_slope_anticipation_range"},
                              "analyses": "horizontal_maximal_latency_ms", "flag": ""},
              "output_slopes": {"dimensions": "MetaConditions", "conditions": "overall", "measurements": "VSDI",
-                               "analyses": ["horizontal_slope_maximal_latency_ms"]},
              "params": {"n_segments": 1, "index": "barSpeed", "n_points": 100}}
+                               "analyses": "horizontal_slope_maximal_latency_ms"},
         ],
         "anticipation_fit": [
             {"activation_time": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
