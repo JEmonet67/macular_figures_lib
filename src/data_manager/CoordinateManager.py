@@ -41,6 +41,28 @@ class CoordinateManager:
         return dict_coordinates
 
     @staticmethod
+    def coordinates_to_id(dict_coordinates, n_cells):
+        """Conversion of a Macular coordinate system of a cell in the Macular identification number.
+
+        Parameters
+        ----------
+        dict_coordinates : dict
+            Dictionary containing the Macular coordinates of the cell named by the Macular identification number
+            given as input. The dictionary contains an ‘x’ and a ‘y’ key.
+
+        n_cells : tuple
+            Size of the Macular graph in cells in the form of : (number of cells in x, number of cells in y).
+
+        Returns
+        ----------
+        num : int
+            Macular identification number of the cell whose coordinates are to be determined in Macular.
+        """
+        num = dict_coordinates["y"] + n_cells[1] * dict_coordinates["x"] + (dict_coordinates["z"]*n_cells[0]*n_cells[1])
+
+        return num
+
+    @staticmethod
     def get_list_time_motion_center(dict_simulation):
         """Creation of a list containing all the times at which a moving object arrives at each of the cells of the
         horizontal or vertical axis.
