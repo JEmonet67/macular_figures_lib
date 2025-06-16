@@ -35,6 +35,7 @@ with open(f"{path_data_test}/MacularAnalysisDataframes/multiple_macular_dict_arr
 # Initialisation of the meta-analysis parameter dictionary of default multiple macular dict array.
 dict_index_default = {condition: multi_macular_dict_array_default[condition].index
                       for condition in multi_macular_dict_array_default}
+dict_index_default["overall"] = {'barSpeed': np.array([28.5, 30.])}
 
 # Import the list of conditions/measures from the default multi macular dict array.
 with open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_empty.pyb", "rb") as file:
@@ -59,10 +60,15 @@ with open(f"{path_data_test}/MacularAnalysisDataframes/peak_amplitudes_meta_anal
           "rb") as file:
     peak_amplitude_meta_analysis_normalized = pickle.load(file)
 
-# Import of a fully analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
+    # Import of a fully analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
+          as file_test):
+        macular_analysis_dataframes_default_analyzed = pickle.load(file_test)
+
+# Import of a fully meta-analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
 with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe.pyb", "rb")
       as file):
-    macular_analysis_dataframes_default = pickle.load(file)
+    macular_analysis_dataframes_default_meta_analyzed = pickle.load(file)
 
 multiple_dicts_simulations_head100 = {
     "global": {
@@ -182,32 +188,32 @@ multiple_dicts_analysis_default = {
                      "params": {"threshold": 0.001, "threshold_type": "dynamic", "index": "temporal_centered_ms",
                                 "y": 7, "axis": "horizontal", "flag": "ms_dynamic"}}
                     ],
-        "time_to_peak": [{"conditions": "all_conditions", "measurements": "all_measurements",
+        "time_to_peak": [{"conditions": "all_conditions", "measurements": "VSDI:FiringRate_GanglionGainControl",
                           "params": {"index": "temporal_ms", "y": 7, "flag": "ms"}}],
         "peak_delay": [{"conditions": "all_conditions", "measurements": "VSDI:FiringRate_GanglionGainControl",
                         "params": {"index": "temporal_centered_ms", "y": 7, "axis": "horizontal", "flag": "ms"}}],
-        "peak_amplitude": [{"conditions": "all_conditions", "measurements": "all_measurements",
+        "peak_amplitude": [{"conditions": "all_conditions", "measurements": "VSDI:FiringRate_GanglionGainControl",
                             "params": {"y": 7, "flag": ""}}],
         "spatial_mean": [{"conditions": "all_conditions", "measurements": "vertical_mean_section_max_ratio_threshold",
-                            "params": {"axis": 0}}]
+                          "params": {"axis": 0, "flag": ""}}]
     },
     "Y": {
         "activation_time": [{"conditions": "all_conditions", "measurements": "VSDI",
                              "params": {"threshold": 0.001, "threshold_type": "static", "index": "temporal_ms",
                                         "x": 36, "flag": "ms"}}],
-        "time_to_peak": [{"conditions": "all_conditions", "measurements": "all_measurements",
+        "time_to_peak": [{"conditions": "all_conditions", "measurements": "VSDI:FiringRate_GanglionGainControl",
                           "params": {"index": "temporal_ms", "x": 36, "flag": "ms"}}],
-        "peak_amplitude": [{"conditions": "all_conditions", "measurements": "all_measurements",
+        "peak_amplitude": [{"conditions": "all_conditions", "measurements": "VSDI:FiringRate_GanglionGainControl",
                             "params": {"x": 36, "flag": ""}}],
         "spatial_mean": [{"conditions": "all_conditions", "measurements": "horizontal_mean_section_fixed_edge",
-                            "params": {"axis": 0}}]
+                          "params": {"axis": 0, "flag": ""}}]
     },
     "Time": {"test": "test"},
     "MetaAnalysis": {
         "peak_speed": [
             {"time_to_peak": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
                               "analyses": "time_to_peak", "flag": "ms"},
-             "params": {"output": "horizontal_peak_speed", "index": "spatial_x"}}
+             "params": {"output": "horizontal_peak_speed", "index": "spatial_x", "n_points": 100, "breaks": "auto"}}
         ],
         "stationary_peak_delay": [
             {"peak_delay": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
@@ -220,7 +226,7 @@ multiple_dicts_analysis_default = {
         ],
         "linear_fit": [
             {"data_to_fit": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
-                             "analyses": "data_to_fit", "flag": ""},
+                             "analyses": "activation_time", "flag": "ms"},
              "output_slopes": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
                                "analyses": "horizontal_first_slope_speed;horizontal_second_slope_speed;"
                                            "horizontal_third_slope_speed;horizontal_fourth_slope_speed"},
@@ -249,40 +255,40 @@ multiple_dicts_analysis_default = {
                                         },
              "output_index_intercepts": {"dimensions": "Conditions", "conditions": "all_conditions",
                                          "measurements": "VSDI",
-             "params": {"n_segments": 4, "index": "test_linear", "n_points": 100}},
-            {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "VSDI",
                                          "analyses": "first_horizontal_data_intercept_VSDI;"
                                                      "second_horizontal_data_intercept_VSDI;"
                                                      "third_horizontal_data_intercept_VSDI;"
                                                      "fourth_horizontal_data_intercept_VSDI"
                                          },
+             "params": {"n_segments": 4, "index": "spatial_x", "n_points": 100, "breaks": "auto"}},
+            {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "",
                              "analyses": "horizontal_anticipation_range", "flag": ""},
              "output_slopes": {"dimensions": "MetaConditions", "conditions": "overall", "measurements": "VSDI",
-             "params": {"n_segments": 1, "index": "barSpeed", "n_points": 100}},
-            {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "VSDI",
                                "analyses": "horizontal_slope_anticipation_range"},
+             "params": {"n_segments": 1, "index": "barSpeed", "n_points": 100, "breaks": "auto"}},
+            {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "",
                              "analyses": "horizontal_maximal_latency_ms", "flag": ""},
              "output_slopes": {"dimensions": "MetaConditions", "conditions": "overall", "measurements": "VSDI",
-             "params": {"n_segments": 1, "index": "barSpeed", "n_points": 100}}
                                "analyses": "horizontal_slope_maximal_latency_ms"},
+             "params": {"n_segments": 1, "index": "barSpeed", "n_points": 100, "breaks": "auto"}}
         ],
         "anticipation_fit": [
             {"activation_time": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
                                  "analyses": "activation_time", "flag": "ms"},
-             "params": {"output_slopes": ["horizontal_short_range_anticipation_speed_dpms",
-                                          "horizontal_long_range_anticipation_speed_dpms"],
+             "params": {"output_slopes": "horizontal_short_range_anticipation_speed_dpms;"
+                                         "horizontal_long_range_anticipation_speed_dpms",
                         "output_anticipation_range": "horizontal_anticipation_range",
                         "output_index_prediction": "horizontal_anticipation_index_prediction",
                         "output_data_prediction": "horizontal_anticipation_data_prediction",
                         "n_segments": 2, "index": "spatial_x", "n_points": 100, "breaks": "auto"}},
             {"activation_time": {"dimensions": "X", "conditions": "barSpeed30dps", "measurements": "VSDI",
                                  "analyses": "activation_time", "flag": "ms"},
-             "params": {"output_slopes": ["horizontal_short_range_anticipation_speed_dpms2",
-                                          "horizontal_long_range_anticipation_speed_dpms2"],
+             "params": {"output_slopes": "horizontal_short_range_anticipation_speed_dpms2;"
+                                         "horizontal_long_range_anticipation_speed_dpms2",
                         "output_anticipation_range": "horizontal_anticipation_range2",
                         "output_index_prediction": "horizontal_anticipation_index_prediction2",
                         "output_data_prediction": "horizontal_anticipation_data_prediction2",
-                        "n_segments": 2, "index": "spatial_x", "n_points": 100, "breaks": [1.12, 4, 17.32]}}
+                        "n_segments": 2, "index": "spatial_x", "n_points": 100, "breaks": [51.8, 159.03, 543]}}
         ],
         "maximal_latency": [
             {"latency": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
@@ -351,10 +357,25 @@ multiple_dicts_analysis_default = {
 
 
 def test_init():
-    print()
-    print(macular_analysis_dataframes_test.multiple_dicts_analysis)
-    print(macular_analysis_dataframes_test.multiple_dicts_simulations)
-    print(macular_analysis_dataframes_test.multiple_dicts_preprocessings)
+    # Set the randomness of the fitting for testing.
+    np.random.seed(1)
+
+    mda = MacularAnalysisDataframes(multi_macular_dict_array_default, multiple_dicts_analysis_default)
+
+    # Verify that the conditions and MetaConditions dataframe are corrects.
+    assert mda.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Conditions"])
+    assert mda.dict_analysis_dataframes["MetaConditions"].equals(
+        macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["MetaConditions"])
+
+    # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in mda.dict_paths_pyb:
+        assert mda.dict_analysis_dataframes["X"][condition].equals(
+            macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["X"][condition])
+        assert mda.dict_analysis_dataframes["Y"][condition].equals(
+            macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Y"][condition])
+        assert mda.dict_analysis_dataframes["Time"][condition].equals(
+            macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Time"][condition])
 
 
 def test_dict_paths_pyb_getter():
@@ -779,40 +800,12 @@ def test_get_levels_of_macular_analysis_dataframes():
             dict_levels_macular_analysis_dataframes_correct)
 
     # Import of a fully analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
-    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe.pyb", "rb")
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
           as file_test):
         macular_analysis_dataframes_default = pickle.load(file_test)
 
-    all_analyses_X = ('activation_time_VSDI_ms:activation_time_VSDI_ms_dynamic:latency_VSDI_ms:latency_VSDI_ms_dynamic:'
-                      'peak_amplitude_BipolarResponse_BipolarGainControl:peak_amplitude_FiringRate_GanglionGainControl:'
-                      'peak_amplitude_FiringRate_GanglionGainControl_derivative:peak_amplitude_VSDI:'
-                      'peak_amplitude_VSDI_derivative:peak_amplitude_V_Amacrine:'
-                      'peak_amplitude_V_BipolarGainControl:peak_amplitude_V_GanglionGainControl:'
-                      'peak_amplitude_muVn_CorticalExcitatory:peak_amplitude_muVn_CorticalInhibitory:'
-                      'peak_amplitude_v_e_CorticalExcitatory:peak_amplitude_v_i_CorticalInhibitory:'
-                      'peak_delay_FiringRate_GanglionGainControl_ms:'
-                      'peak_delay_VSDI_ms:time_to_peak_BipolarResponse_BipolarGainControl_ms:'
-                      'time_to_peak_FiringRate_GanglionGainControl_derivative_ms:'
-                      'time_to_peak_FiringRate_GanglionGainControl_ms:'
-                      'time_to_peak_VSDI_derivative_ms:time_to_peak_VSDI_ms:'
-                      'time_to_peak_V_Amacrine_ms:'
-                      'time_to_peak_V_BipolarGainControl_ms:time_to_peak_V_GanglionGainControl_ms:'
-                      'time_to_peak_muVn_CorticalExcitatory_ms:'
-                      'time_to_peak_muVn_CorticalInhibitory_ms:time_to_peak_v_e_CorticalExcitatory_ms:'
-                      'time_to_peak_v_i_CorticalInhibitory_ms')
-    all_analyses_Y = ('activation_time_VSDI_ms:'
-                      'peak_amplitude_BipolarResponse_BipolarGainControl:peak_amplitude_FiringRate_GanglionGainControl:'
-                      'peak_amplitude_FiringRate_GanglionGainControl_derivative:peak_amplitude_VSDI:'
-                      'peak_amplitude_VSDI_derivative:peak_amplitude_V_Amacrine:peak_amplitude_V_BipolarGainControl:'
-                      'peak_amplitude_V_GanglionGainControl:peak_amplitude_muVn_CorticalExcitatory:'
-                      'peak_amplitude_muVn_CorticalInhibitory:peak_amplitude_v_e_CorticalExcitatory:'
-                      'peak_amplitude_v_i_CorticalInhibitory:time_to_peak_BipolarResponse_BipolarGainControl_ms:'
-                      'time_to_peak_FiringRate_GanglionGainControl_derivative_ms:'
-                      'time_to_peak_FiringRate_GanglionGainControl_ms:time_to_peak_VSDI_derivative_ms:time_to_peak_VSDI_ms:'
-                      'time_to_peak_V_Amacrine_ms:time_to_peak_V_BipolarGainControl_ms:'
-                      'time_to_peak_V_GanglionGainControl_ms:time_to_peak_muVn_CorticalExcitatory_ms:'
-                      'time_to_peak_muVn_CorticalInhibitory_ms:time_to_peak_v_e_CorticalExcitatory_ms:'
-                      'time_to_peak_v_i_CorticalInhibitory_ms')
+    all_analyses_X = "activation_time_VSDI_ms:activation_time_VSDI_ms_dynamic:latency_VSDI_ms:latency_VSDI_ms_dynamic:peak_amplitude_FiringRate_GanglionGainControl:peak_amplitude_VSDI:peak_delay_FiringRate_GanglionGainControl_ms:peak_delay_VSDI_ms:spatial_mean_vertical_mean_section_max_ratio_threshold:time_to_peak_FiringRate_GanglionGainControl_ms:time_to_peak_VSDI_ms"
+    all_analyses_Y = "activation_time_VSDI_ms:peak_amplitude_FiringRate_GanglionGainControl:peak_amplitude_VSDI:spatial_mean_horizontal_mean_section_fixed_edge:time_to_peak_FiringRate_GanglionGainControl_ms:time_to_peak_VSDI_ms"
 
     # Creation of a dictionary of complex and filled macular analysis dataframe levels
     dict_levels_macular_analysis_dataframes_correct = {
@@ -1093,11 +1086,9 @@ def test_make_spatial_dataframes_analysis():
     # Verify that the X dataframes for each condition are equal.
     for condition in macular_analysis_dataframes_default_empty.dict_paths_pyb:
         assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default_spatial_X_filled.dict_analysis_dataframes["X"][condition])
+            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["X"][condition])
         assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default_spatial_X_filled.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default_spatial_X_filled.dict_analysis_dataframes["Time"][condition])
+            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Y"][condition])
 
 
 def test_analysis():
@@ -1614,23 +1605,23 @@ def test_meta_analysis():
     # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
     with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
           as file_test):
-        macular_analysis_dataframes_default_test = pickle.load(file_test)
+        macular_analysis_dataframes_default_analyzed_test = pickle.load(file_test)
 
-    # Use division meta-analysis on default macular analysis dataframes with the default analyses dictionaries.
-    MacularAnalysisDataframes.normalization_analyzing(macular_analysis_dataframes_default_test, "normalization",
-                                                      dict_index_default)
+    # Use normalization meta-analysis on default macular analysis dataframes with the default analyses dictionaries.
+    MacularAnalysisDataframes.normalization_analyzing(macular_analysis_dataframes_default_analyzed_test,
+                                                      "normalization", dict_index_default)
 
     # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
+    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
         peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
+    #
+    # # Verify that the X, Y, and T dataframes for each condition are equal.
+    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
             peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
             peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
             peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Time"][condition])
 
 
@@ -1851,43 +1842,43 @@ def test_make_common_group_meta_analysis():
     # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
     with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
           as file_test):
-        macular_analysis_dataframes_default_test = pickle.load(file_test)
+        macular_analysis_dataframes_default_analyzed_test = pickle.load(file_test)
 
     # Getting a list of dictionaries of common meta-analysis groups that's not condensed for tests.
     common_meta_analysis_group_dictionaries = MacularAnalysisDataframes.multiple_common_meta_analysis_group_parser(
-        macular_analysis_dataframes_default_test.multiple_dicts_analysis["MetaAnalysis"]["normalization"])
+        macular_analysis_dataframes_default_analyzed_test.multiple_dicts_analysis["MetaAnalysis"]["normalization"])
 
     # Execution of a group of common meta-analyses based only on spatial dataframes.
-    macular_analysis_dataframes_default_test.make_common_group_meta_analysis(
+    macular_analysis_dataframes_default_analyzed_test.make_common_group_meta_analysis(
         MacularAnalysisDataframes.normalization_analyzing.__wrapped__, common_meta_analysis_group_dictionaries[0],
         "normalization", dict_index_default)
 
     # Execution of a group of common meta-analyses based on spatial and condition dataframes.
-    macular_analysis_dataframes_default_test.make_common_group_meta_analysis(
+    macular_analysis_dataframes_default_analyzed_test.make_common_group_meta_analysis(
         MacularAnalysisDataframes.normalization_analyzing.__wrapped__, common_meta_analysis_group_dictionaries[1],
         "normalization", dict_index_default)
 
     # Execution of a first group of common meta-analyses based only on condition dataframes.
-    macular_analysis_dataframes_default_test.make_common_group_meta_analysis(
+    macular_analysis_dataframes_default_analyzed_test.make_common_group_meta_analysis(
         MacularAnalysisDataframes.normalization_analyzing.__wrapped__, common_meta_analysis_group_dictionaries[2],
         "normalization", dict_index_default)
 
     # Execution of a second group of common meta-analyses based only on condition dataframes.
-    macular_analysis_dataframes_default_test.make_common_group_meta_analysis(
+    macular_analysis_dataframes_default_analyzed_test.make_common_group_meta_analysis(
         MacularAnalysisDataframes.normalization_analyzing.__wrapped__, common_meta_analysis_group_dictionaries[3],
         "normalization", dict_index_default)
 
     # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
+    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
         peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Conditions"])
 
     # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
+    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
             peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
             peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
             peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Time"][condition])
 
 
@@ -1914,8 +1905,9 @@ def test_extract_all_analysis_array_from_dataframes():
     }
 
     # Extraction of arrays from each analysis.
-    MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes_default,
-                                                                         meta_analysis_dictionary)
+    MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(
+        macular_analysis_dataframes_default_meta_analyzed,
+        meta_analysis_dictionary)
     # Verification that the two dictionaries are equal.
     for arguments in meta_analysis_dictionary:
         if "output" in arguments:
@@ -1930,7 +1922,7 @@ def test_extract_one_analysis_array_from_dataframes():
 
     # Extraction of the analysis associated with the previously defined levels.
     analysis_array_x = MacularAnalysisDataframes.extract_one_analysis_array_from_dataframes(
-        macular_analysis_dataframes_default, meta_analysis_dictionary_x)
+        macular_analysis_dataframes_default_meta_analyzed, meta_analysis_dictionary_x)
 
     # Case of extracting the array of values from an analysis from the spatial dataframe X of a given condition.
     assert np.array_equal(analysis_array_x, np.array([0.041, 0.045, 0.041, 0.045, 0.041, 0.044, 0.041, 0.043, 0.041,
@@ -1946,12 +1938,12 @@ def test_extract_one_analysis_array_from_dataframes():
     meta_analysis_dictionary_conditions = ("Conditions", "barSpeed28,5dps", "", "peak_amplitude", "test")
 
     # Adding a new value line to the conditions dataframe.
-    macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"].loc[
+    macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Conditions"].loc[
         "peak_amplitude_test"] = (1.8, 3.2)
 
     # Extraction of the analysis associated with the previously defined levels.
     analysis_array_conditions = MacularAnalysisDataframes.extract_one_analysis_array_from_dataframes(
-        macular_analysis_dataframes_default, meta_analysis_dictionary_conditions)
+        macular_analysis_dataframes_default_meta_analyzed, meta_analysis_dictionary_conditions)
 
     # Case of extracting the value of an analysis for a condition from the conditions dataframe.
     assert analysis_array_conditions == 1.8
@@ -1961,14 +1953,14 @@ def test_extract_one_analysis_array_from_dataframes():
 
     # Extraction of the analysis associated with the previously defined levels.
     analysis_array_all_conditions = MacularAnalysisDataframes.extract_one_analysis_array_from_dataframes(
-        macular_analysis_dataframes_default, meta_analysis_dictionary_all_conditions)
+        macular_analysis_dataframes_default_meta_analyzed, meta_analysis_dictionary_all_conditions)
 
     # Case of extracting the array of an analysis using all conditions from the conditions dataframe.
     assert np.array_equal(analysis_array_all_conditions, np.array([1.8, 3.2]))
 
     # Remove the new value row in the conditions dataframe.
-    macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"].drop("peak_amplitude_test",
-                                                                                    inplace=True)
+    macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Conditions"].drop("peak_amplitude_test",
+                                                                                                  inplace=True)
 
 
 def test_make_meta_analysis_outputs():
@@ -2052,9 +2044,8 @@ def test_normalization_analyzing():
     # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
     with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
           as file_test):
-        macular_analysis_dataframes_default_test = pickle.load(file_test)
+        macular_analysis_dataframes_default_analyzed_test = pickle.load(file_test)
 
-    # Initialisation of the meta-analysis parameter dictionary for tests.
     parameters_meta_analysis_dict = {"factor": 8}
 
     # Initialisation of a dictionary of argument associated to 2 arrays of values in value_to_normalize and baseline.
@@ -2064,18 +2055,21 @@ def test_normalization_analyzing():
         "output": {"dimension": "X", "condition": "barSpeed28,5dps", "name": "latency_ms_peak_amplitude_normalization"}}
 
     # Performing normalization meta-analysis with arrays as numerators and denominators.
-    MacularAnalysisDataframes.normalization_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+    MacularAnalysisDataframes.normalization_analyzing.__wrapped__(macular_analysis_dataframes_default_analyzed_test,
                                                                   meta_analysis_dictionary, dict_index_default,
                                                                   parameters_meta_analysis_dict)
 
     # Getting the array calculated in the normalization meta-analysis.
-    output_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+    output_array = \
+    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
         "latency_ms_peak_amplitude_normalization"].values
 
     # Manual calculation of the expected array values of the meta-analysis normalization.
-    baseline_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+    baseline_array = \
+    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
         "peak_amplitude_VSDI"].values
-    array_to_normalize = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+    array_to_normalize = \
+    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
         "latency_VSDI_ms"].values
     output_array_expected = (array_to_normalize - baseline_array) / baseline_array * 8
 
@@ -2090,18 +2084,20 @@ def test_normalization_analyzing():
                    "name": "cond_x_latency_ms_peak_amplitude_normalization"}}
 
     # Performs the normalization meta-analysis with a value and an array of values in the arguments.
-    MacularAnalysisDataframes.normalization_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+    MacularAnalysisDataframes.normalization_analyzing.__wrapped__(macular_analysis_dataframes_default_analyzed_test,
                                                                   meta_analysis_dictionary, dict_index_default,
                                                                   parameters_meta_analysis_dict)
 
     # Getting the array calculated in the normalization meta-analysis.
-    output_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+    output_array = \
+    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
         "cond_x_latency_ms_peak_amplitude_normalization"].values
 
     # Manual calculation of the expected array values of the meta-analysis normalization.
-    baseline_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+    baseline_array = macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].loc[
         "peak_amplitude_VSDI", "barSpeed28,5dps"]
-    array_to_normalize = macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+    array_to_normalize = \
+    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
         "latency_VSDI_ms"].values
     output_array_expected = (array_to_normalize - baseline_array) / baseline_array * 8
 
@@ -2117,18 +2113,18 @@ def test_normalization_analyzing():
                    "name": "vsdi_ganglion_peak_amplitude_normalization"}}
 
     # Performing normalization meta-analysis with two unique values in the arguments.
-    MacularAnalysisDataframes.normalization_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+    MacularAnalysisDataframes.normalization_analyzing.__wrapped__(macular_analysis_dataframes_default_analyzed_test,
                                                                   meta_analysis_dictionary, dict_index_default,
                                                                   parameters_meta_analysis_dict)
 
     # Getting the array calculated in the normalization meta-analysis.
-    output_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+    output_array = macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].loc[
         "vsdi_ganglion_peak_amplitude_normalization"].values
 
     # Manual calculation of the expected value of the meta-analysis normalization.
-    baseline_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+    baseline_array = macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].loc[
         "peak_amplitude_FiringRate_GanglionGainControl", "barSpeed28,5dps"]
-    array_to_normalize = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+    array_to_normalize = macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].loc[
         "peak_amplitude_VSDI", "barSpeed28,5dps"]
     output_array_expected = (array_to_normalize - baseline_array) / baseline_array * 8
 
@@ -2137,32 +2133,32 @@ def test_normalization_analyzing():
     assert output_array[1] is np.nan
 
     # Remove to verify that these additions are the only changes made during the meta-analysis.
-    macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].drop(
+    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].drop(
         "latency_ms_peak_amplitude_normalization", inplace=True)
-    macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].drop(
+    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].drop(
         "cond_x_latency_ms_peak_amplitude_normalization", inplace=True)
-    macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].drop(
+    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].drop(
         "vsdi_ganglion_peak_amplitude_normalization", inplace=True)
 
     # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"])
+    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Conditions"])
 
     # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default.dict_analysis_dataframes["Time"][condition])
+    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
+            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
+            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
+            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Time"][condition])
 
 
 def test_peak_speed_analyzing():
     # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
     with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
           as file_test):
-        macular_analysis_dataframes_default_test = pickle.load(file_test)
+        macular_analysis_dataframes_default_analyzed_test = pickle.load(file_test)
 
     # Initialisation of the meta-analysis parameter dictionary for tests.
     parameters_meta_analysis_dict = {"output": "horizontal_peak_speed", "index": "spatial_x", "breaks": "auto",
@@ -2173,7 +2169,7 @@ def test_peak_speed_analyzing():
                                 "output": {"name": "horizontal_peak_speed_dpms"}}
 
     # Performing peak speed meta-analysis for the first condition.
-    MacularAnalysisDataframes.peak_speed_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+    MacularAnalysisDataframes.peak_speed_analyzing.__wrapped__(macular_analysis_dataframes_default_analyzed_test,
                                                                meta_analysis_dictionary, dict_index_default,
                                                                parameters_meta_analysis_dict)
 
@@ -2182,33 +2178,33 @@ def test_peak_speed_analyzing():
                                 "output": {"name": "horizontal_peak_speed_dpms"}}
 
     # Performing peak speed meta-analysis for the second condition.
-    MacularAnalysisDataframes.peak_speed_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+    MacularAnalysisDataframes.peak_speed_analyzing.__wrapped__(macular_analysis_dataframes_default_analyzed_test,
                                                                meta_analysis_dictionary, dict_index_default,
                                                                parameters_meta_analysis_dict)
 
     # Getting the array calculated in the peak speed meta-analysis.
-    output_array = macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc[
+    output_array = macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].loc[
         "horizontal_peak_speed_dpms"].values
 
     # Verification of peak speed values.
     assert np.array_equal(output_array, np.array([0.0287, 0.0301]))
 
     # Remove to verify that this addition is the only change made during the meta-analysis.
-    macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].drop(
+    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].drop(
         "horizontal_peak_speed_dpms", inplace=True)
 
     # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default.dict_analysis_dataframes["Conditions"])
+    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
+        macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Conditions"])
 
     # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default.dict_analysis_dataframes["Time"][condition])
+    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
+            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["X"][condition])
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
+            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Y"][condition])
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
+            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Time"][condition])
 
 
 def test_stationary_peak_delay_analyzing():
@@ -2220,7 +2216,7 @@ def test_stationary_peak_delay_analyzing():
     # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
     with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
           as file_test):
-        macular_analysis_dataframes_default_test = pickle.load(file_test)
+        macular_analysis_dataframes_default_analyzed_test = pickle.load(file_test)
 
     # Initialisation of the meta-analysis parameter dictionary for tests.
     parameters_meta_analysis_dict = {"output": "horizontal_stationary_peak_delay_ms"}
@@ -2230,18 +2226,20 @@ def test_stationary_peak_delay_analyzing():
                                 "output": {"name": "VSDI_horizontal_stationary_peak_delay_ms"}}
 
     # Performing stationary peak delay meta-analysis for the VSDI of the first condition.
-    MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
-                                                                          meta_analysis_dictionary, dict_index_default,
-                                                                          parameters_meta_analysis_dict)
+    MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(
+        macular_analysis_dataframes_default_analyzed_test,
+        meta_analysis_dictionary, dict_index_default,
+        parameters_meta_analysis_dict)
 
     # Definition of the meta-analysis dictionary for the VSDI of the second condition.
     meta_analysis_dictionary = {"peak_delay": ("X", "barSpeed30dps", "VSDI", "peak_delay", "ms"),
                                 "output": {"name": "VSDI_horizontal_stationary_peak_delay_ms"}}
 
     # Performing stationary peak delay meta-analysis for the VSDI of the second condition.
-    MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
-                                                                          meta_analysis_dictionary, dict_index_default,
-                                                                          parameters_meta_analysis_dict)
+    MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(
+        macular_analysis_dataframes_default_analyzed_test,
+        meta_analysis_dictionary, dict_index_default,
+        parameters_meta_analysis_dict)
 
     # Definition of the meta-analysis dictionary for the ganglion firing rate of the first condition.
     meta_analysis_dictionary = {
@@ -2249,9 +2247,10 @@ def test_stationary_peak_delay_analyzing():
         "output": {"name": "ganglion_horizontal_stationary_peak_delay_ms"}}
 
     # Performing stationary peak delay meta-analysis for the ganglion firing rate of the first condition.
-    MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
-                                                                          meta_analysis_dictionary, dict_index_default,
-                                                                          parameters_meta_analysis_dict)
+    MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(
+        macular_analysis_dataframes_default_analyzed_test,
+        meta_analysis_dictionary, dict_index_default,
+        parameters_meta_analysis_dict)
 
     # Definition of the meta-analysis dictionary for the ganglion firing rate of the second condition.
     meta_analysis_dictionary = {
@@ -2259,21 +2258,22 @@ def test_stationary_peak_delay_analyzing():
         "output": {"name": "ganglion_horizontal_stationary_peak_delay_ms"}}
 
     # Performing stationary peak delay meta-analysis for the ganglion firing rate of the second condition.
-    MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
-                                                                          meta_analysis_dictionary, dict_index_default,
-                                                                          parameters_meta_analysis_dict)
+    MacularAnalysisDataframes.stationary_peak_delay_analyzing.__wrapped__(
+        macular_analysis_dataframes_default_analyzed_test,
+        meta_analysis_dictionary, dict_index_default,
+        parameters_meta_analysis_dict)
 
     # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
+    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
         macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes["Conditions"])
 
     # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
+    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
             macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
             macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
             macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes["Time"][condition])
 
 
@@ -2289,7 +2289,7 @@ def test_linear_fit_analyzing():
     # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
     with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
           as file_test):
-        macular_analysis_dataframes_default_test = pickle.load(file_test)
+        macular_analysis_dataframes_default_analyzed_test = pickle.load(file_test)
 
     # Definition of an array consisting of 4 different linear segments.
     array_multi_segment = np.array([i for i in range(1, 42)] + [i for i in range(42, 67, 3)] +
@@ -2297,7 +2297,8 @@ def test_linear_fit_analyzing():
 
     # Added the array consisting of 4 different linear segments to the spatial dataframes X.
     for condition in ("barSpeed28,5dps", "barSpeed30dps"):
-        macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].loc["data_to_fit_VSDI"] = (
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].loc[
+            "data_to_fit_VSDI"] = (
             array_multi_segment)
         dict_index_default[condition]["test_linear"] = np.array([i for i in range(73)])
 
@@ -2345,7 +2346,7 @@ def test_linear_fit_analyzing():
                                 }
 
     # Performing linear fit meta-analysis for the first condition.
-    MacularAnalysisDataframes.linear_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+    MacularAnalysisDataframes.linear_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_analyzed_test,
                                                                meta_analysis_dictionary, dict_index_default,
                                                                parameters_meta_analysis_dict)
 
@@ -2388,27 +2389,27 @@ def test_linear_fit_analyzing():
                                 }
 
     # Performing linear fit meta-analysis for the second condition.
-    MacularAnalysisDataframes.linear_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+    MacularAnalysisDataframes.linear_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_analyzed_test,
                                                                meta_analysis_dictionary, dict_index_default,
                                                                parameters_meta_analysis_dict)
 
     # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
+    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
         macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes["Conditions"])
 
     # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
+    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
             macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
             macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
             macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes["Time"][condition])
 
     # Modification of the conditions dataframe to include more columns.
-    macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"] = (
+    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"] = (
         pd.DataFrame([], index=["speed"], columns=[f"BarSpeed{i}dps" for i in range(3, 30, 3)]))
-    macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].loc["speed"] = \
+    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].loc["speed"] = \
         [i for i in range(3, 30, 3)]
 
     # Define a new index for a fitting on the conditions dataframe.
@@ -2424,13 +2425,14 @@ def test_linear_fit_analyzing():
                                                   "name": ["horizontal_slope_speed"]}}
 
     # Performing linear fit meta-analysis for all conditions fitting.
-    MacularAnalysisDataframes.linear_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+    MacularAnalysisDataframes.linear_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_analyzed_test,
                                                                meta_analysis_dictionary, dict_index_default,
                                                                parameters_meta_analysis_dict)
 
     # Verify that the MetaConditions dataframe is correct.
-    assert np.array_equal(macular_analysis_dataframes_default_test.dict_analysis_dataframes["MetaConditions"].loc[
-                              "horizontal_slope_speed"].values, np.array([1]))
+    assert np.array_equal(
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["MetaConditions"].loc[
+            "horizontal_slope_speed"].values, np.array([1]))
 
 
 def test_anticipation_fit_analyzing():
@@ -2445,7 +2447,7 @@ def test_anticipation_fit_analyzing():
     # Import of an analyzed default MacularAnalysisDataframes to test meta-analysis.
     with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
           as file_test):
-        macular_analysis_dataframes_default_test = pickle.load(file_test)
+        macular_analysis_dataframes_default_analyzed_test = pickle.load(file_test)
 
     # Initialisation of the meta-analysis parameter dictionary for tests.
     parameters_meta_analysis_dict = {"output_slopes": ["horizontal_short_range_anticipation_speed_dpms",
@@ -2465,7 +2467,7 @@ def test_anticipation_fit_analyzing():
                                 }
 
     # Performing linear fit meta-analysis for the first condition.
-    MacularAnalysisDataframes.anticipation_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+    MacularAnalysisDataframes.anticipation_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_analyzed_test,
                                                                      meta_analysis_dictionary, dict_index_default,
                                                                      parameters_meta_analysis_dict)
 
@@ -2479,21 +2481,21 @@ def test_anticipation_fit_analyzing():
                                 }
 
     # Performing linear fit meta-analysis for the second condition.
-    MacularAnalysisDataframes.anticipation_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_test,
+    MacularAnalysisDataframes.anticipation_fit_analyzing.__wrapped__(macular_analysis_dataframes_default_analyzed_test,
                                                                      meta_analysis_dictionary, dict_index_default,
                                                                      parameters_meta_analysis_dict)
 
     # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Conditions"].equals(
+    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
         macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["Conditions"])
 
     # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["X"][condition].equals(
+    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
             macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Y"][condition].equals(
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
             macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_test.dict_analysis_dataframes["Time"][condition].equals(
+        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
             macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["Time"][condition])
 
 

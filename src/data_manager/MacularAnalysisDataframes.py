@@ -221,8 +221,16 @@ class MacularAnalysisDataframes:
         dict_index = self.setup_index_dictionary(multi_macular_dict_array)
 
         # Make analysis
-        self.make_spatial_dataframes_analysis(multiple_dicts_analysis_substituted["X"], "X",
-                                              multi_macular_dict_array, dict_sort_order)
+        self.make_spatial_dataframes_analysis("X", multi_macular_dict_array)
+        self.make_spatial_dataframes_analysis("Y", multi_macular_dict_array)
+        # self.make_temporal_dataframes_analysis(multi_macular_dict_array)
+        self.make_conditions_dataframes_analysis(multi_macular_dict_array)
+
+        # Extract the dimensions/analyses levels from the MacularAnalysisDataframes.
+        self._analysis_dataframes_levels.update(self.get_levels_of_macular_analysis_dataframes())
+
+        # Make meta-analysis with a dictionary of all indexes present in the multiple macular dict array.
+        self.make_meta_analysis_dataframes_analysis(dict_index)
 
     @property
     def dict_paths_pyb(self):
@@ -752,7 +760,9 @@ class MacularAnalysisDataframes:
             if analysis in available_spatial_analyses_dict:
                 available_spatial_analyses_dict[analysis](self, multi_macular_dict_array, dimension, analysis)
 
-        return sorted_list_elements
+    # def make_temporal_dataframes_analysis(self, multi_macular_dict_array):
+    #     for analysis in self.multiple_dicts_analysis["Time"]:
+    #         pass
 
     def make_conditions_dataframes_analysis(self, multi_macular_dict_array):
         """Function used to perform all MacularAnalysisDataframe analyses to be carried out in the conditions dimension.
