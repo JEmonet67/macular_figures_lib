@@ -261,10 +261,10 @@ multiple_dicts_analysis_default = {
                                         },
              "output_index_intercepts": {"dimensions": "Conditions", "conditions": "all_conditions",
                                          "measurements": "VSDI",
-                                         "analyses": "first_horizontal_data_intercept_VSDI;"
-                                                     "second_horizontal_data_intercept_VSDI;"
-                                                     "third_horizontal_data_intercept_VSDI;"
-                                                     "fourth_horizontal_data_intercept_VSDI"
+                                         "analyses": "first_horizontal_index_intercept_VSDI;"
+                                                     "second_horizontal_index_intercept_VSDI;"
+                                                     "third_horizontal_index_intercept_VSDI;"
+                                                     "fourth_horizontal_index_intercept_VSDI"
                                          },
              "params": {"n_segments": 4, "index": "spatial_x", "n_points": 100, "breaks": "auto"}},
             {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "",
@@ -1105,8 +1105,14 @@ def test_get_levels_of_macular_analysis_dataframes():
           as file_test):
         macular_analysis_dataframes_default = pickle.load(file_test)
 
-    all_analyses_X = "activation_time_VSDI_ms:activation_time_VSDI_ms_dynamic:latency_VSDI_ms:latency_VSDI_ms_dynamic:peak_amplitude_FiringRate_GanglionGainControl:peak_amplitude_VSDI:peak_delay_FiringRate_GanglionGainControl_ms:peak_delay_VSDI_ms:spatial_mean_vertical_mean_section_max_ratio_threshold:time_to_peak_FiringRate_GanglionGainControl_ms:time_to_peak_VSDI_ms"
-    all_analyses_Y = "activation_time_VSDI_ms:peak_amplitude_FiringRate_GanglionGainControl:peak_amplitude_VSDI:spatial_mean_horizontal_mean_section_fixed_edge:time_to_peak_FiringRate_GanglionGainControl_ms:time_to_peak_VSDI_ms"
+    all_analyses_X = ("activation_time_VSDI_ms:activation_time_VSDI_ms_dynamic:latency_VSDI_ms:latency_VSDI_ms_dynamic:"
+                      "peak_amplitude_FiringRate_GanglionGainControl:peak_amplitude_VSDI:"
+                      "peak_delay_FiringRate_GanglionGainControl_ms:peak_delay_VSDI_ms:"
+                      "spatial_mean_vertical_mean_section_max_ratio_threshold:"
+                      "time_to_peak_FiringRate_GanglionGainControl_ms:time_to_peak_VSDI_ms")
+    all_analyses_Y = ("activation_time_VSDI_ms:peak_amplitude_FiringRate_GanglionGainControl:peak_amplitude_VSDI:"
+                      "spatial_mean_horizontal_mean_section_fixed_edge:time_to_peak_FiringRate_GanglionGainControl_ms:"
+                      "time_to_peak_VSDI_ms")
 
     # Creation of a dictionary of complex and filled macular analysis dataframe levels
     dict_levels_macular_analysis_dataframes_correct = {
@@ -1259,12 +1265,13 @@ def test_substituting_all_alias_in_multiple_analysis_dictionaries():
 
 def test_substituting_all_alias_in_analysis_dictionary():
     # Creation of character strings with all conditions of the MacularAnalysisDataframe.
-    all_conditions = ":".join(sorted([condition for condition in macular_analysis_dataframes_head100.dict_paths_pyb]))
+    all_conditions = ":".join(
+        sorted([condition for condition in macular_analysis_dataframes_head100.dict_paths_pyb['MacularDictArrays']]))
 
     # Creation of character strings with all measurements from the MacularAnalysisDataframe, one with different size.
     all_measurements = {
         condition: ":".join(sorted([measure for measure in multi_macular_dict_array_head100[condition].data]))
-        for condition in macular_analysis_dataframes_head100.dict_paths_pyb}
+        for condition in macular_analysis_dataframes_head100.dict_paths_pyb['MacularDictArrays']}
     all_measurements["barSpeed15dps"] = ":".join(all_measurements["barSpeed15dps"].split(":")[:5])
 
     # Creation of character strings with all dimensions from the MacularAnalysisDataframe.
@@ -2312,16 +2319,16 @@ def test_normalization_analyzing():
 
     # Getting the array calculated in the normalization meta-analysis.
     output_array = \
-    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
-        "latency_ms_peak_amplitude_normalization"].values
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+            "latency_ms_peak_amplitude_normalization"].values
 
     # Manual calculation of the expected array values of the meta-analysis normalization.
     baseline_array = \
-    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
-        "peak_amplitude_VSDI"].values
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+            "peak_amplitude_VSDI"].values
     array_to_normalize = \
-    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
-        "latency_VSDI_ms"].values
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+            "latency_VSDI_ms"].values
     output_array_expected = (array_to_normalize - baseline_array) / baseline_array * 8
 
     # Case of normalization meta-analysis with arrays as value_to_normalize and baseline values.
@@ -2341,15 +2348,15 @@ def test_normalization_analyzing():
 
     # Getting the array calculated in the normalization meta-analysis.
     output_array = \
-    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
-        "cond_x_latency_ms_peak_amplitude_normalization"].values
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+            "cond_x_latency_ms_peak_amplitude_normalization"].values
 
     # Manual calculation of the expected array values of the meta-analysis normalization.
     baseline_array = macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].loc[
         "peak_amplitude_VSDI", "barSpeed28,5dps"]
     array_to_normalize = \
-    macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
-        "latency_VSDI_ms"].values
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"]["barSpeed28,5dps"].loc[
+            "latency_VSDI_ms"].values
     output_array_expected = (array_to_normalize - baseline_array) / baseline_array * 8
 
     # Case of meta-analysis of normalization with a value in the baseline and an array in the value_to_normalize.

@@ -2483,6 +2483,12 @@ class MacularAnalysisDataframes:
         linear_fit["index_prediction"], linear_fit["data_prediction"] = MetaAnalyser.statistic_binning(
             linear_fit["index_prediction"], linear_fit["data_prediction"], current_index.shape[0])
 
+        # Manage unique outputs by transforming them into a dictionary of size 1.
+        for arguments in meta_analysis_dictionary:
+            if arguments not in ["output_index_prediction", "output_data_prediction", "index", "data_to_fit"]:
+                if not isinstance(meta_analysis_dictionary[arguments]["name"], list):
+                    meta_analysis_dictionary[arguments]["name"] = [meta_analysis_dictionary[arguments]["name"]]
+
         # Adds the output slopes value(s) to a new row in the output dataframe.
         if "output_slopes" in meta_analysis_dictionary.keys():
             for slope, output_name in zip(linear_fit["slopes"], meta_analysis_dictionary["output_slopes"]["name"]):

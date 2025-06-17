@@ -67,6 +67,7 @@ dict_simulation_head100 = {
     "speed": 6,
     "size_bar": 0.67,
     "axis": "horizontal"
+    # "transient": 0
 }
 dict_preprocessing_default = {}
 
@@ -101,7 +102,7 @@ dict_preprocessing_SMS = {
     "temporal_centering": True,
     "spatial_x_centering": True,
     "spatial_y_centering": True,
-    "binning":0.0007,
+    "binning": 0.0007,
     "VSDI": True,
     "derivative": {"VSDI": 31,
                    "FiringRate_GanglionGainControl": 31},
@@ -125,10 +126,6 @@ dict_preprocessing_SMS = {
         "temporal": [{"measurement": "VSDI", "cropping_type": "", "cropping_dict": {}}]
     }
 }
-
-
-# def test_make():
-#     MacularDictArray(dict_simulation_SMS, dict_preprocessing_SMS)
 
 
 def test_init(monkeypatch):
@@ -249,7 +246,7 @@ def test_cleaning_dict_preprocessing():
             {"edge": (5, 0)})
 
 
-def test_checking_pre_existing_file():
+def test_managing_pre_existing_file():
     # Deletion of the file to be used for the test, if it exists.
     try:
         os.remove(dict_simulation_head100['path_pyb'])
@@ -257,7 +254,7 @@ def test_checking_pre_existing_file():
         pass
 
     # Test of the construction of a new MacularDictArray in the absence of a file to import.
-    macular_dict_array_test.checking_pre_existing_file(dict_simulation_head100.copy(), dict_preprocessing_default)
+    macular_dict_array_test.managing_pre_existing_file(dict_simulation_head100.copy(), dict_preprocessing_default)
 
     # Case of non-existent file.
     assert MacularDictArray.equal(macular_dict_array_head100, macular_dict_array_test)
@@ -269,13 +266,13 @@ def test_checking_pre_existing_file():
         "path_csv"] = f"../data_test/data_manager/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.csv"
     dict_simulation_head100_30dps[
         "path_pyb"] = f"../data_test/data_manager/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb"
-    macular_dict_array_test.checking_pre_existing_file(dict_simulation_head100_30dps, dict_preprocessing_default)
+    macular_dict_array_test.managing_pre_existing_file(dict_simulation_head100_30dps, dict_preprocessing_default)
 
     # Case of the existing file.
     assert MacularDictArray.equal(macular_dict_array_head100_30dps, macular_dict_array_test)
 
     # Case of direct import of an existing file without comparison.
-    macular_dict_array_test.checking_pre_existing_file({"path_pyb": path_pyb_file_head100}, {})
+    macular_dict_array_test.managing_pre_existing_file({"path_pyb": path_pyb_file_head100}, {})
     assert MacularDictArray.equal(macular_dict_array_head100, macular_dict_array_test)
 
 
@@ -833,7 +830,8 @@ def test_mean_sectioning_preprocess():
     # Case of calculating average sections of spatial axes with fixed cropping.
     macular_dict_array_SMS.dict_preprocessing["mean_sections"] = {
         "horizontal": [
-            {"measurement": "VSDI", "cropping_type": "fixed_edge", "cropping_dict": {"edge_start": 13, "edge_end": 13}}],
+            {"measurement": "VSDI", "cropping_type": "fixed_edge",
+             "cropping_dict": {"edge_start": 13, "edge_end": 13}}],
         "vertical": [
             {"measurement": "VSDI", "cropping_type": "fixed_edge", "cropping_dict": {"edge_start": 2, "edge_end": 2}}
         ]
@@ -858,7 +856,8 @@ def test_mean_sectioning_preprocess():
     assert np.array_equal(macular_dict_array_SMS.data['horizontal_mean_section_threshold'][
                               ~np.isnan(macular_dict_array_SMS.data['horizontal_mean_section_threshold'])],
                           macular_dict_array_SMS_mean_sectioned.data["horizontal_mean_section_threshold"][
-                              ~np.isnan(macular_dict_array_SMS_mean_sectioned.data["horizontal_mean_section_threshold"])])
+                              ~np.isnan(
+                                  macular_dict_array_SMS_mean_sectioned.data["horizontal_mean_section_threshold"])])
     assert np.array_equal(macular_dict_array_SMS.data['vertical_mean_section_threshold'][
                               ~np.isnan(macular_dict_array_SMS.data['vertical_mean_section_threshold'])],
                           macular_dict_array_SMS_mean_sectioned.data["vertical_mean_section_threshold"][
