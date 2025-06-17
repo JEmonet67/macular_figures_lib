@@ -441,6 +441,69 @@ class MacularAnalysisDataframes:
         print(str_to_display)
         return str_to_display
 
+    def make_from_dictionary(self, path_pyb, multi_macular_dict_array, multiple_dicts_analysis):
+        """Creation of a new MacularAnalysisDataframes based on the multiple analysis dictionary and the multiple
+        macular dict array provided as input by the user.
+
+        The MacularAnalysisDataframes is first initialised to create all its attributes. All analysis dataframes are
+        also constructed with their respective indexes. Once this initialisation is complete, all analyses in the
+        multiple analysis dictionary are performed. The analyses of each dataframe are performed one at a time. When
+        all analyses are complete, the resulting MacularAnalysisDataframes is saved using the pyb file path provided
+        by the user.
+
+        Parameters
+        ----------
+        path_pyb : str
+            Path to the pyb file to be created.
+
+        multi_macular_dict_array : dict of MacularDictArray
+            Dictionary associating specific conditions with different MacularDictArray.
+
+        multiple_dicts_analysis : dict of dict
+            Dictionary containing all the parameters of the Macular simulations necessary for the processing of the
+            MacularDictArray.
+        """
+        # Initialisation of the pyb path dictionary with that of MacularAnalysisDataframes.
+        self._dict_paths_pyb = {"self": path_pyb, "MacularDictArrays": {}}
+
+        # Initialisation of the analysis dataframes dictionary and the dictionary of all the indexes it contains.
+        dict_index = self.initialize_macular_analysis_dataframes(multi_macular_dict_array, multiple_dicts_analysis)
+
+        # Make analysis
+        self.make_spatial_dataframes_analysis("X", multi_macular_dict_array)
+        self.make_spatial_dataframes_analysis("Y", multi_macular_dict_array)
+        # self.make_temporal_dataframes_analysis(multi_macular_dict_array)
+        self.make_conditions_dataframes_analysis(multi_macular_dict_array)
+
+        # Extract the dimensions/analyses levels from the MacularAnalysisDataframes.
+        self._analysis_dataframes_levels.update(self.get_levels_of_macular_analysis_dataframes())
+
+        # #Make meta-analysis with a dictionary of all indexes present in the multiple macular dict array.
+        self.make_meta_analysis_dataframes_analysis(dict_index)
+
+        # Saving the MacularAnalysisDataframes.
+        self.save()
+
+    def update_from_file(self, path_pyb):
+        """Method for updating a MacularAnalysisDataframes object by replacing it with another MacularAnalysisDataframes
+        object contained in a binary pyb file.
+
+        Parameters
+        ----------
+        path_pyb : str
+            Path to file with .pyb extension where a MacularAnalysisDataframes object is saved in binary.
+
+            The path can be absolute or relative.
+
+        """
+        print("FILE UPDATING...", end="")
+        with open(path_pyb, "rb") as pyb_file:
+            tmp_dict = pickle.load(pyb_file).__dict__
+        self.__dict__.clear()
+        self.__dict__.update(tmp_dict)
+        print("UPDATED!")
+
+
     @classmethod
     def equal(cls, macular_analysis_dataframe1, macular_analysis_dataframe2):
         """Checking the equality between two MacularAnalysisDataframes.

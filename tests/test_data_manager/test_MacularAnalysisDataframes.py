@@ -619,6 +619,48 @@ def test_print_specific_dataframes():
             display_Conditions)
 
 
+def test_make_from_dictionary():
+    # Import of a reduced MacularAnalysisDataframes for tests.
+    with open(path_pyb_head100, "rb") as file:
+        macular_analysis_dataframes_test = pickle.load(file)
+
+    # Deletion of the file to be used for the test, if it exists.
+    path_test = f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe.pyb"
+    try:
+        os.remove(path_test)
+    except FileNotFoundError:
+        pass
+
+    # Set the randomness for testing.
+    np.random.seed(1)
+
+    # Copy of the default multiple analysis dictionary without the ‘path_pyb’ key.
+    multiple_dicts_analysis_default_copy = multiple_dicts_analysis_default.copy()
+    del multiple_dicts_analysis_default_copy["path_pyb"]
+
+    # Creation of a MacularDictArray from the multiple analysis dictionary and the multiple macular dict array.
+    macular_analysis_dataframes_test.make_from_dictionary(path_test, multi_macular_dict_array_default,
+                                                          multiple_dicts_analysis_default_copy)
+
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_default_meta_analyzed,
+                                           macular_analysis_dataframes_test)
+    try:
+        os.remove(path_test)
+        assert True
+    except FileNotFoundError:
+        assert False
+
+
+def test_update_from_file():
+    # Update existing MacularAnalysisDataframes from the contents of a pyb file.
+    macular_analysis_dataframes_test.update_from_file(f"{path_data_test}/MacularAnalysisDataframes/"
+                                                      f"fully_meta_analyzed_macular_analysis_dataframe_copy.pyb")
+
+    # Verification that MacularAnalysisDataframes has been updated correctly.
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_test,
+                                           macular_analysis_dataframes_default_meta_analyzed)
+
+
 def test_equal():
     # Import a copy of the fully meta-analyzed default MacularAnalysisDataframes for equality tests.
     with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe_copy.pyb", "rb")
