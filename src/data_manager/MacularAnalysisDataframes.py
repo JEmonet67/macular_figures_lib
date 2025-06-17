@@ -504,6 +504,49 @@ class MacularAnalysisDataframes:
         print("UPDATED!")
 
 
+    def checking_difference_file_json(self, path_pyb, multi_macular_dict_array, multiple_dicts_analysis):
+        """Comparison between the multiple analysis dictionary contained in the imported pyb and that specified in the
+        init function of MacularDictArray.
+
+        The verification is carried out on the elements of the multiple analysis dictionaries. In case of a difference
+        between the two, it is up to the user to choose between the dictionaries contained in the pyb or the one entered
+        as input for the init function.
+
+        Parameters
+        ----------
+        path_pyb : str
+            Path to the pyb file containing a MacularAnalysisDataframes to be compared with the multiple analysis
+            dictionary entered by the user.
+
+        multi_macular_dict_array : dict of MacularDictArray
+            Dictionary associating specific conditions with different MacularDictArray.
+
+        multiple_dicts_analysis : dict of dict
+            Dictionary containing all the parameters of the Macular simulations necessary for the processing of the
+            MacularDictArray.
+
+        Raises
+        ----------
+        ValueError
+            The value error is raised in the event of an incorrect response from the user.
+        """
+        # Checking difference between both multiple analysis dictionary.
+        if self._multiple_dicts_analysis != multiple_dicts_analysis:
+            print("Multiple analysis dictionary differ...")
+            user_choice = input("Which configuration should be kept ? json or pyb : ").lower()
+            # Conservation of the json file.
+            if user_choice == "json":
+                self.make_from_dictionary(path_pyb, multi_macular_dict_array, multiple_dicts_analysis)
+            # Conservation of the pyb file.
+            elif user_choice == "pyb":
+                pass
+            # Incorrect user response.
+            else:
+                raise ValueError("Incorrect configuration")
+
+            return 1
+        return 0
+
     @classmethod
     def equal(cls, macular_analysis_dataframe1, macular_analysis_dataframe2):
         """Checking the equality between two MacularAnalysisDataframes.

@@ -661,6 +661,45 @@ def test_update_from_file():
                                            macular_analysis_dataframes_default_meta_analyzed)
 
 
+def test_checking_difference_file_json(monkeypatch):
+    # Set the randomness for testing.
+    np.random.seed(1)
+
+    # Copy of the default multiple analysis dictionary without the ‘path_pyb’ key.
+    multiple_dicts_analysis_default_copy = multiple_dicts_analysis_default.copy()
+    del multiple_dicts_analysis_default_copy["path_pyb"]
+
+    # Cas de la conservation du MacularAnalysisDataframes présent dans le fichier pyb.
+    monkeypatch.setattr('builtins.input', lambda _: "pyb")
+    macular_analysis_dataframes_test.checking_pre_existing_file(path_pyb_head100,
+                                                                multi_macular_dict_array_default,
+                                                                multiple_dicts_analysis_default_copy)
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_test, macular_analysis_dataframes_head100)
+
+    # Case of keeping MacularAnalysisDataframes associated with the multiple analysis dictionary given as input.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/test_json_case.pyb", "wb") as file:
+        pickle.dump(macular_analysis_dataframes_head100,file)
+
+    monkeypatch.setattr('builtins.input', lambda _: "json")
+    macular_analysis_dataframes_test.checking_pre_existing_file(f"{path_data_test}/MacularAnalysisDataframes/"
+                                                                f"test_json_case.pyb",
+                                                                multi_macular_dict_array_default,
+                                                                multiple_dicts_analysis_default_copy)
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_test, macular_analysis_dataframes_default_meta_analyzed)
+
+    os.remove(f"{path_data_test}/MacularAnalysisDataframes/test_json_case.pyb")
+
+    # Case of incorrect user input.
+    monkeypatch.setattr('builtins.input', lambda _: "No")
+    try:
+        macular_analysis_dataframes_test.checking_pre_existing_file(path_pyb_head100,
+                                                                    multi_macular_dict_array_default,
+                                                                    multiple_dicts_analysis_default_copy)
+        assert False
+    except ValueError:
+        assert True
+
+
 def test_equal():
     # Import a copy of the fully meta-analyzed default MacularAnalysisDataframes for equality tests.
     with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe_copy.pyb", "rb")
