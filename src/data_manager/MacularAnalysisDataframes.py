@@ -1,9 +1,11 @@
+import pickle
 import re
 import copy
 from functools import wraps
 
 import numpy as np
 import pandas as pd
+from tabulate import tabulate
 
 from src.data_manager.MacularDictArray import MacularDictArray
 from src.data_manager.MetaAnalyser import MetaAnalyser
@@ -518,6 +520,54 @@ class MacularAnalysisDataframes:
 
         return equality
 
+    def copy(self, path_pyb=""):
+        """Function used to copy a MacularAnalysisDataframes.
+
+        The copy is performed deeply by also copying all the objects included in the MacularAnalysisDataframes. It is
+        also possible to specify a new .pyb file path to be used in the copy of the MacularAnalysisDataframes.
+
+        Parameters
+        ----------
+        path_pyb : str
+            Path to file with .pyb extension where to save the MacularAnalysisDataframes object in a binary file.
+
+        Returns
+        ----------
+        macular_analysis_dataframe_copy : MacularAnalysisDataframes
+            Returns the copy of the current MacularAnalysisDataframes.
+        """
+        macular_analysis_dataframe_copy = copy.deepcopy(self)
+
+        if path_pyb:
+            macular_analysis_dataframe_copy._dict_paths_pyb["self"] = path_pyb
+
+        return macular_analysis_dataframe_copy
+
+    @classmethod
+    def load(cls, path_pyb):
+        """Class method that allows importing a MacularAnalysisDataframes object from a pyb file containing it in
+        binary format.
+
+        Parameters
+        ----------
+        path_pyb : str
+            Path to file with .pyb extension where a MacularAnalysisDataframes object is saved in binary.
+
+            The path can be absolute or relative.        """
+        print("FILE LOADING...", end="")
+        with open(path_pyb, "rb") as pyb_file:
+            macular_analysis_dataframe = pickle.load(pyb_file)
+        print("LOADED!")
+
+        return macular_analysis_dataframe
+
+    def save(self):
+        """Saving the MacularAnalysisDataframes in a pyb (python binary) file whose path and name correspond to that
+        present in the attribute of the simulation dictionary.
+        """
+        with open(f"{self.dict_paths_pyb['self']}", "wb") as pyb_file:
+            pickle.dump(self, pyb_file)
+
 
 
     @staticmethod
@@ -589,15 +639,15 @@ class MacularAnalysisDataframes:
             # Create y-axis dataframe.
             elif name_dataframe == "X":
                 self.dict_analysis_dataframes[name_dataframe] = {condition: self.initialize_analysis_dataframe(
-                    x_index, name_dataframe) for condition in self.dict_paths_pyb.keys()}
+                    x_index, name_dataframe) for condition in self.dict_paths_pyb["MacularDictArrays"].keys()}
             # Create x-axis dataframe.
             elif name_dataframe == "Y":
                 self.dict_analysis_dataframes[name_dataframe] = {condition: self.initialize_analysis_dataframe(
-                    y_index, name_dataframe) for condition in self.dict_paths_pyb.keys()}
+                    y_index, name_dataframe) for condition in self.dict_paths_pyb["MacularDictArrays"].keys()}
             # Create t-axis dataframe.
             elif name_dataframe == "Time":
                 self.dict_analysis_dataframes[name_dataframe] = {condition: self.initialize_analysis_dataframe(
-                    t_index, name_dataframe) for condition in self.dict_paths_pyb.keys()}
+                    t_index, name_dataframe) for condition in self.dict_paths_pyb["MacularDictArrays"].keys()}
             # Creation of the overall conditions dataframe.
             elif name_dataframe == "MetaAnalysis":
                 name_dataframe = "MetaConditions"
@@ -649,7 +699,7 @@ class MacularAnalysisDataframes:
             Sorted list of the different conditions present in the multiple MacularDictArray.
         """
         # Case of default sorting by alphabetical order.
-        sorted_conditions = list(self.dict_paths_pyb.keys())
+        sorted_conditions = list(self.dict_paths_pyb["MacularDictArrays"].keys())
         sorted_conditions.sort()
 
         # Cases where specific sorting is required.
@@ -682,7 +732,7 @@ class MacularAnalysisDataframes:
         sorted_conditions : list
             List containing conditions sorted by condition name and value.
         """
-        sorted_conditions = list(self.dict_paths_pyb.keys())
+        sorted_conditions = list(self.dict_paths_pyb["MacularDictArrays"].keys())
 
         sorted_conditions.sort(key=lambda x: [(self.condition_reg.findall(x.split("_")[i])[0][0],
                                                float(self.condition_reg.findall(x.split("_")[i])[0][1].replace(
@@ -777,12 +827,12 @@ class MacularAnalysisDataframes:
             the measurements are also separated by ‘:’.
         """
         # Create character string containing all the conditions of a multiple MacularDictArray separated by ‘:’.
-        all_conditions = ":".join(sorted([condition for condition in self.dict_paths_pyb]))
+        all_conditions = ":".join(sorted([condition for condition in self.dict_paths_pyb["MacularDictArrays"]]))
 
         # Create dictionary associating each multiple MacularDictArray conditions with their "all_conditions".
         all_measurements = {
             condition: ":".join(sorted([measure for measure in multi_macular_dict_array[condition].data]))
-            for condition in self.dict_paths_pyb}
+            for condition in self.dict_paths_pyb["MacularDictArrays"]}
 
         dict_levels_multi_macular_dict_array = {"conditions": all_conditions, "measurements": all_measurements}
 

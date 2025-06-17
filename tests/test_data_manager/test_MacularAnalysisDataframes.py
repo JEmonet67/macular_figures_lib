@@ -379,10 +379,11 @@ def test_init():
 
 
 def test_dict_paths_pyb_getter():
-    assert macular_analysis_dataframes_head100.dict_paths_pyb == {
-        "barSpeed6dps": f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_copy_0f.pyb",
-        "barSpeed15dps": f"{path_data_test}/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb",
-        "barSpeed30dps": f"{path_data_test}/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb"}
+    assert macular_analysis_dataframes_head100.dict_paths_pyb == {"MacularDictArrays":
+        {"barSpeed6dps": f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_copy_0f.pyb",
+         "barSpeed15dps": f"{path_data_test}/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb",
+         "barSpeed30dps": f"{path_data_test}/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb"},
+        "self": path_pyb_head100}
 
 
 def test_dict_paths_pyb_setter():
@@ -393,12 +394,13 @@ def test_dict_paths_pyb_setter():
     except AttributeError:
         assert True
 
-    dict_paths_pyb_initial = {'barSpeed6dps': '/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/'
-                                              'data_manager/RC_RM_dSGpCP0026_barSpeed6dps_head100_copy_0f.pyb',
-                              'barSpeed15dps': '/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/'
-                                               'data_manager/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb',
-                              'barSpeed30dps': '/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/'
-                                               'data_manager/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb'}
+    dict_paths_pyb_initial = {"self": path_pyb_head100, "MacularDictArrays":
+        {'barSpeed6dps': '/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/'
+                         'data_manager/RC_RM_dSGpCP0026_barSpeed6dps_head100_copy_0f.pyb',
+         'barSpeed15dps': '/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/'
+                          'data_manager/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb',
+         'barSpeed30dps': '/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/'
+                          'data_manager/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb'}}
 
     # Verification that the value of dict_paths_pyb has not changed.
     assert (macular_analysis_dataframes_test.dict_paths_pyb
@@ -677,6 +679,45 @@ def test_equal_dict_analysis_dataframes():
         macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes)
 
 
+def test_copy():
+    # Copy without modification of the pyb path.
+    test_copy = macular_analysis_dataframes_default_meta_analyzed.copy()
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_default_meta_analyzed, test_copy)
+
+    # Copy with modification of the pyb path.
+    test_copy = macular_analysis_dataframes_default_meta_analyzed.copy("test_copy.pyb")
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_default_meta_analyzed, test_copy)
+    assert test_copy.dict_paths_pyb["self"] == "test_copy.pyb"
+
+
+def test_load():
+    assert MacularAnalysisDataframes.equal(MacularAnalysisDataframes.load(path_pyb_default_copy),
+                                           macular_analysis_dataframes_default_meta_analyzed)
+
+
+def test_save():
+    # Import a copy of a fully meta-analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe_copy.pyb", "rb")
+          as file):
+        macular_analysis_dataframes_default_meta_analyzed_copy = pickle.load(file)
+
+    # Change the name of the file where MacularAnalysisDataframes is saved.
+    macular_analysis_dataframes_default_meta_analyzed_copy._dict_paths_pyb["self"] = \
+        f"{path_data_test}/MacularAnalysisDataframes/test_save.pyb"
+
+    # Change the name of the file where MacularAnalysisDataframes is saved.
+    macular_analysis_dataframes_default_meta_analyzed_copy.save()
+
+    # Loading saved MacularAnalysisDataframes.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/test_save.pyb", "rb")
+          as file):
+        macular_analysis_dataframes_load = pickle.load(file)
+
+    # Verify that MacularAnalysisDataframes is saved correctly in the pyb file.
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_load,
+                                           macular_analysis_dataframes_default_meta_analyzed_copy)
+    # Suppression of the new saved file.
+    os.remove(f"{path_data_test}/MacularAnalysisDataframes/test_save.pyb")
 
 
 def test_get_maximal_index_multi_macular_dict_array():
@@ -741,9 +782,9 @@ def test_initialize_analysis_dataframe():
 
 def test_dataframe_conditions_sorting():
     # Creation of an ordered example list.
-    macular_analysis_dataframes_test._dict_paths_pyb = {"wAmaGang10Hz": '',
-                                                        "wAmaGang3,8Hz": '',
-                                                        "barSpeed6dps": ''}
+    macular_analysis_dataframes_test._dict_paths_pyb = {"self": "test",
+                                                        "MacularDictArrays": {"wAmaGang10Hz": '', "wAmaGang3,8Hz": '',
+                                                                              "barSpeed6dps": ''}}
 
     # Case of default sorting by alphabetical order and KeyError.
     macular_analysis_dataframes_test._multiple_dicts_analysis["Conditions"] = {}
@@ -768,10 +809,12 @@ def test_dataframe_conditions_sorting():
             ["barSpeed6dps", "wAmaGang3,8Hz", "wAmaGang10Hz"])
 
     # Case of sorting based on condition names and the ‘NameValueUnit’ format and with complex conditions to sort.
-    macular_analysis_dataframes_test._dict_paths_pyb = {"barSpeed30dps_wAmaBip10Hz_wAmaGang0,1Hz": '',
-                                                        "barSpeed6dps_wAmaBip3Hz": '',
-                                                        "barSpeed6dps_wAmaGang0,1Hz": '',
-                                                        "barSpeed6dps": ''}
+    macular_analysis_dataframes_test._dict_paths_pyb = {"self": "test",
+                                                        "MacularDictArrays": {
+                                                            "barSpeed30dps_wAmaBip10Hz_wAmaGang0,1Hz": '',
+                                                            "barSpeed6dps_wAmaBip3Hz": '',
+                                                            "barSpeed6dps_wAmaGang0,1Hz": '',
+                                                            "barSpeed6dps": ''}}
     assert macular_analysis_dataframes_test.dataframe_conditions_sorting() == ["barSpeed6dps",
                                                                                "barSpeed6dps_wAmaBip3Hz",
                                                                                "barSpeed6dps_wAmaGang0,1Hz",
@@ -785,10 +828,12 @@ def test_name_value_unit_sorting_conditions():
                          "barSpeed6dps_wAmaBip10Hz_wAmaGang0,8Hz", "barSpeed30dps_wAmaBip10Hz_wAmaGang0,1Hz"]
 
     # Modification of dict_paths_pyb to add conditions to 3 disordered parameters to be sorted.
-    macular_analysis_dataframes_test._dict_paths_pyb = {"barSpeed30dps_wAmaBip10Hz_wAmaGang0,1Hz": '',
-                                                        "barSpeed6dps_wAmaBip10Hz_wAmaGang0,8Hz": '',
-                                                        "barSpeed6dps_wAmaBip3Hz_wAmaGang0,8Hz": '',
-                                                        "barSpeed6dps_wAmaBip10Hz_wAmaGang0,1Hz": ''}
+    macular_analysis_dataframes_test._dict_paths_pyb = {"self": "test",
+                                                        "MacularDictArrays": {
+                                                            "barSpeed30dps_wAmaBip10Hz_wAmaGang0,1Hz": '',
+                                                            "barSpeed6dps_wAmaBip10Hz_wAmaGang0,8Hz": '',
+                                                            "barSpeed6dps_wAmaBip3Hz_wAmaGang0,8Hz": '',
+                                                            "barSpeed6dps_wAmaBip10Hz_wAmaGang0,1Hz": ''}}
 
     # Verify that the conditions are sorted correctly.
     macular_analysis_dataframes_test.name_value_unit_sorting_conditions()
@@ -836,11 +881,12 @@ def test_setup_conditions_values_to_condition_dataframe():
         setup_complex_conditions_dataframe = pickle.load(file)
 
     # Preparation of a macular analysis dataframe for complex conditions.
-    macular_analysis_dataframes_test._dict_paths_pyb = {"barSpeed6dps_wAmaGang0,8Hz": '',
-                                                        "barSpeed6dps_wAmaBip10Hz": '',
-                                                        "barSpeed6dps": "",
-                                                        "barSpeed30dps": "",
-                                                        "barSpeed6dps_wAmaBip10Hz_wAmaGang0,1Hz": ""}
+    macular_analysis_dataframes_test._dict_paths_pyb = {"self": "test",
+                                                        "MacularDictArrays": {"barSpeed6dps_wAmaGang0,8Hz": '',
+                                                                              "barSpeed6dps_wAmaBip10Hz": '',
+                                                                              "barSpeed6dps": "",
+                                                                              "barSpeed30dps": "",
+                                                                              "barSpeed6dps_wAmaBip10Hz_wAmaGang0,1Hz": ""}}
     macular_analysis_dataframes_test.multiple_dicts_analysis["Conditions"] = {"sorting": "NameValueUnit"}
     macular_analysis_dataframes_test.initialize_dict_analysis_dataframes()
 
@@ -1174,7 +1220,7 @@ def test_make_spatial_dataframes_analysis():
                                                                                multi_macular_dict_array_default)
 
     # Verify that the X dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_empty.dict_paths_pyb:
+    for condition in macular_analysis_dataframes_default_empty.dict_paths_pyb["MacularDictArrays"]:
         assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["X"][condition].equals(
             macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["X"][condition])
         assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Y"][condition].equals(
