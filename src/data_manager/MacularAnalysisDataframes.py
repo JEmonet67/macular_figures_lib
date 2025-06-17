@@ -189,50 +189,18 @@ class MacularAnalysisDataframes:
             In certain specific cases, the analysis key may be associated only with a Boolean, an int or a float, as with
             the ‘sorting’ analysis for sorting condition names.
         """
-        # Create and clean the multiple_dicts_analysis attributes.
-        self.multiple_dicts_analysis = multiple_dicts_analysis
-        self.multiple_dicts_analysis = self.cleaning_multiple_dicts_features(multiple_dicts_analysis)
+        # Storing of the pyb path.
+        path_pyb = multiple_dicts_analysis["path_pyb"]
 
-        # Create and clean the multiple_dicts_simulations attributes.
-        self._multiple_dicts_simulations = self.cleaning_multiple_dicts_features(
-            {condition: multi_macular_dict_array[condition].dict_simulation for condition in multi_macular_dict_array})
+        # Deletion of the pyb path of the current MacularDictArray from a copy of the multiple analysis dictionary.
+        multiple_dicts_analysis_copy = multiple_dicts_analysis.copy()
+        del multiple_dicts_analysis_copy["path_pyb"]
 
-        # Create and clean the multiple_dicts_preprocessings attributes.
-        self._multiple_dicts_preprocessings = self.cleaning_multiple_dicts_features(
-            {condition: multi_macular_dict_array[condition].dict_preprocessing for condition in
-             multi_macular_dict_array})
+        # Clean the multiple_dicts_analysis attributes.
+        multiple_dicts_analysis_copy = self.cleaning_multiple_dicts_features(multiple_dicts_analysis_copy)
 
-        # Create dict_paths_pyb attributes to store each path_pyb associated to its condition.
-        self._dict_paths_pyb = {}
-        for condition in multi_macular_dict_array:
-            self._dict_paths_pyb[condition] = multi_macular_dict_array[condition].path_pyb
-
-        # Extract the conditions/measurements levels present in the MacularAnalysisDataframes.
-        self._analysis_dataframes_levels = self.get_levels_of_multi_macular_dict_array(multi_macular_dict_array)
-
-        # Regular expression to extract the name, value and unit of a condition with "NameValueUnit" format.
-        self.condition_reg = re.compile("(^[A-Za-z]+)(-?[0-9]{1,4},?[0-9]{0,4})([A-Za-z]+$)")
-
-        # Create the dataframes specified in the analysis dictionary.
-        t_index = self.get_maximal_index_multi_macular_dict_array(multi_macular_dict_array, "temporal")
-        x_index = self.get_maximal_index_multi_macular_dict_array(multi_macular_dict_array, "spatial_x")
-        y_index = self.get_maximal_index_multi_macular_dict_array(multi_macular_dict_array, "spatial_y")
-        self.initialize_dict_analysis_dataframes(x_index, y_index, t_index)
-
-        # Implementation of the MacularAnalysisDataframes index dictionary.
-        dict_index = self.setup_index_dictionary(multi_macular_dict_array)
-
-        # Make analysis
-        self.make_spatial_dataframes_analysis("X", multi_macular_dict_array)
-        self.make_spatial_dataframes_analysis("Y", multi_macular_dict_array)
-        # self.make_temporal_dataframes_analysis(multi_macular_dict_array)
-        self.make_conditions_dataframes_analysis(multi_macular_dict_array)
-
-        # Extract the dimensions/analyses levels from the MacularAnalysisDataframes.
-        self._analysis_dataframes_levels.update(self.get_levels_of_macular_analysis_dataframes())
-
-        # Make meta-analysis with a dictionary of all indexes present in the multiple macular dict array.
-        self.make_meta_analysis_dataframes_analysis(dict_index)
+        # Import a pyb file with the same name or create a new MacularAnalysisDataframes from the dictionary.
+        self.managing_pre_existing_file(path_pyb, multi_macular_dict_array, multiple_dicts_analysis_copy)
 
     @property
     def dict_paths_pyb(self):
@@ -503,6 +471,39 @@ class MacularAnalysisDataframes:
         self.__dict__.update(tmp_dict)
         print("UPDATED!")
 
+    def managing_pre_existing_file(self, path_pyb, multi_macular_dict_array, multiple_dicts_analysis):
+        """Manages whether a pyb file corresponding to the path of the pyb file provided by the user exists.
+
+        If the pyb file exists, it is imported into the MacularAnalysisDataframes as a priority to save time and avoid
+        additional processing. If it does not exist, the multiple macular dictionaries are processed to create a new
+        MacularAnalysisDataframes which will be saved. If the pyb file exists, a comparison will be made between its
+        multiple analysis dictionary after import and the one provided by the user to check whether a file/json
+        inconsistency needs to be handled.
+
+        Parameters
+        ----------
+        path_pyb : str
+            Path to the pyb file to be loaded or created.
+
+        multi_macular_dict_array : dict of MacularDictArray
+            Dictionary associating specific conditions with different MacularDictArray.
+
+        multiple_dicts_analysis : dict of dict
+            Dictionary containing all the parameters of the Macular simulations necessary for the processing of the
+            MacularDictArray.
+        """
+        try:
+            # Update MacularAnalysisDataframes from an existing file if possible.
+            self.update_from_file(path_pyb)
+
+            # The comparison with json occurs if the multiple analysis dictionary does not contain only the pyb path.
+            if len(multiple_dicts_analysis.keys()) != 0:
+                self.checking_difference_file_json(path_pyb, multi_macular_dict_array, multiple_dicts_analysis)
+
+        except (FileNotFoundError, EOFError):
+            # Construction of a MacularAnalysisDataframes from the dictionaries if no file exists.
+            print("NO FILE FOR THE UPDATE. Using the dictionaries.")
+            self.make_from_dictionary(path_pyb, multi_macular_dict_array, multiple_dicts_analysis)
 
     def checking_difference_file_json(self, path_pyb, multi_macular_dict_array, multiple_dicts_analysis):
         """Comparison between the multiple analysis dictionary contained in the imported pyb and that specified in the
@@ -674,6 +675,39 @@ class MacularAnalysisDataframes:
         with open(f"{self.dict_paths_pyb['self']}", "wb") as pyb_file:
             pickle.dump(self, pyb_file)
 
+    def initialize_macular_analysis_dataframes(self, multi_macular_dict_array, multiple_dicts_analysis):
+        # Create the multiple_dicts_analysis attributes.
+        self._multiple_dicts_analysis = multiple_dicts_analysis
+
+        # Create and clean the multiple_dicts_simulations attributes.
+        self._multiple_dicts_simulations = self.cleaning_multiple_dicts_features(
+            {condition: multi_macular_dict_array[condition].dict_simulation for condition in multi_macular_dict_array})
+
+        # Create and clean the multiple_dicts_preprocessings attributes.
+        self._multiple_dicts_preprocessings = self.cleaning_multiple_dicts_features(
+            {condition: multi_macular_dict_array[condition].dict_preprocessing for condition in
+             multi_macular_dict_array})
+
+        # Added the pyb paths for each condition of the multiple MacularDictArray to the dict_paths_pyb attribute.
+        for condition in multi_macular_dict_array:
+            self._dict_paths_pyb["MacularDictArrays"][condition] = multi_macular_dict_array[condition].path_pyb
+
+        # Extract the conditions/measurements levels present in the MacularAnalysisDataframes.
+        self._analysis_dataframes_levels = self.get_levels_of_multi_macular_dict_array(multi_macular_dict_array)
+
+        # Regular expression to extract the name, value and unit of a condition with "NameValueUnit" format.
+        self.condition_reg = re.compile("(^[A-Za-z]+)(-?[0-9]{1,4},?[0-9]{0,4})([A-Za-z]+$)")
+
+        # Create the dataframes specified in the analysis dictionary.
+        t_index = self.get_maximal_index_multi_macular_dict_array(multi_macular_dict_array, "temporal")
+        x_index = self.get_maximal_index_multi_macular_dict_array(multi_macular_dict_array, "spatial_x")
+        y_index = self.get_maximal_index_multi_macular_dict_array(multi_macular_dict_array, "spatial_y")
+        self.initialize_dict_analysis_dataframes(x_index, y_index, t_index)
+
+        # Implementation of the MacularAnalysisDataframes index dictionary.
+        dict_index = self.setup_index_dictionary(multi_macular_dict_array)
+
+        return dict_index
 
 
     @staticmethod
@@ -1131,7 +1165,6 @@ class MacularAnalysisDataframes:
             if analysis in available_spatial_analyses_dict:
                 available_spatial_analyses_dict[analysis](self, multi_macular_dict_array, dimension, analysis)
 
-    # TODO test
     def make_meta_analysis_dataframes_analysis(self, dict_index):
         """Function used to perform all MacularAnalysisDataframe meta-analyses.
 

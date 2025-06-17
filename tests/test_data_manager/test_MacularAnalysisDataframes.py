@@ -12,12 +12,13 @@ from src.data_manager.MacularAnalysisDataframes import MacularAnalysisDataframes
 # Get data for test from relative path.
 path_data_test = os.path.normpath(f"{os.getcwd()}/../data_test/data_manager/")
 
-# Import of a MacularAnalysisDataframes based on reduced MacularDictArray (100 first rows).
-with open(f"{path_data_test}/MacularAnalysisDataframes/initialized_macular_analysis_dataframe.pyb", "rb") as file:
+# Import of a initialized MacularAnalysisDataframes based on reduced MacularDictArray (100 first rows).
+path_pyb_head100 = f"{path_data_test}/MacularAnalysisDataframes/initialized_macular_analysis_dataframe.pyb"
+with open(path_pyb_head100, "rb") as file:
     macular_analysis_dataframes_head100 = pickle.load(file)
 
 # Import of a reduced MacularAnalysisDataframes for tests.
-with open(f"{path_data_test}/MacularAnalysisDataframes/initialized_macular_analysis_dataframe.pyb", "rb") as file:
+with open(path_pyb_head100, "rb") as file:
     macular_analysis_dataframes_test = pickle.load(file)
 
 # Import a multiple reduced macular dict array of bar speed condition.
@@ -60,13 +61,13 @@ with open(f"{path_data_test}/MacularAnalysisDataframes/peak_amplitudes_meta_anal
           "rb") as file:
     peak_amplitude_meta_analysis_normalized = pickle.load(file)
 
-    # Import of a fully analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
-    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
-          as file_test):
-        macular_analysis_dataframes_default_analyzed = pickle.load(file_test)
+# Import of a fully analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
+with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_analysis_dataframe.pyb", "rb")
+      as file_test):
+    macular_analysis_dataframes_default_analyzed = pickle.load(file_test)
 
 # Import of a fully meta-analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
-with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe.pyb", "rb")
+with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe_copy.pyb", "rb")
       as file):
     macular_analysis_dataframes_default_meta_analyzed = pickle.load(file)
 
@@ -113,6 +114,7 @@ multiple_dicts_preprocessings_head100 = {
 }
 
 multiple_dicts_analysis_head100 = {
+    "path_pyb": path_pyb_head100,
     "Conditions": {"sorting": "NameValueUnit"},
     "X": {"test": "test"},
     "Y": {"test": "test"},
@@ -162,7 +164,11 @@ multiple_dicts_preprocessings_default = {
     "barSpeed30dps": {}
 }
 
+path_pyb_default = f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe.pyb"
+path_pyb_default_copy = (f"{path_data_test}/MacularAnalysisDataframes/"
+                         f"fully_meta_analyzed_macular_analysis_dataframe_copy.pyb")
 multiple_dicts_analysis_default = {
+    "path_pyb": path_pyb_default,
     "Conditions": {
         "sorting": "NameValueUnit",
         "peak_amplitude": [{"conditions": "all_conditions",
@@ -357,25 +363,21 @@ multiple_dicts_analysis_default = {
 
 
 def test_init():
-    # Set the randomness of the fitting for testing.
+    # Set the randomness for testing.
     np.random.seed(1)
 
-    mda = MacularAnalysisDataframes(multi_macular_dict_array_default, multiple_dicts_analysis_default)
+    # Execution of the init function with a complex multiple analysis dictionary.
+    macular_analysis_dataframes_init = MacularAnalysisDataframes(multi_macular_dict_array_default,
+                                                                 multiple_dicts_analysis_default)
 
-    # Verify that the conditions and MetaConditions dataframe are corrects.
-    assert mda.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Conditions"])
-    assert mda.dict_analysis_dataframes["MetaConditions"].equals(
-        macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["MetaConditions"])
+    # Verify equality between the macular analysis dataframes obtained and the correct one.
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_init,
+                                           macular_analysis_dataframes_default_meta_analyzed)
 
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in mda.dict_paths_pyb:
-        assert mda.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["X"][condition])
-        assert mda.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Y"][condition])
-        assert mda.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Time"][condition])
+    # Execution of init in the case of a simplified multiple analysis dictionary containing only the pyb path.
+    macular_analysis_dataframes_init_no_dict = MacularAnalysisDataframes(
+        {}, {"path_pyb": path_pyb_head100})
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_init_no_dict, macular_analysis_dataframes_head100)
 
 
 def test_dict_paths_pyb_getter():
@@ -620,7 +622,7 @@ def test_print_specific_dataframes():
 
 
 def test_make_from_dictionary():
-    # Import of a reduced MacularAnalysisDataframes for tests.
+    # Import of a initialized reduced MacularAnalysisDataframes for tests.
     with open(path_pyb_head100, "rb") as file:
         macular_analysis_dataframes_test = pickle.load(file)
 
@@ -661,6 +663,58 @@ def test_update_from_file():
                                            macular_analysis_dataframes_default_meta_analyzed)
 
 
+def test_managing_pre_existing_file():
+    # Set the randomness for testing.
+    np.random.seed(1)
+
+    # Deletion of the file to be used for the no existing test, if it exists.
+    path_no_existing_test = f"{path_data_test}/MacularAnalysisDataframes/not_existing_test.pyb"
+    try:
+        os.remove(path_no_existing_test)
+    except FileNotFoundError:
+        pass
+
+    # Copy of the default multiple analysis dictionary without the ‘path_pyb’ key.
+    multiple_dicts_analysis_default_copy = multiple_dicts_analysis_default.copy()
+    del multiple_dicts_analysis_default_copy["path_pyb"]
+
+    # Case of updating MacularAnalysisDataframes from a file with no differences from the multiple analysis dictionary.
+    macular_analysis_dataframes_test.managing_pre_existing_file(path_pyb_default_copy,
+                                                                multi_macular_dict_array_default,
+                                                                multiple_dicts_analysis_default_copy)
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_test,
+                                           macular_analysis_dataframes_default_meta_analyzed)
+
+    # Case of a difference between the file and the multiple analysis dictionary during an update from file.
+    try:
+        macular_analysis_dataframes_test.managing_pre_existing_file(path_pyb_default_copy,
+                                                                    multi_macular_dict_array_default,
+                                                                    multiple_dicts_analysis_head100)
+        assert False
+    except OSError:
+        assert True
+
+    # Case of creating a MacularAnalysisDataframes because no pre-existing pyb file exists.
+    macular_analysis_dataframes_test.managing_pre_existing_file(path_no_existing_test,
+                                                                multi_macular_dict_array_default,
+                                                                multiple_dicts_analysis_default_copy)
+
+    with open(path_no_existing_test, "rb") as file_no_existing:
+        macular_analysis_dataframes_test_not_existing = pickle.load(file_no_existing)
+
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_test_not_existing,
+                                           macular_analysis_dataframes_default_meta_analyzed)
+
+    os.remove(path_no_existing_test)
+
+    # Case of updating from a pyb file in the case of a multiple analysis dictionary that only contained the path_pyb.
+    macular_analysis_dataframes_test.managing_pre_existing_file(path_pyb_head100,
+                                                                multi_macular_dict_array_default,
+                                                                {})
+
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_test, macular_analysis_dataframes_head100)
+
+
 def test_checking_difference_file_json(monkeypatch):
     # Set the randomness for testing.
     np.random.seed(1)
@@ -671,7 +725,7 @@ def test_checking_difference_file_json(monkeypatch):
 
     # Cas de la conservation du MacularAnalysisDataframes présent dans le fichier pyb.
     monkeypatch.setattr('builtins.input', lambda _: "pyb")
-    macular_analysis_dataframes_test.checking_pre_existing_file(path_pyb_head100,
+    macular_analysis_dataframes_test.managing_pre_existing_file(path_pyb_head100,
                                                                 multi_macular_dict_array_default,
                                                                 multiple_dicts_analysis_default_copy)
     assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_test, macular_analysis_dataframes_head100)
@@ -681,7 +735,7 @@ def test_checking_difference_file_json(monkeypatch):
         pickle.dump(macular_analysis_dataframes_head100,file)
 
     monkeypatch.setattr('builtins.input', lambda _: "json")
-    macular_analysis_dataframes_test.checking_pre_existing_file(f"{path_data_test}/MacularAnalysisDataframes/"
+    macular_analysis_dataframes_test.managing_pre_existing_file(f"{path_data_test}/MacularAnalysisDataframes/"
                                                                 f"test_json_case.pyb",
                                                                 multi_macular_dict_array_default,
                                                                 multiple_dicts_analysis_default_copy)
@@ -692,7 +746,7 @@ def test_checking_difference_file_json(monkeypatch):
     # Case of incorrect user input.
     monkeypatch.setattr('builtins.input', lambda _: "No")
     try:
-        macular_analysis_dataframes_test.checking_pre_existing_file(path_pyb_head100,
+        macular_analysis_dataframes_test.managing_pre_existing_file(path_pyb_head100,
                                                                     multi_macular_dict_array_default,
                                                                     multiple_dicts_analysis_default_copy)
         assert False
@@ -799,6 +853,26 @@ def test_save():
                                            macular_analysis_dataframes_default_meta_analyzed_copy)
     # Suppression of the new saved file.
     os.remove(f"{path_data_test}/MacularAnalysisDataframes/test_save.pyb")
+
+
+def test_initialize_macular_analysis_dataframes():
+    # Import of a reduced MacularAnalysisDataframes correctly initialized for tests.
+    with open(path_pyb_head100, "rb") as file:
+        macular_analysis_dataframes_test = pickle.load(file)
+
+    # Copy of the multiple analysis dictionary without the ‘path_pyb’ key.
+    multiple_dicts_analysis_head100_copy = multiple_dicts_analysis_head100.copy()
+    del multiple_dicts_analysis_head100_copy["path_pyb"]
+
+    # Adding path pyb to the paths pyb dictionary attribute.
+    macular_analysis_dataframes_test._dict_paths_pyb["self"] = path_pyb_head100
+
+    # Execution of the initialisation function of MacularAnalysisDataframes.
+    macular_analysis_dataframes_test.initialize_macular_analysis_dataframes(multi_macular_dict_array_head100,
+                                                                   multiple_dicts_analysis_head100_copy)
+
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_test,
+                                           macular_analysis_dataframes_head100)
 
 
 def test_get_maximal_index_multi_macular_dict_array():
@@ -1267,7 +1341,7 @@ def test_make_conditions_dataframes_analysis():
 
 
 def test_make_meta_analysis_dataframes_analysis():
-    # Set the randomness of the fitting for testing.
+    # Set the randomness for testing.
     np.random.seed(1)
 
     # Import of a fully analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
@@ -1815,8 +1889,8 @@ def test_setup_index_dictionary():
     with open(f"{path_data_test}/MacularAnalysisDataframes/index_dictionary_head100.pyb", "rb") as file:
         dict_index_correct = pickle.load(file)
 
-    # Import of a MacularAnalysisDataframes based on reduced MacularDictArray (100 first rows).
-    with open(f"{path_data_test}/MacularAnalysisDataframes/initialized_macular_analysis_dataframe.pyb", "rb") as file:
+    # Import of a initialized MacularAnalysisDataframes based on reduced MacularDictArray (100 first rows).
+    with open(path_pyb_head100, "rb") as file:
         macular_analysis_dataframes_head100_initialized = pickle.load(file)
 
     # Two additional conditions have been added to assess the ability to manage multiple conditions.
