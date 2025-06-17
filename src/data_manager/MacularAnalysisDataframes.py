@@ -439,6 +439,86 @@ class MacularAnalysisDataframes:
         print(str_to_display)
         return str_to_display
 
+    @classmethod
+    def equal(cls, macular_analysis_dataframe1, macular_analysis_dataframe2):
+        """Checking the equality between two MacularAnalysisDataframes.
+
+        MacularAnalysisDataframes are equal if they have the same attributes with the same values. Two MacularDictArray
+        are equal if they have the same attributes and values associated with each of these attributes. Only the
+        path_pyb and conditions_reg attribute can differ between the two MacularAnalysisDataframes.
+
+        Parameters
+        ----------
+        macular_analysis_dataframe1 : MacularAnalysisDataframes
+            First MacularAnalysisDataframes to compare.
+
+        macular_analysis_dataframe1 : MacularAnalysisDataframes
+            Second MacularAnalysisDataframes to compare.
+
+        Returns
+        ----------
+        equality : Bool
+            Returns True if both MacularAnalysisDataframes are equal and False otherwise.
+        """
+        equality = True
+
+        # Equality between the attributes of the two MacularDictArray.
+        if macular_analysis_dataframe1.__dict__.keys() == macular_analysis_dataframe2.__dict__.keys():
+            # Dictionary attributes search.
+            for attributes in macular_analysis_dataframe1.__dict__:
+                # Case of the dict analysis dataframes attributes.
+                if attributes == "_dict_analysis_dataframes":
+                    # Equality between the dataframes contained in dict analysis dataframes attribute.
+                    equality = equality & (cls.equal_dict_analysis_dataframes(macular_analysis_dataframe1.__dict__[attributes],
+                                                                macular_analysis_dataframe2.__dict__[attributes]))
+                # Case of the dict path pyb attribute, which is ignored.
+                elif attributes in ("_dict_paths_pyb", "_condition_reg"):
+                    continue
+
+                # Case of other attributes.
+                else:
+                    equality = equality & (
+                            macular_analysis_dataframe1.__dict__[attributes] == macular_analysis_dataframe2.__dict__[attributes])
+        else:
+            equality = False
+
+        return equality
+
+    @classmethod
+    def equal_dict_analysis_dataframes(cls, dict_analysis_dataframes1, dict_analysis_dataframes2):
+        """Function to compare equality between dictionaries of analysis dataframes of MacularAnalysisDataframes.
+
+        Parameters
+        ----------
+        dict_analysis_dataframes1 : dict of numpy.array or dict of dict
+            First dict of analysis dataframes to compare.
+
+        dict_analysis_dataframes2 : dict of numpy.array
+            Second dict of analysis dataframes to compare.
+
+        Returns
+        ----------
+        equality : Bool
+            Returns True if both dict of analysis dataframes are equal and False otherwise.
+        """
+        equality = True
+
+        if dict_analysis_dataframes1.keys() == dict_analysis_dataframes2.keys():
+            # Equality between all the arrays of both dictionaries.
+            for dimension in dict_analysis_dataframes1:
+                if dimension in ["Conditions", "MetaConditions"]:
+                    equality = equality & dict_analysis_dataframes1[dimension].equals(
+                        dict_analysis_dataframes2[dimension])
+                else:
+                    for condition in dict_analysis_dataframes1[dimension]:
+                        equality = equality & dict_analysis_dataframes1[dimension][condition].equals(
+                            dict_analysis_dataframes2[dimension][condition])
+        else:
+            equality = False
+
+        return equality
+
+
 
     @staticmethod
     def get_maximal_index_multi_macular_dict_array(multi_macular_dict_array, name_index):

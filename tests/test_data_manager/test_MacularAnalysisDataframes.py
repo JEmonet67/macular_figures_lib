@@ -617,6 +617,68 @@ def test_print_specific_dataframes():
             display_Conditions)
 
 
+def test_equal():
+    # Import a copy of the fully meta-analyzed default MacularAnalysisDataframes for equality tests.
+    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe_copy.pyb", "rb")
+          as file):
+        macular_analysis_dataframes_default_meta_analyzed_copy = pickle.load(file)
+
+    # Case of equality between the two MacularDictionaryAnalysis.
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_default_meta_analyzed,
+                                           macular_analysis_dataframes_default_meta_analyzed_copy)
+
+    macular_analysis_dataframes_default_meta_analyzed_copy._dict_paths_pyb = {}
+    macular_analysis_dataframes_default_meta_analyzed_copy._condition_reg = ""
+
+    # Case of equality despite different condition_reg and dict_path_pyb attributes.
+    assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_default_meta_analyzed,
+                                           macular_analysis_dataframes_default_meta_analyzed_copy)
+
+    # Case of inequality between the analysis dataframes of the two MacularDictionaryAnalysis.
+    assert not MacularAnalysisDataframes.equal(macular_analysis_dataframes_default_meta_analyzed,
+                                               macular_analysis_dataframes_default_analyzed)
+
+    # Case of inequality between multiple analysis dictionaries.
+    save_value = \
+        macular_analysis_dataframes_default_meta_analyzed_copy._multiple_dicts_analysis["X"]["activation_time"][0][
+            "conditions"]
+    macular_analysis_dataframes_default_meta_analyzed_copy._multiple_dicts_analysis["X"]["activation_time"][0][
+        "conditions"] = "barSpeed30dps"
+    assert not MacularAnalysisDataframes.equal(macular_analysis_dataframes_default_meta_analyzed,
+                                               macular_analysis_dataframes_default_meta_analyzed_copy)
+    macular_analysis_dataframes_default_meta_analyzed_copy._multiple_dicts_analysis["X"]["activation_time"][0][
+        "conditions"] = save_value
+
+    # Case of inequality between multiple preprocessing dictionaries.
+    save_value = macular_analysis_dataframes_default_meta_analyzed_copy._multiple_dicts_preprocessings["barSpeed30dps"][
+        "VSDI"]
+    macular_analysis_dataframes_default_meta_analyzed_copy._multiple_dicts_preprocessings["barSpeed30dps"][
+        "VSDI"] = False
+    assert not MacularAnalysisDataframes.equal(macular_analysis_dataframes_default_meta_analyzed,
+                                               macular_analysis_dataframes_default_meta_analyzed_copy)
+    macular_analysis_dataframes_default_meta_analyzed_copy._multiple_dicts_analysis["X"]["activation_time"][0][
+        "conditions"] = save_value
+
+    # Case of inequality when additional attributes are present.
+    macular_analysis_dataframes_default_meta_analyzed_copy._test = True
+    assert not MacularAnalysisDataframes.equal(macular_analysis_dataframes_default_meta_analyzed,
+                                               macular_analysis_dataframes_default_meta_analyzed_copy)
+
+
+def test_equal_dict_analysis_dataframes():
+    # Case of equality between the two dictionaries of analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes,
+        macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes)
+
+    # Case of inequality between the two dictionaries of analysis dataframes.
+    assert not MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes,
+        macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes)
+
+
+
+
 def test_get_maximal_index_multi_macular_dict_array():
     # Creation of a multi_macular_dict_array with spatio-temporal indexes varying between each MacularDictArray.
     multi_macular_dict_array_index_modified = MacularDictArray.make_multiple_macular_dict_array(
@@ -659,20 +721,10 @@ def test_initialize_dict_analysis_dataframes():
     # Initialisation of Macular analysis dataframes.
     macular_analysis_dataframes_to_init.initialize_dict_analysis_dataframes(x_index, y_index, t_index)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_head100.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_to_init.dict_analysis_dataframes["Conditions"])
-    assert macular_analysis_dataframes_head100.dict_analysis_dataframes["MetaConditions"].equals(
-        macular_analysis_dataframes_to_init.dict_analysis_dataframes["MetaConditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_head100.dict_paths_pyb:
-        assert macular_analysis_dataframes_head100.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_to_init.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_head100.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_to_init.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_head100.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_to_init.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_head100.dict_analysis_dataframes,
+        macular_analysis_dataframes_to_init.dict_analysis_dataframes)
 
 
 def test_initialize_analysis_dataframe():
@@ -1100,20 +1152,10 @@ def test_make_meta_analysis_dataframes_analysis():
     macular_analysis_dataframes_default_analyzed_test.make_meta_analysis_dataframes_analysis(
         dict_index_default)
 
-    # Verify that the conditions and MetaConditions dataframe are corrects.
-    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Conditions"])
-    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["MetaConditions"].equals(
-        macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["MetaConditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes,
+        macular_analysis_dataframes_default_meta_analyzed.dict_analysis_dataframes)
 
 
 def test_make_spatial_dataframes_analysis():
@@ -1185,18 +1227,10 @@ def test_analysis():
                                                        multi_macular_dict_array_default, "Conditions",
                                                        "peak_amplitude")
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default_complex_make_analysis.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_empty.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default_complex_make_analysis.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default_complex_make_analysis.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_empty.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default_complex_make_analysis.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_default_empty.dict_analysis_dataframes,
+        macular_analysis_dataframes_default_complex_make_analysis.dict_analysis_dataframes)
 
 
 def test_common_analysis_group_parser():
@@ -1278,18 +1312,10 @@ def test_make_common_group_analysis():
         multi_macular_dict_array_default, common_analysis_group_generator,
         "X", "activation_time", parameters_analysis_dict_spatial_analysis)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_spatial_analysis.dict_analysis_dataframes["Conditions"].equals(
-        activation_time_common_group_analysis.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_spatial_analysis.dict_paths_pyb:
-        assert macular_analysis_dataframes_spatial_analysis.dict_analysis_dataframes["X"][condition].equals(
-            activation_time_common_group_analysis.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_spatial_analysis.dict_analysis_dataframes["Y"][condition].equals(
-            activation_time_common_group_analysis.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_spatial_analysis.dict_analysis_dataframes["Time"][condition].equals(
-            activation_time_common_group_analysis.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_spatial_analysis.dict_analysis_dataframes,
+        activation_time_common_group_analysis.dict_analysis_dataframes)
 
     # Setup generator and parameters for conditions common group analysis (peak amplitude).
     common_analysis_group_generator = (analysis_pair for analysis_pair in
@@ -1304,18 +1330,10 @@ def test_make_common_group_analysis():
         multi_macular_dict_array_default, common_analysis_group_generator,
         "Conditions", "peak_amplitude", parameters_analysis_dict_conditions_analysis)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_conditions_analysis.dict_analysis_dataframes["Conditions"].equals(
-        peak_amplitude_conditions_common_group_analysis.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_conditions_analysis.dict_paths_pyb:
-        assert macular_analysis_dataframes_conditions_analysis.dict_analysis_dataframes["X"][condition].equals(
-            peak_amplitude_conditions_common_group_analysis.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_conditions_analysis.dict_analysis_dataframes["Y"][condition].equals(
-            peak_amplitude_conditions_common_group_analysis.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_conditions_analysis.dict_analysis_dataframes["Time"][condition].equals(
-            peak_amplitude_conditions_common_group_analysis.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_conditions_analysis.dict_analysis_dataframes,
+        peak_amplitude_conditions_common_group_analysis.dict_analysis_dataframes)
 
 
 def test_activation_time_analyzing():
@@ -1659,18 +1677,10 @@ def test_meta_analysis():
     MacularAnalysisDataframes.normalization_analyzing(macular_analysis_dataframes_default_analyzed_test,
                                                       "normalization", dict_index_default)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
-        peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Conditions"])
-    #
-    # # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
-            peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
-            peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
-            peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes,
+        peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes)
 
 
 def test_setup_index_dictionary():
@@ -1916,18 +1926,10 @@ def test_make_common_group_meta_analysis():
         MacularAnalysisDataframes.normalization_analyzing.__wrapped__, common_meta_analysis_group_dictionaries[3],
         "normalization", dict_index_default)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
-        peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
-            peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
-            peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
-            peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes,
+        peak_amplitude_meta_analysis_normalized.dict_analysis_dataframes)
 
 
 def test_extract_all_analysis_array_from_dataframes():
@@ -2188,18 +2190,10 @@ def test_normalization_analyzing():
     macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].drop(
         "vsdi_ganglion_peak_amplitude_normalization", inplace=True)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes,
+        macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes)
 
 
 def test_peak_speed_analyzing():
@@ -2241,18 +2235,10 @@ def test_peak_speed_analyzing():
     macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].drop(
         "horizontal_peak_speed_dpms", inplace=True)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes,
+        macular_analysis_dataframes_default_analyzed.dict_analysis_dataframes)
 
 
 def test_stationary_peak_delay_analyzing():
@@ -2311,18 +2297,10 @@ def test_stationary_peak_delay_analyzing():
         meta_analysis_dictionary, dict_index_default,
         parameters_meta_analysis_dict)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes,
+        macular_analysis_dataframes_default_correct_SPD.dict_analysis_dataframes)
 
 
 def test_linear_fit_analyzing():
@@ -2441,18 +2419,10 @@ def test_linear_fit_analyzing():
                                                                meta_analysis_dictionary, dict_index_default,
                                                                parameters_meta_analysis_dict)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes,
+        macular_analysis_dataframes_default_correct_fit.dict_analysis_dataframes)
 
     # Modification of the conditions dataframe to include more columns.
     macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"] = (
@@ -2533,18 +2503,10 @@ def test_anticipation_fit_analyzing():
                                                                      meta_analysis_dictionary, dict_index_default,
                                                                      parameters_meta_analysis_dict)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_analyzed_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_default_analyzed_test.dict_analysis_dataframes,
+        macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes)
 
 
 def test_maximal_latency_analyzing():
@@ -2595,18 +2557,10 @@ def test_maximal_latency_analyzing():
     macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["Conditions"].drop(
         "horizontal_maximal_latency_ms", inplace=True)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_anticipation_test_copy.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_anticipation_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_anticipation_test_copy.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_anticipation_test_copy.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_anticipation_test_copy.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes,
+        macular_analysis_dataframes_anticipation_test_copy.dict_analysis_dataframes)
 
 
 def test_subtraction_analyzing():
@@ -2666,15 +2620,7 @@ def test_subtraction_analyzing():
     macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["Conditions"].drop(
         "horizontal_cortex_ganglion_stationary_peak_delay_diff", inplace=True)
 
-    # Verify that the conditions dataframe is correct.
-    assert macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["Conditions"].equals(
-        macular_analysis_dataframes_default_SPD_copy.dict_analysis_dataframes["Conditions"])
-
-    # Verify that the X, Y, and T dataframes for each condition are equal.
-    for condition in macular_analysis_dataframes_default_SPD_test.dict_paths_pyb:
-        assert macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["X"][condition].equals(
-            macular_analysis_dataframes_default_SPD_copy.dict_analysis_dataframes["X"][condition])
-        assert macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["Y"][condition].equals(
-            macular_analysis_dataframes_default_SPD_copy.dict_analysis_dataframes["Y"][condition])
-        assert macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes["Time"][condition].equals(
-            macular_analysis_dataframes_default_SPD_copy.dict_analysis_dataframes["Time"][condition])
+    # Verify equality between all analysis dataframes.
+    assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
+        macular_analysis_dataframes_default_SPD_test.dict_analysis_dataframes,
+        macular_analysis_dataframes_default_SPD_copy.dict_analysis_dataframes)
