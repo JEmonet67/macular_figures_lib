@@ -569,6 +569,54 @@ def test_condition_reg_setter():
     macular_analysis_dataframes_test.condition_reg = "(^[A-Za-z]+)(-?[0-9]{1,4},?[0-9]{0,4})([A-Za-z]+$)"
 
 
+def test_repr():
+    # Import of the general display correctly formatted.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/repr/global_repr.txt", "r") as file_repr:
+        display_global_dataframes = "".join(file_repr.readlines())
+
+    assert macular_analysis_dataframes_default_meta_analyzed.__repr__() == display_global_dataframes
+
+
+def test_print_specific_dataframes():
+    # Import of the general display correctly formatted.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/repr/global_repr.txt", "r") as file_repr:
+        display_global_dataframes = "".join(file_repr.readlines())
+
+    # Verification of correct formatting for a general display.
+    assert macular_analysis_dataframes_default_meta_analyzed.print_specific_dataframes() == display_global_dataframes
+
+    # Import of the spatial displays correctly formatted.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/repr/spatial_repr.txt", "r") as file_repr:
+        display_spatial = "".join(file_repr.readlines())
+
+    # Verification of correct formatting for spatial displays.
+    assert macular_analysis_dataframes_default_meta_analyzed.print_specific_dataframes("X:Y", "all") == display_spatial
+
+    # Import of all display of a specific condition correctly formatted.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/repr/barSpeed30dps_repr.txt", "r") as file_repr:
+        display_barSpeed30dps = "".join(file_repr.readlines())
+
+    # Verification of correct formatting for a specific condition display.
+    assert (macular_analysis_dataframes_default_meta_analyzed.print_specific_dataframes("all", "barSpeed30dps") ==
+            display_barSpeed30dps)
+
+    # Import of a specific dimension and condition display correctly formatted.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/repr/spatial_X_repr.txt", "r") as file_repr:
+        display_spatial_X = "".join(file_repr.readlines())
+
+    # Verification of correct formatting for a specific dimension and condition display.
+    assert (macular_analysis_dataframes_default_meta_analyzed.print_specific_dataframes("X", "barSpeed30dps") ==
+            display_spatial_X)
+
+    # Import of the conditions display correctly formatted.
+    with open(f"{path_data_test}/MacularAnalysisDataframes/repr/conditions_repr.txt", "r") as file_repr:
+        display_Conditions = "".join(file_repr.readlines())
+
+    # Verification of correct formatting for conditions display.
+    assert (macular_analysis_dataframes_default_meta_analyzed.print_specific_dataframes("Conditions") ==
+            display_Conditions)
+
+
 def test_get_maximal_index_multi_macular_dict_array():
     # Creation of a multi_macular_dict_array with spatio-temporal indexes varying between each MacularDictArray.
     multi_macular_dict_array_index_modified = MacularDictArray.make_multiple_macular_dict_array(

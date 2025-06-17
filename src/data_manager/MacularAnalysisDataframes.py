@@ -334,6 +334,112 @@ class MacularAnalysisDataframes:
         """
         self._condition_reg = re.compile(condition_reg)
 
+    def __repr__(self):
+        """Function to display a MacularAnalysisDataframes.
+
+        Example of one dataframe :
+         ######## barSpeed28,5dps Y dataframe ########
+        ╒═════════════════════════════════════════════════╤══════════╤═════════╤═══════════╤═══════════╤═══════════╤══════════╤═══════════╤═══════════╤═══════════╤═══════════╤═══════════╤═══════════╤═══════════╤════════════╤══════════╕
+        │                                                 │      0.0 │   0.225 │      0.45 │     0.675 │       0.9 │    1.125 │      1.35 │     1.575 │       1.8 │     2.025 │      2.25 │     2.475 │       2.7 │      2.925 │     3.15 │
+        ╞═════════════════════════════════════════════════╪══════════╪═════════╪═══════════╪═══════════╪═══════════╪══════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╪════════════╪══════════╡
+        │ activation_time_VSDI_ms                         │ 290.2    │ 295     │ 291.8     │ 290.2     │ 288.6     │ 287      │ 287       │ 285.4     │ 287       │ 287       │ 288.6     │ 290.2     │ 291.8     │ 295        │ 290.2    │
+        ├─────────────────────────────────────────────────┼──────────┼─────────┼───────────┼───────────┼───────────┼──────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼────────────┼──────────┤
+        │ time_to_peak_VSDI_ms                            │ 523.8    │ 517.4   │ 514.2     │ 517.4     │ 511       │ 485.4    │ 477.4     │ 475.8     │ 475.8     │ 483.8     │ 509.4     │ 515.8     │ 514.2     │ 517.4      │ 523.8    │
+        ├─────────────────────────────────────────────────┼──────────┼─────────┼───────────┼───────────┼───────────┼──────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼────────────┼──────────┤
+        │ time_to_peak_FiringRate_GanglionGainControl_ms  │ 471      │ 471     │ 471       │ 471       │ 471       │ 471      │ 471       │ 471       │ 471       │ 471       │ 471       │ 471       │ 471       │ 471        │ 471      │
+        ├─────────────────────────────────────────────────┼──────────┼─────────┼───────────┼───────────┼───────────┼──────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼────────────┼──────────┤
+        │ peak_amplitude_VSDI                             │   0.014  │   0.012 │   0.013   │   0.014   │   0.016   │   0.027  │   0.038   │   0.039   │   0.038   │   0.028   │   0.016   │   0.014   │   0.013   │   0.012    │   0.015  │
+        ├─────────────────────────────────────────────────┼──────────┼─────────┼───────────┼───────────┼───────────┼──────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼────────────┼──────────┤
+        │ peak_amplitude_FiringRate_GanglionGainControl   │   0.002  │   0.01  │   0.053   │   0.265   │   1.128   │   3.57   │   5.985   │   6.672   │   6.028   │   3.664   │   1.173   │   0.277   │   0.056   │   0.011    │   0.002  │
+        ├─────────────────────────────────────────────────┼──────────┼─────────┼───────────┼───────────┼───────────┼──────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼────────────┼──────────┤
+        │ spatial_mean_horizontal_mean_section_fixed_edge │   0.0024 │   0.002 │   0.0022  │   0.0023  │   0.0026  │   0.0044 │   0.0061  │   0.0063  │   0.0061  │   0.0045  │   0.0026  │   0.0023  │   0.0022  │   0.002    │   0.0024 │
+        ├─────────────────────────────────────────────────┼──────────┼─────────┼───────────┼───────────┼───────────┼──────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼────────────┼──────────┤
+        │ spatial_peak_amplitudes_normalization           │  48      │   1.6   │  -6.03774 │  -7.57736 │  -7.88652 │  -7.9395 │  -7.94921 │  -7.95324 │  -7.94957 │  -7.93886 │  -7.89088 │  -7.59567 │  -6.14286 │   0.727273 │  52      │
+        ╘═════════════════════════════════════════════════╧══════════╧═════════╧═══════════╧═══════════╧═══════════╧══════════╧═══════════╧═══════════╧═══════════╧═══════════╧═══════════╧═══════════╧═══════════╧════════════╧══════════╛
+        """
+        # Initialisation of text to be displayed.
+        str_to_display = ""
+
+        # Loop through the dimensions to display.
+        for dimension in self.analysis_dataframes_levels["dimensions"].split(":"):
+            # Single dataframe cases.
+            if dimension in ["Conditions", "MetaConditions"]:
+                # Increment the display by adding the one of the current dataframe.
+                str_to_display += f"\n\n ######## {dimension} dataframe ######## \n"
+                str_to_display += tabulate(self.dict_analysis_dataframes[dimension], headers='keys',
+                                           tablefmt='fancy_grid')
+
+            # Case of dataframes divided into several conditions.
+            else:
+                # Loop through the dimensions to display.
+                for condition in self.analysis_dataframes_levels["conditions"].split(":"):
+                    # Increment the display by adding the one of the current dataframe.
+                    str_to_display += f"\n\n ######## {condition} {dimension} dataframe ######## \n"
+                    str_to_display += tabulate(self.dict_analysis_dataframes[dimension][condition], headers='keys',
+                                               tablefmt='fancy_grid')
+
+        return str_to_display
+
+    def print_specific_dataframes(self, dimensions="all", conditions="all"):
+        """Function to display specific dataframes of MacularAnalysisDataframes.
+
+        It is possible to specify which conditions or dimensions are displayed. To do this, the two corresponding
+        parameters are given a character string containing the names of the conditions and dimensions separated by ‘:’.
+
+        Example :
+         ######## barSpeed28,5dps Y dataframe ########
+        ╒═════════════════════════════════════════════════╤══════════╤═════════╤═══════════╤═══════════╤═══════════╤══════════╤═══════════╤═══════════╤═══════════╤═══════════╤═══════════╤═══════════╤═══════════╤════════════╤══════════╕
+        │                                                 │      0.0 │   0.225 │      0.45 │     0.675 │       0.9 │    1.125 │      1.35 │     1.575 │       1.8 │     2.025 │      2.25 │     2.475 │       2.7 │      2.925 │     3.15 │
+        ╞═════════════════════════════════════════════════╪══════════╪═════════╪═══════════╪═══════════╪═══════════╪══════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╪════════════╪══════════╡
+        │ activation_time_VSDI_ms                         │ 290.2    │ 295     │ 291.8     │ 290.2     │ 288.6     │ 287      │ 287       │ 285.4     │ 287       │ 287       │ 288.6     │ 290.2     │ 291.8     │ 295        │ 290.2    │
+        ├─────────────────────────────────────────────────┼──────────┼─────────┼───────────┼───────────┼───────────┼──────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼────────────┼──────────┤
+        │ time_to_peak_VSDI_ms                            │ 523.8    │ 517.4   │ 514.2     │ 517.4     │ 511       │ 485.4    │ 477.4     │ 475.8     │ 475.8     │ 483.8     │ 509.4     │ 515.8     │ 514.2     │ 517.4      │ 523.8    │
+        ├─────────────────────────────────────────────────┼──────────┼─────────┼───────────┼───────────┼───────────┼──────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼────────────┼──────────┤
+        │ time_to_peak_FiringRate_GanglionGainControl_ms  │ 471      │ 471     │ 471       │ 471       │ 471       │ 471      │ 471       │ 471       │ 471       │ 471       │ 471       │ 471       │ 471       │ 471        │ 471      │
+        ├─────────────────────────────────────────────────┼──────────┼─────────┼───────────┼───────────┼───────────┼──────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼────────────┼──────────┤
+        │ peak_amplitude_VSDI                             │   0.014  │   0.012 │   0.013   │   0.014   │   0.016   │   0.027  │   0.038   │   0.039   │   0.038   │   0.028   │   0.016   │   0.014   │   0.013   │   0.012    │   0.015  │
+        ├─────────────────────────────────────────────────┼──────────┼─────────┼───────────┼───────────┼───────────┼──────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼────────────┼──────────┤
+        │ peak_amplitude_FiringRate_GanglionGainControl   │   0.002  │   0.01  │   0.053   │   0.265   │   1.128   │   3.57   │   5.985   │   6.672   │   6.028   │   3.664   │   1.173   │   0.277   │   0.056   │   0.011    │   0.002  │
+        ├─────────────────────────────────────────────────┼──────────┼─────────┼───────────┼───────────┼───────────┼──────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼────────────┼──────────┤
+        │ spatial_mean_horizontal_mean_section_fixed_edge │   0.0024 │   0.002 │   0.0022  │   0.0023  │   0.0026  │   0.0044 │   0.0061  │   0.0063  │   0.0061  │   0.0045  │   0.0026  │   0.0023  │   0.0022  │   0.002    │   0.0024 │
+        ├─────────────────────────────────────────────────┼──────────┼─────────┼───────────┼───────────┼───────────┼──────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼───────────┼────────────┼──────────┤
+        │ spatial_peak_amplitudes_normalization           │  48      │   1.6   │  -6.03774 │  -7.57736 │  -7.88652 │  -7.9395 │  -7.94921 │  -7.95324 │  -7.94957 │  -7.93886 │  -7.89088 │  -7.59567 │  -6.14286 │   0.727273 │  52      │
+        ╘═════════════════════════════════════════════════╧══════════╧═════════╧═══════════╧═══════════╧═══════════╧══════════╧═══════════╧═══════════╧═══════════╧═══════════╧═══════════╧═══════════╧═══════════╧════════════╧══════════╛
+        """
+        # Gets all dimensions present in the MacularAnalysisDataframes.
+        if dimensions == "all":
+            dimensions = self.analysis_dataframes_levels["dimensions"]
+
+        # Gets all conditions present in the MacularAnalysisDataframes.
+        if conditions == "all":
+            conditions = self.analysis_dataframes_levels["conditions"]
+
+        # Initialisation of text to be displayed.
+        str_to_display = ""
+
+        # Loop through the dimensions to display.
+        for dimension in dimensions.split(":"):
+            # Single dataframe cases.
+            if dimension in ["Conditions", "MetaConditions"]:
+                # Increment the display by adding the one of the current dataframe.
+                str_to_display += f"\n\n ######## {dimension} dataframe ######## \n"
+                str_to_display += tabulate(self.dict_analysis_dataframes[dimension], headers='keys',
+                                           tablefmt='fancy_grid')
+
+
+            # Case of dataframes divided into several conditions.
+            else:
+                # Loop through the dimensions to display.
+                for condition in conditions.split(":"):
+                    # Increment the display by adding the one of the current dataframe.
+                    str_to_display += f"\n\n ######## {condition} {dimension} dataframe ######## \n"
+                    str_to_display += tabulate(self.dict_analysis_dataframes[dimension][condition], headers='keys',
+                                               tablefmt='fancy_grid')
+
+        print(str_to_display)
+        return str_to_display
+
+
     @staticmethod
     def get_maximal_index_multi_macular_dict_array(multi_macular_dict_array, name_index):
         """Creation of an empty dictionary of analysis dataframes.
