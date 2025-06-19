@@ -206,7 +206,7 @@ class MacularDictArray:
             dict_simulation_copy["path_pyb"] = dict_simulation_copy["path_csv"].replace("csv", "pyb")
         print(f"\n{dict_simulation_copy['path_pyb']}")
 
-        self.checking_pre_existing_file(dict_simulation_copy, dict_preprocessing_copy)
+        self.managing_pre_existing_file(dict_simulation_copy, dict_preprocessing_copy)
         self.save()
 
     @property
@@ -447,8 +447,8 @@ class MacularDictArray:
 
         return dict_preprocessing_cleaned
 
-    def checking_pre_existing_file(self, dict_simulation, dict_preprocessing):
-        """Checks that a pyb file corresponding to the file path in the
+    def managing_pre_existing_file(self, dict_simulation, dict_preprocessing):
+        """Managing that a pyb file corresponding to the file path in the
         simulation dictionary already exists.
 
         If the pyb file exists, it is imported into the MacularDictArray as a priority to save time and avoid
@@ -988,9 +988,10 @@ class MacularDictArray:
         """Class method to create several MultiDictArray in succession.
 
         MultiDictArrays are created from dictionaries of simulation and preprocessing dictionaries. Each specific
-        parameter of the MacularDictArray is associated with conditions (keys) whose names are not important here. In addition, it is
-        possible to create a key named ‘global’ which allows you to group together all the parameters whose values are
-        shared by all the MacularDictArray to be created.
+        parameter of the MacularDictArray is associated with conditions (keys) whose names are not important here. In
+        addition, it is possible to create a key named ‘global’ which allows you to group together all the parameters
+        whose values are shared by all the MacularDictArray to be created. The simulation and processing dictionaries
+        used to create each MacularDictArray are constructed by merging the condition and global dictionaries.
 
         Parameters
         ----------

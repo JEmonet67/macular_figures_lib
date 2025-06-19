@@ -12,7 +12,7 @@ from src.data_manager.MacularAnalysisDataframes import MacularAnalysisDataframes
 # Get data for test from relative path.
 path_data_test = os.path.normpath(f"{os.getcwd()}/../data_test/data_manager/")
 
-# Import of a initialized MacularAnalysisDataframes based on reduced MacularDictArray (100 first rows).
+# Import of an initialized MacularAnalysisDataframes based on reduced MacularDictArray (100 first rows).
 path_pyb_head100 = f"{path_data_test}/MacularAnalysisDataframes/initialized_macular_analysis_dataframe.pyb"
 with open(path_pyb_head100, "rb") as file:
     macular_analysis_dataframes_head100 = pickle.load(file)
@@ -313,7 +313,7 @@ multiple_dicts_analysis_default = {
                                    "analyses": "initial_amplitude", "flag": ""},
              "output": {"dimensions": "Conditions", "conditions": "all_conditions",
                         "measurements": "muVn_CorticalExcitatory", "analyses": "subtraction_excitatory_mean_voltage"},
-             "params": {"factor": 8}},
+             "params": {}},
             {"initial_value": {"dimensions": "Conditions", "conditions": "all_conditions",
                                "measurements": "muVn_CorticalInhibitory", "analyses": "peak_amplitude",
                                "flag": ""},
@@ -322,7 +322,7 @@ multiple_dicts_analysis_default = {
                                    "analyses": "initial_amplitude", "flag": ""},
              "output": {"dimensions": "Conditions", "conditions": "all_conditions",
                         "measurements": "muVn_CorticalInhibitory", "analyses": "subtraction_inhibitory_mean_voltage"},
-             "params": {"factor": 8}}
+             "params": {}}
         ],
         "normalization": [
             {"value_to_normalize": {"dimensions": "X:Y", "conditions": "all_conditions", "measurements": "VSDI",
@@ -622,7 +622,7 @@ def test_print_specific_dataframes():
 
 
 def test_make_from_dictionary():
-    # Import of a initialized reduced MacularAnalysisDataframes for tests.
+    # Import of an initialized reduced MacularAnalysisDataframes for tests.
     with open(path_pyb_head100, "rb") as file:
         macular_analysis_dataframes_test = pickle.load(file)
 
@@ -1896,7 +1896,7 @@ def test_setup_index_dictionary():
     with open(f"{path_data_test}/MacularAnalysisDataframes/index_dictionary_head100.pyb", "rb") as file:
         dict_index_correct = pickle.load(file)
 
-    # Import of a initialized MacularAnalysisDataframes based on reduced MacularDictArray (100 first rows).
+    # Import of an initialized MacularAnalysisDataframes based on reduced MacularDictArray (100 first rows).
     with open(path_pyb_head100, "rb") as file:
         macular_analysis_dataframes_head100_initialized = pickle.load(file)
 
@@ -2077,7 +2077,7 @@ def test_check_common_analysis_group_levels_size():
     common_analysis_group_levels_list = [("dimension1", "conditions1", "measurement1", "analysis1")]
 
     # Case of a list with a single element to be repeated 4 times.
-    assert MacularAnalysisDataframes.check_common_analysis_group_levels_size(
+    assert MacularAnalysisDataframes.check_common_analysis_group_coordinates_size(
         common_analysis_group_levels_list, 4) == common_analysis_group_levels_list_correct
 
     # Initialisation of the list of 4 elements.
@@ -2087,7 +2087,7 @@ def test_check_common_analysis_group_levels_size():
                                          ("dimension4", "conditions4", "measurement4", "analysis4")]
 
     # Case of a list whose number of elements matches the desired number.
-    assert MacularAnalysisDataframes.check_common_analysis_group_levels_size(
+    assert MacularAnalysisDataframes.check_common_analysis_group_coordinates_size(
         common_analysis_group_levels_list, 4) == common_analysis_group_levels_list
 
     # Initialisation of the list of 3 elements.
@@ -2097,7 +2097,7 @@ def test_check_common_analysis_group_levels_size():
 
     # Case of a list with fewer elements than desired and containing more than one element.
     try:
-        MacularAnalysisDataframes.check_common_analysis_group_levels_size(
+        MacularAnalysisDataframes.check_common_analysis_group_coordinates_size(
             common_analysis_group_levels_list, 6) == common_analysis_group_levels_list_correct
         assert False
     except ValueError:

@@ -14,78 +14,343 @@ from src.data_manager.ConditionsAnalyser import ConditionsAnalyser
 
 
 class MacularAnalysisDataframes:
-    """Summary
+    """The MacularAnalysisDataframe is a data structure containing a set of analyses performed on different measurements
+    and based on a particular dimension of several MacularDictArrays.
 
-    Explanation
+    The core of MacularAnalysisDataframes is a set of dataframes containing all the analyses performed. These dataframes
+    are organised within a dictionary, grouped by dimension and, when necessary, by simulation conditions. Curently,
+    MacularAnalysisDataframes consist of five different dimensions: horizontal (X) and vertical (Y) spatial dimensions,
+    the time dimension, the simulation conditions dimension, and finally the MetaConditions dimension, which contains
+    the analysis results summarising all conditions.
+
+    The positions of the analyses or meta-analyses contained in these dataframes follow an analysis coordinate system.
+    These coordinates are composed of five hierarchical levels present in the MacunarAnalysisDataframes, which allow
+    each analysis to be distinguished. The first level is that of dimensions ("X", "Y", "Conditions"), which allows the
+    dataframe to be determined. The second level is that of conditions ("barSpeed30dps", "ampGang30Hz"), which are used
+    to determine either the dataframe or which column of the dataframe. The third is the simulation measurement used
+    ("VSDI", "FiringRate_GanglionGainControl"), the fourth is the type of analysis used ("latency", "peak_amplitude"),
+    and the last is a ‘flag’ label used to characterise each group of common analyses. These last three are used
+    together to determine the name of the row where the analysis is located. Each analysis is therefore associated with
+    a unique analysis coordinate tuple: (dimension, condition, measurement, analysis, flag).
+
+    Each of these dimensional dataframes can be filled by performing various analyses. All analyses extract specific
+    information from a series of MacularDictArrays, each associated with a simulation condition. Each MacularDictArray
+    is characterised by data, indexes and two configuration dictionaries for simulation and for the pre-processing that
+    needed to be carried out. These two dictionaries will be stored in the MacularAnalysisDataframes to keep track of
+    these configuration files. However, the data and indexes are not stored as they are potentially too large.
+
+    Each analysis is specific to one or more dimensions of the MacularAnalysisDataframes. The type of information
+    extracted and how it is extracted varies depending on how the analysis was implemented. A number of default analyses
+    have been created, but it is possible for each developer to contribute their own analyses. To do this, simply create
+    the new analysis function with the three arguments ‘data’, “index” and ‘parameters_analysis_dict’ and then add it to
+    the list of analyses available within the make_dimension_dataframes_analysis function of the corresponding dimension
+    dataframe (e.g. make_spatial_dataframes_analysis).
+
+    In addition to analyses, there are also meta-analyses, which define analyses based on other pre-existing analyses.
+    Here again, there are default meta-analyses, but it is possible to add more within the make_meta_analysis_dataframes
+    _analysis. Each meta-analysis function has four arguments: ‘macular_analysis_dataframes’,‘meta_analysis_dictionary’,
+    “index”, ‘parameters_meta_analysis_dict’. Meta-analyses are a little more complex to create than analyses. This is
+    because each one requires a number of arguments to be defined, which will contain the analyses used when calculating
+    the meta-analysis, as well as outputs representing the output analyses to which the various results should be saved.
+    A single meta-analysis can lead to several results that can be saved in completely different dataframes. The
+    developer must determine which arguments and outputs are necessary for the meta-analysis. In practice, each argument
+    and output can be associated with analyses from various dimensions and conditions. However, some outputs may also be
+    dedicated to a particular dimension and/or condition. In this case these particular dimensions and conditions are
+    defined in the implementation of the meta-analysis function and only the name of the output needs to be provided by
+    the user. Some meta-analyses may also require an undefined and potentially unlimited number of outputs for a single
+    meta-analysis. To do this, simply store them all in a single output in the form of a character string, all separated
+    by ‘;’.
+
+    In order to perform all these analyses, MacularAnalysisDataframes uses a master plan, which is the multiple analysis
+    dictionary provided as input to the class constructor. This plan is structured as a succession of dictionaries
+    nested within each other. The first level of the dictionary contains the path to the pyb file where
+    MacularAnalysisDataframes is to be saved. This path will be removed from the dictionary and added to the dictionary
+    attribute containing all file paths. The other keys in this first level are the four dimensions that can be used for
+    analyses (X, Y, Time, Conditions) and the ‘MetaAnalysis’ key. The second level of the dictionary consists of all the
+    types of analyses. From there, in the case of simple analyses, each type of analysis is associated with a list
+    containing dictionaries of groups of common analyses. These are all the identical analyses performed on an entire
+    batch of dimensions, conditions and measurements. The order of this list is important in defining the order in which
+    each different analysis will be performed. This organisation allows for a more condensed writing of the lists of
+    analyses to be performed. The dictionary of common analysis groups is thus composed here of the two keys
+    ‘measurements’ and ‘conditions’. For each of these, we associate a character string containing all the names of
+    measurements and conditions that are included in the group, all separated by ‘:’. In addition to this, we also have
+    another key, ‘params’, associated with the dictionary of constant analysis parameters within the common analysis
+    group. Once uncompressed, these dictionaries are transformed into a list containing all the coordinates of the
+    analyses to be performed. Each coordinate corresponds to a combination of the different possible values for the
+    measurements and conditions. When creating a new analysis (or meta-analysis), it is important not to forget to also
+    add it to the multiple analysis dictionary.
+
+    For meta-analyses, there is an intermediate dictionary level that is added to the list of common analysis groups.
+    This level corresponds to the arguments and outputs of the meta-analysis. It also contains the ‘params’ key with the
+    meta-analysis parameter dictionary. It is called a common meta-analysis group because it groups together all
+    meta-analyses performed on different dimensions, conditions and measures. In the case of meta-analyses, we have a
+    dictionary of common analysis groups composed of 5 keys corresponding to a hierarchical level different from the
+    MacularAnalysisDataframes (dimensions, conditions, measurements, types of analyses and flag). Once again, it is in
+    condensed form with the names that each hierarchical level will take, separated by ‘:’. Once decondensed, it will
+    also provide all the coordinates of the analyses to be used for each argument and output.
 
     Attributes
     ----------
-    dict_paths_pyb : dict of str
-        Dictionnaire associant les conditions d'un MacularDictArray multiple avec le path de leur fichier pyb.
+    dict_paths_pyb : dict of dict and dict of str
+        Dictionary containing all important path pyb of MacularAnalysisDataframes.
 
-    dict_analysis_dataframes : dict of pd.DataFrame
-        Summary attr1
+        The dictionary is constructed with a first key ‘self’ associated with the path of the pyb file of the current
+        MacularAnalysisDataframes. The second key ‘MacularDictArrays’ is linked to a dictionary containing all the paths
+        of the conditions of the multiple MacularDictArray used.
+
+    dict_analysis_dataframes : dict of dict or pd.DataFrame
+        Dictionary containing all dataframes in which analyses or meta-analyses are placed. Each dataframe represents a
+        dimension of the MacularAnalysisDataframes, whose columns are the different values of the dimension and the
+        rows are the names of the analyses.
+
+        The dictionary contains 5 dimensions associated with dataframes:
+        - ‘X’ contains the analyses represented according to the spatial dimension X. Each column corresponds to a
+        spatial index on the horizontal axis.
+        - ‘Y’ contains the analyses represented according to the spatial dimension Y. Each column corresponds to a
+        spatial index on the vertical axis.
+        - ‘Time’ groups together the analyses expressed in terms of time. Each column corresponds to a time in the
+        simulation.
+        - ‘Conditions’ consists of analyses depending on the simulation condition. Each column is one simulation
+        condition. The dataframe contains the first lines summarising the values of each of the parameters
+        distinguishing each condition. To do this, the condition must follow the format ‘NameValueUnit1_NameValueUnit2’.
+        - ‘MetaConditions’ is a dataframe that brings together all the analyses summarising all the conditions. It is
+        composed of a single “overall” column.
+
+        The spatial and temporal dimensions (X, Y, Time) of the dataframe dictionary are each associated with a second
+        level of dictionary corresponding to the simulation conditions. This is because each spatial or temporal
+        analysis performed depends on this condition.
+
+        The positions of the analyses or meta-analyses contained in these dataframes follow an analysis coordinate
+        system. These coordinates are composed of five hierarchical levels present in the MacunarAnalysisDataframes,
+        which allow each analysis to be distinguished. The first level is that of dimensions, which allows the dataframe
+        to be determined. The second level is that of conditions, which are used to determine either the dataframe or
+        which column of the dataframe. The third is the simulation measure used, the fourth is the type of analysis
+        used, and the last is a ‘flag’ label used to characterise each group of common analyses. These last three are
+        used together to determine the name of the row where the analysis is located. Each analysis is therefore
+        associated with a unique analysis coordinate tuple: (dimension, condition, measurement, analysis, flag).
 
     multiple_dicts_analysis : dict of dict
-        Dictionaries containing all analyses to be performed for each dimension of the MacularAnalysisDataframes.
+        Dictionaries containing all analyses or meta-analyses to be performed for each dimension of the
+        MacularAnalysisDataframes, in a condensed format.
 
-        The dictionary consists of a series of dictionaries included in the previous one, each representing a
-        hierarchical level of the analysis to be performed. The keys of the first dictionary are those of the
-        dimensions of the MacularAnalysisDataframes (‘Conditions’, ‘X’, ‘Y’, ‘Time’). The keys of the second
-        dictionary are those of the analyses to be performed on the given dimension. For each of these analyses,
-        there is a list of dictionaries, each representing a group of common analyses. These groups of common
-        analyses are a conditions and measurements for which the same analysis is performed with the same parameters.
-        The order in which the different dictionaries of common analysis groups are arranged in the list also defines
-        the order in which they will be performed. Thus, if two common analysis groups modify the same line of a
-        dataframe, it will be the last group in the list that will leave its value.
+        The dictionary initially contains a key ‘path_pyb’ which corresponds to the path of the pyb file in which the
+        MacularAnalysisDataframes will be saved. The rest of the dictionary consists of a series of dictionaries
+        included in the previous one, each representing a hierarchical level of the analysis to be performed. The keys
+        of the first dictionary are those of the dimensions of the MacularAnalysisDataframes (‘Conditions’, ‘X’, ‘Y’,
+        ‘Time’, 'MetaAnalysis'). The keys of the second dictionary are those of the analyses to be performed on the
+        given dimension. The rest of the data structure differs depending on whether you are considering analyses or
+        meta-analyses. Analyses concern all dimensions of the first dictionary except for the ‘MetaAnalysis’ key, which
+        corresponds to meta-analyses. Meta-analyses are analyses performed solely on the basis of other analyses from
+        the MacularAnalysisDataframes.
 
-        The dictionaries for these groups of common analyses must contain a ‘conditions’ and ‘measurements’ key, both
-        associated with all the names of the conditions and measurements included in that group. These names are in
-        the form of a string where each name is separated by ‘:’ as in, for example: ‘barSpeed15dps:barSpeed30dps’
-         or ‘FiringRate_GanglionGainControl:VSDI’. The dictionary also contains a “params” key associated with a
-        final dictionary level containing the parameters to be used for the analysis. The parameters to be used
-        depend on the analysis, but all have a ‘flag’ parameter that allows add a suffix behind the name of the
-        analysis used to create a new line in the corresponding dataframe in order to differentiate it from other
-        similar analyses. For example, to differentiate two ‘activation_time’ with two different thresholds, two
+        For each analyses, there is a list of dictionaries, each representing a group of common analyses. This is a set
+        of measurements for certain conditions and dimensions that undergo the same analysis process (identical
+        parameters). The order in which these dictionaries are entered is important, especially if two dictionaries
+        cause analyses at the same position in the MacularAnalysisDataframes. The common analysis group dictionary
+        contains a key for each hierarchical level of the MacularAnalysisDataframes. In the case of analyses, simply add
+        the two levels ‘conditions’ and ‘measurements’ because the other two, “dimensions” and ‘analysis type’, are
+        present in the keys of the dictionaries in which they are found. For each hierarchical level, enter a character
+        string with all the names of the hierarchical levels for which the same analysis must be performed and separated
+        by ‘:’ (‘barSpeed15dps:barSpeed30dps’ or ‘FiringRate_GanglionGainControl:VSDI’). Finally there is also a
+        ‘params’ key that contains the dictionary of constant parameters for the analysis or meta-analysis. It is in
+        this dictionary that the last hierarchical level ‘flag’ must be entered, which serves as a suffix indicating the
+        group of common analyses. For example, to differentiate two ‘activation_time’ with two different thresholds, two
         flags can be used:‘flag’:‘threshold0,1’ and ‘flag’:‘threshold0,05’ which gives two column names in the
-        dataframe: ‘activation_time_threshold0,1’ and 'activation_time_threshold0,05’.
+        dataframe: ‘activation_time_threshold0,1’ and 'activation_time_threshold0,05’. Note that there is an exception
+        for the ‘sorting’ analysis located in the ‘Conditions’ dictionary. This is a global analysis that contains only
+        a character string corresponding to the sorting type of the condition names in the conditions dataframe.
 
-        There is a special case with the ‘MetaAnalysis’ key in the multiple analysis dictionary. This dictionary is
-        used to perform analyses using other analyses already performed within the MacularAnalysisDataframes. In
-        this case, the analysis key (second dictionary level) is associated with an additional dictionary level
-        used for meta-analysis. This dictionary level contains a first key ‘params’ containing any parameters that
-        do not depend on existing analyses. In addition, there are keys associated with the various arguments
-        required to perform the meta-analysis function. These arguments are associated with a list of groups of
-        common analyses in the form of dictionaries. These are all the analyses to be retrieved and used in the
-        meta-analysis calculation. Their dictionary contains keys ‘conditions’, ‘measurements’, “dimensions” and
-        ‘analyses’. Each of these is associated with a string of all the names of the common analysis group
-        separated by ‘:’.
+        In the case of meta-analyses, the meta-analysis key is associated with a list of dictionaries containing groups
+        of common meta-analyses. The order of the list is important. Each group of common meta-analyses is a batch of
+        analyses, measurements under certain conditions, dimensions sharing the same meta-analysis processing. Each of
+        these dictionaries has a key for each of the arguments needed to calculate the meta-analysis, as well as outputs
+        to which the various results should be sent. There is also a ‘params’ key with the meta-analysis parameter
+        dictionary, which may also contain output names, but all of the coordinates for this output must be defined by
+        the meta-analysis function. The number and name of the arguments and outputs (in params or not) are specified
+        when the meta-analysis function is created. Each of the argument or output keys is associated with a dictionary
+        of common analysis groups.
 
-        Global aliases can be used for each element used in the common analysis group. These aliases allow you to
-        retrieve all possible elements (conditions, measurements, dimensions, analyses). In the case of
-        ‘measurements’ and 'analyses', the possible elements vary depending on the dimensions and conditions present
-        in the multiple analysis group. Aliases must contain the prefix ‘all_’ followed by the element from which
-        you want to retrieve everything. These aliases are substituted within the MacularAnalysisDataframes by the
-        getter of the multiple analysis dictionary. Be careful to only group together analyses that share the same
-        configurations.
+        These dictionaries of common analyses used for meta-analyses differ in a few ways from those used for analyses.
+        Firstly, they contain the five hierarchical levels used as coordinates to find the position in the
+        MacularAnalysisDataframes (dimensions, conditions, measurements, analyses, flag). In the case of meta-analysis
+        outputs, the ‘measurements’ key in the dictionary may be empty as it is optional. However, it may be filled in
+        for traceability purposes. It is also preferable to remove it when it comes to arguments retrieving results from
+        previous meta-analyses. This absence of measurements is still considered by the system as a measure in itself
+        and will suffice to differentiate between two analyses. Another exception concerns the possibility of placing
+        the alias ‘overall’ within the “conditions” key when the dimension is that of ‘conditions’. This alias allows
+        the meta-analysis to be performed directly on the array of analyses according to the conditions instead of
+        performing a repeated meta-analysis for each condition. This alias is particularly useful in the context of
+        meta-analyses with outputs directed to the 5th dimension ‘MetaConditions’, which is only accessible for
+        meta-analyses. This dataframe groups together analyses summarising all the conditions. An example would be the
+        calculation of slopes or inflection points of a fit of a given analysis expressed as a function of conditions.
+        The dictionary of common analysis groups in the output must have a ‘dimensions’ key equal to ‘MetaConditions’
+        and a “conditions” key equal to ‘overall’ which is the only column in the dataframe. In the case of
+        meta-analyses, the meta-analysis key is associated with a list of dictionaries containing groups of common
+        meta-analyses. The order of the list is important.  Each group of common meta-analyses is a batch of analyses,
+        measurements under certain conditions, dimensions sharing the same meta-analysis processing. Each of these
+        dictionaries has a key for each of the arguments needed to calculate the meta-analysis, as well as outputs to
+        which the various results should be sent. There is also a ‘params’ key with the meta-analysis parameter
+        dictionary, which may also contain output names, but all of the coordinates for this output must be defined by
+        the meta-analysis function. The number and name of the arguments and outputs (in params or not) are specified
+        when the meta-analysis function is created. Each of the argument or output keys is associated with a dictionary
+        of common analysis groups.
+        Example :"output": {"dimensions": "MetaConditions", "conditions": "overall", "measurements": "VSDI", "analyses":
+        "horizontal_slope_anticipation_range"}
 
-        In certain specific cases, the analysis key may be associated only with a Boolean, an int or a float, as with
-        the ‘sorting’ analysis for sorting condition names.
+        The common analysis groups detailed above are used to reduce and condense the writing of all the analyses to be
+        performed and their respective coordinates. The structure can be summarised as a dictionary with a key for each
+        of the hierarchical levels of the MacularAnalysisDataframes (dimensions, conditions, measurements, analyses,
+        flag). Each key is associated with a character string containing all the names of the hierarchical levels
+        included in the common analysis group. These names are separated by ‘:’. In the case of the “analyses” and
+        ‘flag’ levels, only one hierarchical level name is allowed. All equivalent analyses of common analysis groups
+        will be performed indifferently for all combinations of dimensions, conditions and measurements present in the
+        group. Thus, after decondensation, a list of analysis coordinates corresponding to all combinations between the
+        different names of hierarchical levels is obtained. In the case of a meta-analysis, a list of analysis
+        coordinates is available for each argument and output. In this context, it is crucial that all lists are the
+        same size. To achieve this, it is important to use common analysis groups with the same number of dimension
+        names, conditions and measurements. An exception is allowed for lists of size 1, which will be repeated as many
+        times as necessary for each analysis.
 
+        Global aliases can be used for each element used in common analysis group dictionaries. These aliases are used
+        when you want to use all the hierarchical level names available in the MacularAnalysisDataframes. This avoids
+        having to enter all the names one by one. In the case of “measurements” and “analyses”, the possible
+        hierarchical level names vary depending on the dimensions and conditions present in the multiple analysis group.
+        These aliases are constructed from the name of the hierarchical level for which all available names are desired,
+        preceded by the prefix ‘all_’. These aliases are substituted within the MacularAnalysisDataframes by the getter
+        of the multiple analysis dictionary. This allows both the original dictionary and the substituted dictionary to
+        be retained.
+
+        Example :
+        "path_pyb": "path/to/file.pyb,
+        "Conditions": {
+            "sorting": "NameValueUnit",
+            "peak_amplitude": [{"conditions": "all_conditions",
+                            "measurements": "FiringRate_GanglionGainControl:VSDI:"
+                                            "muVn_CorticalExcitatory:muVn_CorticalInhibitory",
+                            "params": {"x": 36, "y": 7, "flag": ""}}]
+        },
+        "X": {
+            "activation_time": [{"conditions": "all_conditions", "measurements": "VSDI",
+                             "params": {"threshold": 0.001, "threshold_type": "static", "index": "temporal_ms", "y": 7,
+                                        "flag": "ms"}}],
+            "latency": [{"conditions": "all_conditions", "measurements": "VSDI",
+                     "params": {"threshold": 0.001, "threshold_type": "static", "index": "temporal_centered_ms",
+                                "y": 7, "axis": "horizontal", "flag": "ms"}}],
+            "time_to_peak": [{"conditions": "all_conditions", "measurements": "VSDI:FiringRate_GanglionGainControl",
+                          "params": {"index": "temporal_ms", "y": 7, "flag": "ms"}}],
+            "spatial_mean": [{"conditions": "all_conditions", "measurements": "vertical_mean_section_max_ratio_threshold",
+                          "params": {"axis": 0, "flag": ""}}]
+        },
+        "Y": {
+            "activation_time": [{"conditions": "all_conditions", "measurements": "VSDI",
+                                 "params": {"threshold": 0.001, "threshold_type": "static", "index": "temporal_ms",
+                                            "x": 36, "flag": "ms"}}],
+            "time_to_peak": [{"conditions": "all_conditions", "measurements": "VSDI:FiringRate_GanglionGainControl",
+                              "params": {"index": "temporal_ms", "x": 36, "flag": "ms"}}]
+        },
+        "MetaAnalysis": {
+            "peak_speed": [
+                {"time_to_peak": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                                  "analyses": "time_to_peak", "flag": "ms"},
+                 "params": {"output": "horizontal_peak_speed", "index": "spatial_x", "n_points": 100, "breaks": "auto"}}
+            ],
+            "stationary_peak_delay": [
+                {"peak_delay": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                                "analyses": "peak_delay", "flag": "ms"},
+                 "params": {"output": "VSDI_horizontal_stationary_peak_delay_ms"}},
+            ],
+            "linear_fit": [
+                {"data_to_fit": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                                 "analyses": "activation_time", "flag": "ms"},
+                 "output_slopes": {"dimensions": "Conditions", "conditions": "all_conditions", "measurements": "VSDI",
+                                   "analyses": "horizontal_first_slope_speed;horizontal_second_slope_speed;"
+                                               "horizontal_third_slope_speed;horizontal_fourth_slope_speed"},
+                 "output_inflection_points_data": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                                   "measurements": "VSDI",
+                                                   "analyses": "horizontal_first_inflection_point;"
+                                                               "horizontal_second_inflection_point;"
+                                                               "horizontal_third_inflection_point"},
+                 "output_inflection_points_index": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                                    "measurements": "VSDI",
+                                                    "analyses": "horizontal_first_inflection_point_time;"
+                                                                "horizontal_second_inflection_point_time;"
+                                                                "horizontal_third_inflection_point_time"},
+                 "output_index_prediction": {"dimensions": "X", "conditions": "all_conditions",
+                                             "measurements": "VSDI",
+                                             "analyses": "horizontal_data_to_fit_index_prediction"},
+                 "output_data_prediction": {"dimensions": "X", "conditions": "all_conditions",
+                                            "measurements": "VSDI",
+                                            "analyses": "horizontal_data_to_fit_data_prediction"},
+                 "output_data_intercepts": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                            "measurements": "VSDI",
+                                            "analyses": "first_horizontal_data_intercept_VSDI;"
+                                                        "second_horizontal_data_intercept_VSDI"},
+                 "output_index_intercepts": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                             "measurements": "VSDI",
+                                             "analyses": "first_horizontal_data_intercept_VSDI,5dps_VSDI;"
+                                                         "second_horizontal_data_intercept_VSDI"},
+                 "params": {"n_segments": 4, "index": "spatial_x", "n_points": 100, "breaks": "auto"}},
+
+                {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "",
+                                 "analyses": "horizontal_anticipation_range", "flag": ""},
+                 "output_slopes": {"dimensions": "MetaConditions", "conditions": "overall", "measurements": "VSDI",
+                                   "analyses": "horizontal_slope_anticipation_range"},
+                 "params": {"n_segments": 1, "index": "barSpeed", "n_points": 100, "breaks": "auto"}},
+            ],
+            "anticipation_fit": [
+                {"activation_time": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                                     "analyses": "activation_time", "flag": "ms"},
+                 "params": {"output_slopes": "horizontal_short_range_anticipation_speed_dpms;"
+                                             "horizontal_long_range_anticipation_speed_dpms",
+                            "output_anticipation_range": "horizontal_anticipation_range",
+                            "output_index_prediction": "horizontal_anticipation_index_prediction",
+                            "output_data_prediction": "horizontal_anticipation_data_prediction",
+                            "n_segments": 2, "index": "spatial_x", "n_points": 100, "breaks": "auto"}}
+            ],
+            "maximal_latency": [
+                {"latency": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
+                             "analyses": "latency", "flag": "ms"},
+                 "anticipation_range": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                        "measurements": "",
+                                        "analyses": "horizontal_anticipation_range", "flag": ""},
+                 "params": {"output": "horizontal_maximal_latency_ms", "index": "spatial_x"}}
+            ],
+            "subtraction": [
+                {"initial_value": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                   "measurements": "muVn_CorticalExcitatory", "analyses": "peak_amplitude",
+                                   "flag": ""},
+                 "values_subtracted": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                       "measurements": "muVn_CorticalExcitatory",
+                                       "analyses": "initial_amplitude", "flag": ""},
+                 "output": {"dimensions": "Conditions", "conditions": "all_conditions",
+                            "measurements": "muVn_CorticalExcitatory", "analyses": "subtraction_excitatory_mean_voltage"},
+                 "params": {}}
+            ],
+            "normalization": [
+                {"value_to_normalize": {"dimensions": "Conditions", "conditions": "all_conditions",
+                                        "measurements": "muVn_CorticalExcitatory", "analyses": "peak_amplitude",
+                                        "flag": ""},
+                 "baseline": {"dimensions": "Conditions", "conditions": "all_conditions",
+                              "measurements": "muVn_CorticalExcitatory", "analyses": "initial_amplitude", "flag": ""},
+                 "output": {"dimensions": "Conditions", "conditions": "all_conditions",
+                            "measurements": "muVn_CorticalExcitatory", "analyses": "normalized_excitatory_mean_voltage"},
+                 "params": {"factor": 1}}
+            ]
+        }
 
     multiple_dicts_simulations : dict of dict
-        Dictionary associating simulation dictionaries with multiple conditions
+        Dictionary grouping together dictionaries of simulations of each condition present in the multiple macular
+        dict array analysed in this MacularAnalysisDataframes.
 
-        The dictionary may  also contain a ‘global’ key containing parameters shared between all simulations. The
-        simulation dictionary cannot be empty or contains only a ‘global’ key. There must be at least one
-        difference, such as the pyb file name. It is possible to enter simulation dictionaries that only contain the
-        path of the pyb file.
+        Each dictionary is retrieved from each MacularDictArray. They are therefore already cleaned of any empty fields
+        and do not contain any pyb file paths or ‘global’ keys.
 
     multiple_dicts_preprocessings : dict of dict
-        Dictionary associating preprocessing dictionaries with multiple conditions
+        Dictionary grouping together dictionaries of preprocessing of each condition present in the multiple macular
+        dict array analysed in this MacularAnalysisDataframes.
 
-        The dictionary may also contain a ‘global’ key containing parameters shared between all preprocessing of
-        MacularDictArray. The preprocessing dictionary can be empty or contains only a ‘global’ key.
+        Each dictionary is retrieved from each MacularDictArray. They are therefore already cleaned of any empty fields
+        and do not contain any ‘global’ keys.
 
     condition_reg : re.Pattern
         Regular expression to extract the name of the condition, its value and its unit from the keys of the
@@ -93,18 +358,19 @@ class MacularAnalysisDataframes:
 
         This pattern is primarily used to sort conditions in the ‘Conditions’ dataframe of MacularAnalysisDataframes.
         By default, the regular expression entered allows you to read conditions that follow a ‘NameValueUnit’ format.
+        For example : "barSpeed6dps" or "ampGang30Hz".
 
     analysis_dataframes_levels : dict of str or dict of dict
         Container grouping all the names of conditions, measurements, dimensions and analyses found in the
         MacularAnalysisDataframes or associated multiple Macular Dict Array, separated by ‘:’.
 
-        The first key "conditions" is associated to a character string with conditions names separated by ":". The
-        second key "measurements" is a dictionary associating the conditions of a multiple macular dict array as keys
-        with values corresponding to the names of the measurements present in each of the MacularDictArray. The names
-        of the measurements are also separated by ‘:’. La troisième clé "dimensions" est associée à une chaîne de caractères
-        avec toutes les dataframes de dimension contenu dans le MacularAnalysisDataframes actuel. La dernière clé "analyses"
-        est aussi un dictionnaire contenant des les noms des dimensions associés à un second dictionnaire avec des pairs
-        de noms de conditions et des noms des analyses dans le dataframe de cette dimension et de cette condition.
+        The first key "conditions" is associated to a character string with all conditions names. The second key,
+        ‘measurements’, is associated with another dictionary level linking each MacularDictArray condition with all the
+        measurements they contain. The third key, “dimensions”, is associated with a character string containing all the
+        dimension dataframes contained in the current MacularAnalysisDataframes. The last key, ‘analyses’, contains two
+        other dictionary levels. The first dictionary corresponds to the dimensions of the dataframes, while the second
+        contains the conditions for each MacularDictArray. This allows all analyses for each dimension dataframe and for
+        each condition to be stored.
 
         Example :
         {
@@ -122,18 +388,27 @@ class MacularAnalysisDataframes:
             'Time': {'barSpeed6dps': '', 'barSpeed15dps': '', 'barSpeed30dps': ''}
             }
         }
-
-    Example
-    ----------
-    >>> instruction
-    result instruction
-
     """
 
     def __init__(self, multi_macular_dict_array, multiple_dicts_analysis):
-        """Summary
+        """Function for constructing a MacularAnalysisDataframes.
 
-        Explanation
+        The function begins by extracting the path to the pyb file and removing it from the multiple analysis
+        dictionary. It continues by cleaning up the same dictionary to remove any empty fields. Once finished, it can
+        begin creating or loading the MacularAnalysisDataframes.
+
+        Before creating a new MacularAnalysisDataframes, the function will search for the existence of a pyb file at the
+        path specified in the multiple analysis dictionary. If the file does not exist,  a new MacularAnalysisDataframes
+        will be constructed and saved at that location. If a file exists, it is loaded to save time. The multiple
+        analysis dictionary of the MacularAnalysisDataframes that has been loaded is then compared with the one given as
+        input to the __init__ function. If there is a difference,between the two dictionaries, it will be up to the user
+        to decide whether to keep the pyb loaded from the file or creating a new MacularAnalysisDataframes based on the
+        multiple analysis dictionary provided as input. In this case, the MacularAnalysisDataframes will be saved and
+        will therefore replace the existing pyb file.
+
+        In the event that the multiple analysis dictionary provided as input contains only a single key for the path to
+        the pyb file, then the MacularAnalysisDataframes will simply be loaded without comparisons. In this context, the
+        multiple analysis dictionary would be empty once the pyb path is extracted.
 
         Parameters
         ----------
@@ -144,50 +419,57 @@ class MacularAnalysisDataframes:
             and another for the pre-processing it has undergone.
 
         multiple_dicts_analysis : dict of dict
-            Dictionaries containing all analyses to be performed for each dimension of the MacularAnalysisDataframes.
+            Dictionaries containing all analyses or meta-analyses to be performed for each dimension of the
+            MacularAnalysisDataframes, in a condensed format.
 
-            The dictionary consists of a series of dictionaries included in the previous one, each representing a
-            hierarchical level of the analysis to be performed. The keys of the first dictionary are those of the
-            dimensions of the MacularAnalysisDataframes (‘Conditions’, ‘X’, ‘Y’, ‘Time’). The keys of the second
-            dictionary are those of the analyses to be performed on the given dimension. For each of these analyses,
-            there is a list of dictionaries, each representing a group of common analyses. These groups of common
-            analyses are a conditions and measurements for which the same analysis is performed with the same
-            parameters. The order in which the different dictionaries of common analysis groups are arranged in the
-            list also defines the order in which they will be performed. Thus, if two common analysis groups modify the
-            same line of a dataframe, it will be the last group in the list that will leave its value.
+            The dictionary initially contains a key ‘path_pyb’ which corresponds to the path of the pyb file in which
+            the MacularAnalysisDataframes will be saved. The rest of the dictionary consists of a series of dictionaries
+            included in the previous one, each representing a hierarchical level of the analysis to be performed. The
+            keys of the first dictionary are those of the dimensions of the MacularAnalysisDataframes (‘Conditions’,
+            ‘X’, ‘Y’, ‘Time’, 'MetaAnalysis'). The keys of the second dictionary are those of the analyses to be
+            performed on the given dimension. The rest of the data structure differs depending on whether you are
+            considering analyses or meta-analyses. Analyses concern all dimensions of the first dictionary except for
+            the ‘MetaAnalysis’ key, which corresponds to meta-analyses. Meta-analyses are analyses performed solely on
+            the basis of other analyses from the MacularAnalysisDataframes.
 
-            The dictionaries for these groups of common analyses must contain a ‘conditions’ and ‘measurements’ key,
-            both associated with all the names of the conditions and measurements included in that group. These names
-            are in the form of a string where each name is separated by ‘:’ as in, for example:
-            ‘barSpeed15dps:barSpeed30dps’ or ‘FiringRate_GanglionGainControl:VSDI’. The dictionary also contains a
-            “params” key associated with a final dictionary level containing the parameters to be used for the analysis.
-            The parameters to be used depend on the analysis, but all have a ‘flag’ parameter that allows add a suffix
-            behind the name of the analysis used to create a new line in the corresponding dataframe in order to
-            differentiate it from other similar analyses. For example, to differentiate two ‘activation_time’ with two
-            different thresholds, two flags can be used:‘flag’:‘threshold0,1’ and ‘flag’:‘threshold0,05’ which gives two
-            column names in the dataframe: ‘activation_time_threshold0,1’ and 'activation_time_threshold0,05’.
+            For each analyses, there is a list of dictionaries, each representing a group of common analyses. This is a
+            set of measurements for certain conditions and dimensions that undergo the same analysis process (identical
+            parameters). The order in which these dictionaries are entered is important, especially if two dictionaries
+            cause analyses at the same position in the MacularAnalysisDataframes. The common analysis group dictionary
+            contains a key for each hierarchical level of the MacularAnalysisDataframes. In the case of analyses, simply
+            add the two levels ‘conditions’ and ‘measurements’ because the other two, “dimensions” and ‘analysis type’,
+            are present in the keys of the dictionaries in which they are found. For each hierarchical level, enter a
+            character string with all the names of the hierarchical levels for which the same analysis must be performed
+            and separated by ‘:’ (‘barSpeed15dps:barSpeed30dps’ or ‘FiringRate_GanglionGainControl:VSDI’). Finally,
+            there is also a ‘params’ key that contains the dictionary of constant parameters for the analysis or
+            meta-analysis. This dictionary is where the last hierarchical level ‘flag’ must be entered, which serves as
+            a suffix indicating the group of common analyses. For example, to differentiate two ‘activation_time’ with
+            two different thresholds, two flags can be used:‘flag’:‘threshold0,1’ and ‘flag’:‘threshold0,05’ which gives
+            two column names in the dataframe: ‘activation_time_threshold0,1’ and 'activation_time_threshold0,05’. Note
+            that there is an exception for the ‘sorting’ analysis located in the ‘Conditions’ dictionary. This is a
+            global analysis that contains only a character string corresponding to the sorting type of the condition
+            names in the conditions dataframe.
 
-            There is a special case with the ‘MetaAnalysis’ key in the multiple analysis dictionary. This dictionary is
-            used to perform analyses using other analyses already performed within the MacularAnalysisDataframes. In
-            this case, the analysis key (second dictionary level) is associated with an additional dictionary level
-            used for meta-analysis. This dictionary level contains a first key ‘params’ containing any parameters that
-            do not depend on existing analyses. In addition, there are keys associated with the various arguments
-            required to perform the meta-analysis function. These arguments are associated with a list of groups of
-            common analyses in the form of dictionaries. These are all the analyses to be retrieved and used in the
-            meta-analysis calculation. Their dictionary contains keys ‘conditions’, ‘measurements’, “dimensions” and
-            ‘analyses’. Each of these is associated with a string of all the names of the common analysis group
-            separated by ‘:’.
+            In the case of meta-analyses, the meta-analysis key is associated with a list of dictionaries containing
+            groups of common meta-analyses. The order of the list is important. Each group of common meta-analyses is a
+            batch of analyses, measurements under certain conditions, dimensions sharing the same meta-analysis
+            treatment. Each of these dictionaries has a key for each of the arguments needed to calculate the
+            meta-analysis, as well as outputs to which the various results should be sent. There is also a ‘params’ key
+            with the meta-analysis parameter dictionary, which may also contain output names, but all the coordinates
+            for this output must be defined by the meta-analysis function. The number and name of the arguments and
+            outputs (in params or not) are specified when the meta-analysis function is created. Each of the argument or
+            output keys are associated with a dictionary of common analysis groups. This dictionary contains the five
+            hierarchical levels used as coordinates to find the position in the MacularAnalysisDataframes (dimensions,
+            conditions, measurements, analyses, flag).
 
-            Global aliases can be used for each element used in the common analysis group. These aliases allow you to
-            retrieve all possible elements (conditions, measurements, dimensions, analyses). In the case of
-            ‘measurements’ and 'analyses', the possible elements vary depending on the dimensions and conditions present
-            in the multiple analysis group. Aliases must contain the prefix ‘all_’ followed by the element from which
-            you want to retrieve everything. These aliases are substituted within the MacularAnalysisDataframes by the
-            getter of the multiple analysis dictionary. Be careful to only group together analyses that share the same
-            configurations.
-
-            In certain specific cases, the analysis key may be associated only with a Boolean, an int or a float, as with
-            the ‘sorting’ analysis for sorting condition names.
+            Global aliases can be used for each element used in common analysis group dictionaries. These aliases are
+            used when you want to use all the hierarchical level names available in the MacularAnalysisDataframes. This
+            avoids having to enter all the names one by one. In the case of ‘measurements’ and 'analyses', the possible
+            hierarchical levels names vary depending on the dimensions and conditions present in the multiple analysis
+            group. These aliases are constructed from the name of the hierarchical level for which all available names
+            are desired, preceded by the prefix ‘all_’. These aliases are substituted within the
+            MacularAnalysisDataframes by the getter of the multiple analysis dictionary. Be careful to only group
+            together analyses that share the same configurations.
         """
         # Storing of the pyb path.
         path_pyb = multiple_dicts_analysis["path_pyb"]
@@ -428,8 +710,8 @@ class MacularAnalysisDataframes:
             Dictionary associating specific conditions with different MacularDictArray.
 
         multiple_dicts_analysis : dict of dict
-            Dictionary containing all the parameters of the Macular simulations necessary for the processing of the
-            MacularDictArray.
+            Dictionaries containing all analyses or meta-analyses to be performed for each dimension of the
+            MacularAnalysisDataframes, in a condensed format.
         """
         # Initialisation of the pyb path dictionary with that of MacularAnalysisDataframes.
         self._dict_paths_pyb = {"self": path_pyb, "MacularDictArrays": {}}
@@ -489,8 +771,8 @@ class MacularAnalysisDataframes:
             Dictionary associating specific conditions with different MacularDictArray.
 
         multiple_dicts_analysis : dict of dict
-            Dictionary containing all the parameters of the Macular simulations necessary for the processing of the
-            MacularDictArray.
+            Dictionaries containing all analyses or meta-analyses to be performed for each dimension of the
+            MacularAnalysisDataframes, in a condensed format.
         """
         try:
             # Update MacularAnalysisDataframes from an existing file if possible.
@@ -523,8 +805,8 @@ class MacularAnalysisDataframes:
             Dictionary associating specific conditions with different MacularDictArray.
 
         multiple_dicts_analysis : dict of dict
-            Dictionary containing all the parameters of the Macular simulations necessary for the processing of the
-            MacularDictArray.
+            Dictionaries containing all analyses or meta-analyses to be performed for each dimension of the
+            MacularAnalysisDataframes, in a condensed format.
 
         Raises
         ----------
@@ -660,7 +942,8 @@ class MacularAnalysisDataframes:
         path_pyb : str
             Path to file with .pyb extension where a MacularAnalysisDataframes object is saved in binary.
 
-            The path can be absolute or relative.        """
+            The path can be absolute or relative.
+        """
         print("FILE LOADING...", end="")
         with open(path_pyb, "rb") as pyb_file:
             macular_analysis_dataframe = pickle.load(pyb_file)
@@ -676,6 +959,33 @@ class MacularAnalysisDataframes:
             pickle.dump(self, pyb_file)
 
     def initialize_macular_analysis_dataframes(self, multi_macular_dict_array, multiple_dicts_analysis):
+        """Function to initialise a MacularAnalysisDataframes.
+
+        First, the three parameter dictionaries (simulation, processing and analysis) are cleaned to remove empty fields
+        before being stored as attributes. Next, the dictionaries from the multiple Macular dict array are constructed.
+        The first dictionary stores the paths to the pyb files for each MacularDictArray included, while the second
+        gathers and hierarchises all possible values for the first two hierarchical levels of the
+        MacularAnalysisDataframes. The process continues by creating the attribute containing the regular expression
+        compiled to process the condition names. The next step is to initialise each of the analysis dataframes using
+        their respective indexes. In the case of the condition dataframe, the index can be ordered as desired by the
+        user. Finally, a dictionary is created that brings together all the indexes present in the dataset of multiple
+        MacularDictArrays.
+
+        Parameters
+        ----------
+        multi_macular_dict_array : dict of MacularDictArray
+            Dictionary associating specific conditions with different MacularDictArray.
+
+        multiple_dicts_analysis : dict of dict
+            Dictionaries containing all analyses or meta-analyses to be performed for each dimension of the
+            MacularAnalysisDataframes, in a condensed format.
+
+        Returns
+        ----------
+        dict_index : dict of dict
+            Dictionary of all indexes present in the multiple macular dict array used in the current
+            MacularAnalysisDataframes.
+        """
         # Create the multiple_dicts_analysis attributes.
         self._multiple_dicts_analysis = multiple_dicts_analysis
 
@@ -1019,8 +1329,9 @@ class MacularAnalysisDataframes:
 
         Parameters
         ----------
-        multiple_dicts_analysis : dict of MacularDictArray
-            Copy of the multiple analysis dictionaries contained in the current MacularAnalysisDataframes.
+        multiple_dicts_analysis : dict of dict
+            Dictionaries containing all analyses or meta-analyses to be performed for each dimension of the
+            MacularAnalysisDataframes, in a condensed format.
 
         Returns
         ----------
@@ -1168,9 +1479,10 @@ class MacularAnalysisDataframes:
     def make_meta_analysis_dataframes_analysis(self, dict_index):
         """Function used to perform all MacularAnalysisDataframe meta-analyses.
 
-        The names of all meta-analyses type in the multiple analysis dictionaries are scanned and identified. For each
-        of them, a conditional block allows the corresponding analysis function to be executed. All these functions
-        take as inputs the current MacularAnalysisDataframes, the dimension, and the current analysis.
+        The names of all meta-analyses type in the multiple analysis dictionaries are scanned and identified in a
+        specific order. For each of them, a conditional block allows the corresponding analysis function to be executed.
+        All these functions take as inputs the current MacularAnalysisDataframes, the dimension, and the current
+        analysis.
         """
         # Dictionary containing all meta-analyses type currently implemented.
         available_spatial_analyses_dict = {
@@ -1254,13 +1566,13 @@ class MacularAnalysisDataframes:
         return modified_analysis_function
 
     @staticmethod
-    def common_analysis_group_parser(list_grouped_levels, list_analysis_levels=None, n=0):
-        """Recursive function for creating a unique association generator for hierarchical levels.
+    def common_analysis_group_parser(list_grouped_levels, list_analysis_coordinates=None, n=0):
+        """Recursive function for creating a unique association generator for analysis coordinates. hierarchical levels.
 
-        The goal is to create all possible unique tuples of hierarchical level names from a given number of different
-        names for each hierarchical level. These different names are provided in the grouped level list. Each item in
-        the list is a different name for a given level separated by ‘:’. All levels are classified in a hierarchical
-        order defined within this list of grouped levels.
+        The goal is to generate all possible combinations of analysis coordinates from all the different names at each
+        of the five hierarchical levels. These names are contained in character strings and separated by ‘:’ symbols.
+        The analysis coordinates are tuples formed from the 5 hierarchical levels classified in their hierarchical
+        order: (dimension, condition, measurement, analysis, flag).
 
         Parameters
         ----------
@@ -1269,10 +1581,10 @@ class MacularAnalysisDataframes:
             ‘barSpeed30dps:barSpeed27dps’. The number of hierarchical levels contained in this list will define the
             depth of recursion.
 
-        list_analysis_levels : list of str
-            List containing all the names of an association of a hierarchical level. This list is constructed at each
-            hierarchical level and is reset between each association of a different hierarchical level. The list is
-            transformed into a tuple once it is complete.
+        list_analysis_coordinates : list of str
+            List containing all the hierarchical level to compose one analysis coordinates. This list is incremented at
+            each hierarchical level by adding the new hierarchical level. It's then reset between each analysis
+            coordinates. The list is transformed into a tuple once it is complete.
 
         n : int
             Hierarchical level counter in the analysis dictionary that increases with recursion. It is always equal to
@@ -1280,11 +1592,11 @@ class MacularAnalysisDataframes:
         """
         # Loop on the current hierarchical level of the current analysis.
         for level in list_grouped_levels[n].split(":"):
-            # Initialisation of the list of analysis levels when at level 0.
+            # Initialisation of the list of analysis coordinates when at level 0.
             if not n:
-                list_analysis_levels = []
-            # Increment the list of analysis levels with the current level.
-            new_list_current_analysis_levels = list_analysis_levels + [level]
+                list_analysis_coordinates = []
+            # Increment the list of analysis coordinates with the current level.
+            new_list_current_analysis_levels = list_analysis_coordinates + [level]
 
             # Call the recursive function to go down one level if you are not at the last level.
             if n < len(list_grouped_levels) - 1:
@@ -1292,7 +1604,7 @@ class MacularAnalysisDataframes:
                                                                                   new_list_current_analysis_levels,
                                                                                   n + 1)
             else:
-                # Returns the analysis level tuple to the generator once the last level has been reached.
+                # Returns the analysis coordinates tuple to the generator once the last level has been reached.
                 yield tuple(new_list_current_analysis_levels)
 
     def make_common_group_analysis(self, analysis_function, multi_macular_dict_array, common_analysis_group_generator,
@@ -1656,6 +1968,7 @@ class MacularAnalysisDataframes:
         ----------
         meta_analysis_function : function
             Analysis function to apply to calculate the current meta-analysis.
+            Analysis function to apply to calculate the current meta-analysis.
 
             This meta-analysis function changes between each meta-analysis, so they must all have the same three input
             arguments: the data, the index and the analysis parameters. However, the data may be in different forms
@@ -1664,53 +1977,88 @@ class MacularAnalysisDataframes:
 
         @wraps(meta_analysis_function)
         def modified_meta_analysis_function(macular_analysis_dataframes, meta_analysis_type, dict_index):
-            # TODO Test, relire commentaires
-            """Function applied within the decorator, prior to the meta-analysis function, to process each group of common
-            analyses and analyse each of their pairs of conditions/measurements.
+            """Function applied within the decorator, prior to the meta-analysis function, pour parser chaque groupes de
+            méta-analyses communes puis en extraire chaque méta-analyses pour les effectuer.
 
-            Depending on the type of meta-analysis being performed, the name of the meta-analysis and the associated
-            function are modified. The global analysis is performed by carrying out specific analyses for groups
-            of common analyses. Each of these groups combines conditions and measurements that share the same
-            parameter values for the current analysis. These common analysis groups are presented in the form of
-            dictionaries contained in a list. The dictionaries must contain a ‘conditions’ key, “measurements” associated with the names of the
-            conditions and measurements in the group separated by ‘:’ and a ‘params’ key containing all the parameters
-            to be used for the current analysis.
+            The meta-analysis of a MacularAnalysisDataframes is performed by conducting an ordered list of specific
+            meta-analyses. Depending on the type of meta-analysis being performed, the name of the meta-analysis and the
+            associated function are modified. Each specific meta-analysis can in turn be subdivided into a list of
+            groups of common meta-analyses.
 
-            The function goes through the list of common analysis groups in the order decided by the user. This order
-            is important because if two common analysis groups act on one or more identical rows of dataframes, then
-            the last common analysis group processed will leave its value.
+            Common meta-analysis groups are sets of analyses from different conditions, dimensions, and measurements
+            that share the same meta-analysis treatment. A meta-analysis group therefore contains a succession of
+            iterations of equivalent meta-analyses. These groups are presented in the form of dictionaries of
+            dictionaries. The first key in this dictionary contains the dictionary of all constant parameters of the
+            meta-analysis in question. Each meta-analysis is associated with different mandatory or optional parameters.
+            All other keys represent the arguments and outputs of the meta-analysis.
 
-            Lors d'une méta-analyse, l'ensemble des analyses contenues dans les listes des groupes communs d'analyses
-            associés à chaque arguments de la fonction de Meta-analyses sont récupérées une par une. L'ordre dans lequel sont
-            renseignées les différentes analyses utilisées par chaque argument est donc crucial. Si la méta-analyse nécessite
-            plusieurs arguments, le nombre d'analyses contenues dans leurs groupes d'analyses communes respectives doivent
-            être identiques. Il est aussi possible qu'un argument soit associé à une unique analyse, dans ce cas elle sera
-            ré-utilisée pour toutes les méta-analyses s'il y en a plus d'une.
+            The arguments of a meta-analysis are necessary for calculating the meta-analysis, while its outputs
+            represent the different output paths of the meta-analyses. Each type of meta-analysis requires a specific
+            number of arguments and outputs with specific names. In the case of outputs, some of them may be optional
+            depending on the implementation of the meta-analysis. Some meta-analyses also define outputs whose
+            dimension, conditions and measurement coordinates are already partially fixed. In this case, the user only
+            needs to enter the name of the output. This name must be added with its corresponding key in the parameter
+            dictionary. Finally, some meta-analyses use an undefined and potentially unlimited number of outputs for a
+            single meta-analysis. All of these outputs are placed in one or more ‘unlimited’ outputs, which are
+            characterised by a succession of output names separated by ‘;’ symbols.
 
-            Chaque analyses d'un MacularAnalysisDataframes peut être définie par les 4 niveaux hiérarchiques d'un
-            MacularAnalysisDataframes. On a la dimension ("X", "Y", "Conditions"), la condition ("barSpeed30dps",
-            "ampGang30Hz"), la mesure ("VSDI", "FiringRate_GanglionGainControl") et le type de l'analyse ("latency",
-            "peak_amplitude"). Il faut donc utiliser ces 4 niveaux pour localiser et extraire une analyse. A cela
-            s'ajoute aussi le nom du flag s'il y en a un.
+            The argument and output keys are each associated with a dictionary representing a group of common analyses.
+            A group of common analyses is a set of different measurements and conditions sharing the same analysis
+            process within different dimensions. This dictionary consists of a key representing each of the hierarchical
+            levels of the MacularAnalysisDataframes and allowing the identification of a position within the latter.
+            This is the position of the MacularAnalaysisDataframes from which to extract the analysis to be used as an
+            argument or the meta-analysis intended to receive an output.
 
-            # Le dictionnaire de méta-analyse est parser pour créer une liste de méta-analyses communes dont la
-            # longueur doit être la même pour chaque analyses utilisée dans la méta-analyse en cours.
-            # Si il y a une seule analyse elle sera répétée pour tous les groupes de méta-analyses.
-            # Les groupes de méta-analyses communes sont sous la forme d'un tuple
-            # (dimension, condition, mesure, analyse, étiquette)
-            # Les groupes de méta-analyses communes fonctionnent comme les groupes d'analyses communes, elles regroupent un
-            # ensemble de méta-analyses identiques avec les mêmes paramètres et à réaliser sur tout un lot d'input.
-            # Seul ces inputs varient. Le but est donc de récupérer tout ces inputs avant de les traiter identiquement.
+            Each position in the MacularAnalysisDataframes is defined by a set of coordinates corresponding to the
+            different hierarchical levels associated with an analysis. The first is the dimension of the dataframe (X,
+            Y, Time, Conditions, MetaConditions). The second is the condition of the Macular simulation performed. The
+            next is the measurement of the Macular simulation data retrieved. Finally, there is the type of analysis to
+            be performed. There is also a flag that allows you to differentiate between two identical analyses by adding
+            a suffix to the analysis name. This suffix only works for arguments, not outputs.
 
-            Le dictionnaire de méta-analyse peut contenir deux manières de définir des outputs, la manière utilisée dépend
-            avant tout de la méta-analyse considérée. Certaine méta-analyses n'auront pas besoin de définir complètement
-            un nouvel output.
+            Initially, the common analysis group dictionary is presented in a condensed form. Each hierarchical level
+            key is associated with a character string containing all the names of the hierarchical levels represented in
+            the common analysis group. Each name is separated by the symbol ‘:’. It is also possible to use the aliases
+            ‘all_conditions’, “all_measurements” and ‘all_dimensions’ when you want all the existing names of a
+            hierarchical level without having to write everything. Once expanded, the common analysis groups will be
+            defined by the combination of all the names of the hierarchical levels they contain. Any duplicate
+            hierarchical level names will be removed.
 
-            Parler de la structure des méta-analyses arguments et de la répartition des méta-analyses au sein de leurs
-            listes.
+            Dictionaries of common meta-analysis groups must contain dictionaries of common analysis groups that are
+            equivalent in terms of arguments for this to work. This means that the dictionaries must have the same
+            number of dimensions, conditions, measures and analyses. The only exception is the use of a common analysis
+            group dictionary representing only a single analysis, which is in this case repeated as many times as the
+            number of analyses in the argument containing the most. Dictionaries of common analysis groups must also not
+            contain duplicates among the names at these levels.
 
-            Parler de la différence entre l'argument output qui sert à spécifier un output totalement différent tandis
-            que si on le met pas ça veut dire que le type de méta-analyse prend un output parmi les arguments des analyses.
+            This function is called for each type of meta-analysis present in the multiple analysis dictionary. It
+            begins by parsing the list of dictionaries of common meta-analysis groups to decompress it. Each of the
+            dictionaries of common analysis groups associated with the arguments and outputs are decompressed. This
+            transformation allows the list of coordinates (hierarchical levels ) of the analysis positions of the
+            MacularAnalysisDataframes whose argument or output will take the successive values to be extracted. These
+            coordinates are the hierarchical levels of the analyses or meta-analyses.
+
+            A meta-analysis is defined here as the set of analysis coordinates located at the same index of the lists
+            of arguments and outputs. For this reason, it is important that the lists of analysis coordinates for each
+            argument and output are equal. For this to happen, all dictionaries of common analysis groups must be
+            equivalent. This means that the dictionaries must have the same number of dimensions, conditions, measures
+            and unique analyses. The only exception is the use of a common analysis group dictionary representing only
+            a single meta-analysis, which in this case is repeated as many times as the number of meta-analyses of the
+            argument containing the most.
+
+            Once the dictionaries of common meta-analysis groups have been parsed, the function retrieves each
+            meta-analysis one by one by simultaneously browsing all the lists of analysis coordinates of the arguments
+            and outputs. A dictionary is created for each meta-analysis. The analysis coordinate tuples of each output
+            are modified to create a dictionary with each hierarchical level. In the case of unlimited outputs that must
+            be associated with several names, each name is retrieved by splitting at the ‘;’ level The meta-analysis
+            dictionary thus obtained is provided as input to the meta-analysis function in progress.
+
+            Note : In the context of meta-analysis outputs and some of their arguments derived from meta-analyses, the
+            hierarchical level ‘measurement’ of dictionaries of common analysis groups is optional. This choice is
+            motivated by the fact that a meta-analysis may depend on several measurements at the same time. However, it
+            is still possible to provide this information for the sake of traceability of the measurements used to
+            calculate each meta-analysis. Furthermore, any absence of measurements will be considered as a measurement
+            in itself and will differentiate between two analyses.
 
             Parameters
             ----------
@@ -1804,17 +2152,17 @@ class MacularAnalysisDataframes:
     @staticmethod
     def common_meta_analysis_group_parser(common_meta_analysis_group_dictionary):
         """Function that decondenses all meta-analyses contained in a dictionary of common meta-analysis groups. This is
-        characterised by the presence of a list of the levels defining each analyses containing in meta-analyses
+        characterised by the presence of a list of analysis coordinates for each analyses containing in meta-analyses
         arguments: its dimension, condition, measure, type of analysis and any associated flag.
 
         To perform this process, dictionaries of common analysis groups must not contain duplicate names among their
-        levels. Parsing will replace each of meta-analysis arguments dictionaries with the list of tuples of level names
+        levels. Parsing will replace each of meta-analysis arguments dictionaries with the list of analysis coordinates
         that define the different analyses to be extracted from the MacularAnalysisDataframes. The dictionary also
         contains a ‘params’ key associated with external parameters to be used for meta-analysis. This dictionary is not
         modified during parsing.
 
-        In the case where the lists of analysis level for each argument are of different sizes, en error will be raised
-        except a list of size 1, which will adjust to the maximum size observed.
+        In the case where the lists of analysis coordinates for each argument are of different sizes, en error will be
+        raised except a list of size 1, which will adjust to the maximum size observed.
 
         Example :
         common_meta_analysis_group_parser(
@@ -1853,48 +2201,48 @@ class MacularAnalysisDataframes:
         Returns
         ----------
         parsed_dictionary : dict of list
-            Dictionary of a common meta-analysis group with lists of tuples of level names characterising each analysis
+            Dictionary of a common meta-analysis group with lists of tuples of coordinates characterising each analysis
             associated with each of the meta-analysis arguments.
         """
         # Verification that there are no duplicates in the dictionaries of common analysis groups.
         MacularAnalysisDataframes.check_common_analysis_group_repeats(common_meta_analysis_group_dictionary)
 
-        # Initialisation of the dictionary containing the lists of levels tuples of the common meta-analysis group.
+        # Initialisation of the dictionary containing the lists of coordinates of the common meta-analysis group.
         parsed_dictionary = {}
 
-        # Initialisation of the maximum length of the level lists for common analysis groups.
+        # Initialisation of the maximum length of the analysis coordinates lists for common analysis groups.
         common_meta_analysis_group_max_length = 1
         # Loop through all argument names for the meta-analysis function in its dictionary.
         for meta_analysis_argument in common_meta_analysis_group_dictionary:
             # Copy the parameter dictionary to the parsed dictionary of common meta-analysis group.
             if meta_analysis_argument == "params":
                 parsed_dictionary["params"] = common_meta_analysis_group_dictionary[meta_analysis_argument].copy()
-            # Initialisation of the list of levels of one common analysis group for one meta-analysis argument.
+            # Initialisation of the list of coordinates of one common analysis group for one meta-analysis argument.
             else:
                 argument_common_group_analysis = common_meta_analysis_group_dictionary[meta_analysis_argument]
                 if "output" in meta_analysis_argument:
-                    # Creation of levels generator for the common analysis group of the current output argument.
+                    # Creation of analysis coordinates generator for the common analysis group of the current output.
                     argument_common_analysis_group_generator = MacularAnalysisDataframes.common_analysis_group_parser(
                         [argument_common_group_analysis["dimensions"], argument_common_group_analysis["conditions"],
                          argument_common_group_analysis["measurements"], argument_common_group_analysis["analyses"]])
                 else:
-                    # Creation of levels generator for the common analysis group of the current not output argument.
+                    # Creation of analysis coordinates generator for the common analysis group of the current argument.
                     argument_common_analysis_group_generator = MacularAnalysisDataframes.common_analysis_group_parser(
                         [argument_common_group_analysis["dimensions"], argument_common_group_analysis["conditions"],
                          argument_common_group_analysis["measurements"], argument_common_group_analysis["analyses"],
                          argument_common_group_analysis["flag"]])
-                # Transformation of levels generator into a list of levels of the common analysis group.
-                parsed_dictionary[meta_analysis_argument] = [analysis_levels for analysis_levels in
+                # Transformation of coordinates generator into a list of coordinates of the common analysis group.
+                parsed_dictionary[meta_analysis_argument] = [analysis_coordinates for analysis_coordinates in
                                                              argument_common_analysis_group_generator]
-                # Calculate the maximum length of the level lists for each argument.
+                # Calculate the maximum length of the analysis coordinates lists for each argument.
                 if len(parsed_dictionary[meta_analysis_argument]) > common_meta_analysis_group_max_length:
                     common_meta_analysis_group_max_length = len(parsed_dictionary[meta_analysis_argument])
 
-        # Adjusting the length of levels lists of common analysis group that were too small.
+        # Adjusting the length of analysis coordinates lists of common analysis group that were too small.
         for meta_analysis_argument in parsed_dictionary:
             if meta_analysis_argument != "params":
                 parsed_dictionary[meta_analysis_argument] = (MacularAnalysisDataframes.
-                check_common_analysis_group_levels_size(
+                check_common_analysis_group_coordinates_size(
                     parsed_dictionary[meta_analysis_argument],
                     common_meta_analysis_group_max_length))
 
@@ -1930,56 +2278,57 @@ class MacularAnalysisDataframes:
                                            f"{common_meta_analysis_group_dictionary[argument][element]}")
 
     @staticmethod
-    def check_common_analysis_group_levels_size(common_analysis_group_levels_list, expected_length):
-        """Function for checking the size of the list of levels for a group of common analyses so that it corresponds
-        to an expected length.
+    def check_common_analysis_group_coordinates_size(common_analysis_group_coordinates_list, expected_length):
+        """Function for checking the size of the list of analysis coordinates for a group of common analyses so that it
+        corresponds to an expected length.
 
         If the length does not match, there are two possibilities. If the list is of size 1, it will be repeated as many
         times as the expected length. However, if the size is greater than 1, an error will be raised.
 
-        Example : check_common_analysis_group_levels_size([(element1, element2, element3)], 2)
+        Example : check_common_analysis_group_coordinates_size([(element1, element2, element3)], 2)
         > [(element1, element2, element3), (element1, element2, element3)]
 
         Parameters
         ----------
-        common_analysis_group_levels_list : list of tuples
-            List containing tuples of level names from a common analysis group.
+        common_analysis_group_coordinates_list : list of tuples
+            List containing analysis coordinates from a common analysis group.
 
         expected_length : int
-            Expected length that you want to reach with the list of levels in the common analysis group.
+            Expected length that you want to reach with the list of analysis coordinates in the common analysis group.
 
         Returns
         ----------
-        checked_levels_list : list of tuples
-            List level tuples of a common analysis group checked in size.
+        checked_coordinates_list : list of tuples
+            List analysis coordinates tuples of a common analysis group checked in size.
 
         Raises
         ----------
         ValueError
-            The length of the level list is smaller than expected and is also greater than 1.
+            The length of the analysis coordinates list is smaller than expected and is also greater than 1.
         """
-        levels_list_length = len(common_analysis_group_levels_list)
-        # Cases where the length of the level list is smaller than expected.
-        if levels_list_length < expected_length and levels_list_length == 1:
-            checked_levels_list = []
+        coordinates_list_length = len(common_analysis_group_coordinates_list)
+        # Cases where the length of the analysis coordinates list is smaller than expected.
+        if coordinates_list_length < expected_length and coordinates_list_length == 1:
+            checked_coordinates_list = []
             # Correct the length by repeating each element in the list in an equivalent way.
-            for levels in common_analysis_group_levels_list:
-                checked_levels_list += [levels] * (expected_length // levels_list_length)
-        # Case where the length of the level list is equal to the expected size.
-        elif levels_list_length == expected_length:
-            checked_levels_list = common_analysis_group_levels_list
+            for coordinates in common_analysis_group_coordinates_list:
+                checked_coordinates_list += [coordinates] * (expected_length // coordinates_list_length)
+        # Case where the length of the analysis coordinates list is equal to the expected size.
+        elif coordinates_list_length == expected_length:
+            checked_coordinates_list = common_analysis_group_coordinates_list
         else:
-            raise ValueError(f"The length of the common analysis group level list does not match the maximum length"
-                             f" {expected_length}")
+            raise ValueError(f"The length of the common analysis group coordinates list does not match the maximum "
+                             f"length {expected_length}")
 
-        return checked_levels_list
+        return checked_coordinates_list
 
     def make_common_group_meta_analysis(self, meta_analysis_function, common_meta_analysis_group_dictionary,
                                         meta_analysis, dict_index):
         """Function performing all meta-analyses present in a group of decondensed common meta-analyses.
 
         The decondensed group of common meta-analyses is structured as a dictionary associating the names of the
-        meta-analysis arguments with lists of tuples of all analyses levels for which the argument will take the value.
+        meta-analysis arguments with lists of tuples of all analyses coordinates for which the argument will take the
+        value.
 
         A meta-analysis groups together all the analyses located at the same index in all the lists of arguments of
         meta-analyses. Therefore, all the arguments in a dictionary of common meta-analyses have a list of the same
@@ -1987,11 +2336,11 @@ class MacularAnalysisDataframes:
         meta-analysis.
 
         The function iterates over the arguments (except ‘params’) of all meta-analyses defined in the common
-        meta-analysis group. The level tuples associated with all these arguments are stored as is in a first dictionary
-        that is used after the loop to construct the names of all output arguments of the meta-analysis. The level
-        tuples of the non-output arguments are also used to extract the arrays of analyses they describe into a second
-        dictionary. This dictionary also contains the analysis levels defined in the output arguments. This dictionary
-        is finally used in the execution of the current meta-analysis function.
+        meta-analysis group. The analysis coordinates associated with all these arguments are stored as is in a first
+        dictionary that is used after the loop to construct the names of all output of the meta-analysis. The analysis
+        coordinates of the arguments are also used to extract the arrays of analyses they describe into a second
+        dictionary. This dictionary also contains the analysis coordinates defined in the output. This dictionary is
+        finally used in the execution of the current meta-analysis function.
 
         Parameters
         ----------
@@ -2007,7 +2356,7 @@ class MacularAnalysisDataframes:
             values are decondensed common analysis group dictionaries.
 
             The dictionary of the common meta-analysis group consists of keys corresponding to the arguments to be
-            passed to the meta-analysis function. Each key is associated with the list of each analysis levels whose
+            passed to the meta-analysis function. Each key is associated with the list of each analysis coordinates whose
             argument will take the values.
 
         meta_analysis : str
@@ -2028,12 +2377,12 @@ class MacularAnalysisDataframes:
         meta_analysis_arguments_length = len(common_meta_analysis_group_dictionary[meta_analysis_arguments_list[0]])
 
         # Loop on the indexes of all meta-analyses contained in the common meta-analysis group.
-        for analysis_levels_index in range(meta_analysis_arguments_length):
+        for analysis_coordinates_index in range(meta_analysis_arguments_length):
             # Loop over the arguments of the current meta-analysis function.
             for meta_analysis_argument in meta_analysis_arguments_list:
-                # Store the levels defining the current meta-analysis in the meta-analysis dictionary.
+                # Store the analyses coordinates defining the current meta-analysis in the meta-analysis dictionary.
                 current_meta_analysis_dictionary[meta_analysis_argument] = (
-                    common_meta_analysis_group_dictionary)[meta_analysis_argument][analysis_levels_index]
+                    common_meta_analysis_group_dictionary)[meta_analysis_argument][analysis_coordinates_index]
 
             # Make a copy of the current meta analysis dictionary to avoid modification of it during the process.
             current_meta_analysis_dictionary_copy = current_meta_analysis_dictionary.copy()
@@ -2057,7 +2406,7 @@ class MacularAnalysisDataframes:
             Macular Analyses Dataframes that the user wishes to use to extract a row from a given dataframe.
 
         meta_analysis_dictionary : dict of tuple
-            Meta-analysis dictionary linking the names of arguments in a meta-analysis with the names of the levels
+            Meta-analysis dictionary linking the names of arguments in a meta-analysis with the names of the coordinates
             defining a given analysis (dimension, condition, measurements, analysis type, flag).
         """
         # Loop on meta-analysis arguments except output ones.
@@ -2068,15 +2417,14 @@ class MacularAnalysisDataframes:
                         macular_analysis_dataframes, meta_analysis_dictionary[meta_analysis_argument]))
 
     @staticmethod
-    def extract_one_analysis_array_from_dataframes(macular_analysis_dataframes, analysis_levels):
-        """Function used to extract the value(s) associated with a given analysis and contained in a
-        MacularAnalysisDataframes.
+    def extract_one_analysis_array_from_dataframes(macular_analysis_dataframes, analysis_coordinates):
+        """Function to extract the value(s) located at a given analysis coordinate in the MacularAnalysisDataframes.
 
-        Each analysis of a MacularAnalysisDataframes can be defined by the four hierarchical levels of a
-        MacularAnalysisDataframes. There is the dimension (‘X’, ‘Y’, “Conditions”), the condition (‘barSpeed30dps’,
-        ‘ampGang30Hz’), the measurement (‘VSDI’, ‘FiringRate_GanglionGainControl’) and the type of analysis (“latency”,
-        ‘peak_amplitude’). These four levels must therefore be used to locate and extract an analysis. In addition,
-        there is also the name of the flag, if there is one.
+        Each analysis of a MacularAnalysisDataframes can be defined by an analysis coordinates with the five
+        hierarchical levels of a MacularAnalysisDataframes. There is the dimension (‘X’, ‘Y’, “Conditions”), the
+        condition (‘barSpeed30dps’, ‘ampGang30Hz’), the measurement (‘VSDI’, ‘FiringRate_GanglionGainControl’), the
+        type of analysis (“latency”, ‘peak_amplitude’) and the name of the flag, if there is one. These levels must
+        therefore be used to locate and extract an analysis.
 
         In some cases, an analysis to be extracted may be defined only by the dimension, condition and type of the
         analysis, but not by the measurement. This can happen for analyses from meta-analyses. In this case, the
@@ -2084,15 +2432,17 @@ class MacularAnalysisDataframes:
 
         In the case of the ‘Conditions’ dimension, there is a single dataframe containing the data, whereas in the
         other spatio-temporal dimensions there is one dataframe per condition. Therefore, two methods must be used to
-        extract values from these two types of dataframes.
+        extract values from these two types of dataframes. In the case of conditions, it is possible to either extract
+        a single value associated with a condition or get everything if the hierarchical level of the dimensions has
+        been set with the term ‘overall’.
 
         Parameters
         ----------
         macular_analysis_dataframes : MacularAnalysisDataframes
             Macular Analyses Dataframes that the user wishes to use to extract a row from a given dataframe.
 
-        analysis_levels : tuple
-            Names of the levels defining a given analysis (dimension, condition, measure, analysis type).
+        analysis_coordinates : tuple
+            Coordinates defining a given analysis (dimension, condition, measure, analysis type).
 
         Returns
         ----------
@@ -2100,27 +2450,27 @@ class MacularAnalysisDataframes:
             Array of values or single value of the analysis to be extracted.
         """
         # Construction of the name of the analysis line to be extracted.
-        if analysis_levels[2] == "":
+        if analysis_coordinates[2] == "":
             # Cases that only include the analysis type in the name of the analysis to be extracted.
-            dataframe_row = f"{analysis_levels[3]}_{analysis_levels[4]}".strip("_")
+            dataframe_row = f"{analysis_coordinates[3]}_{analysis_coordinates[4]}".strip("_")
         else:
             # Cases that include the analysis type and measurement in the name of the analysis to be extracted.
-            dataframe_row = f"{analysis_levels[3]}_{analysis_levels[2]}_{analysis_levels[4]}".strip("_")
+            dataframe_row = f"{analysis_coordinates[3]}_{analysis_coordinates[2]}_{analysis_coordinates[4]}".strip("_")
 
         # Cases of conditions dataframe.
-        if analysis_levels[0] == "Conditions":
+        if analysis_coordinates[0] == "Conditions":
             # Case of every condition in condition dataframe.
-            if analysis_levels[1] == "overall":
-                analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_levels[0]].loc[
+            if analysis_coordinates[1] == "overall":
+                analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_coordinates[0]].loc[
                                  dataframe_row, :].values.astype(float)
             # Case of the single conditions in condition dataframe.
             else:
-                analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_levels[0]].loc[
-                    dataframe_row, analysis_levels[1]]
+                analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_coordinates[0]].loc[
+                    dataframe_row, analysis_coordinates[1]]
         # Case of multiple spatio-temporal dataframes.
         else:
-            analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_levels[0]][
-                                 analysis_levels[1]].loc[dataframe_row, :].values
+            analysis_array = macular_analysis_dataframes.dict_analysis_dataframes[analysis_coordinates[0]][
+                                 analysis_coordinates[1]].loc[dataframe_row, :].values
 
         return analysis_array
 
@@ -2146,8 +2496,8 @@ class MacularAnalysisDataframes:
             Name of the meta-analysis for which a format is needed.
 
         meta_analysis_dictionary : dict of tuples
-            Meta-analysis dictionary linking the names of arguments in a meta-analysis with the names of the levels
-            defining a given analysis (dimension, condition, measurements, analysis type, flag).
+            Meta-analysis dictionary linking the names of arguments in a meta-analysis with the coordinates defining a
+            given analysis (dimension, condition, measurements, analysis type, flag).
 
             Among the arguments of the meta-analysis function, there may be one or more arguments used as output within
             a MacularAnalysisDataframes. These arguments can be recognised by the presence of the term ‘output’ in
@@ -2213,8 +2563,8 @@ class MacularAnalysisDataframes:
     def add_array_line_to_dataframes(macular_analysis_dataframes, dimension, condition, output, array_output):
         """Function to add a new line within a dataframe of a MacularDictDataframes.
 
-        Creating a new line requires all the names of the levels in the MacularDictDataframes to identify the position
-        of the new line and its name.
+        Creating a new line requires the analysis coordinates corresponding to the names of each hierarchical level in
+        the MacularDictDataframes. This allows to identify the position of the new line and its name.
 
         Parameters
         ----------
@@ -2281,7 +2631,7 @@ class MacularAnalysisDataframes:
             This dictionary must contain the ‘factor’ key associated with the value you want to use as the
             multiplication factor.
         """
-        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        # Convert all non-outputs meta-analysis arguments coordinates into the corresponding analysis array.
         MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
                                                                              meta_analysis_dictionary)
 
@@ -2342,7 +2692,7 @@ class MacularAnalysisDataframes:
         meta_analysis_dictionary["output"]["dimension"] = "Conditions"
         meta_analysis_dictionary["output"]["condition"] = meta_analysis_dictionary["time_to_peak"][1]
 
-        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        # Convert all non-outputs meta-analysis arguments coordinates into the corresponding analysis array.
         MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
                                                                              meta_analysis_dictionary)
 
@@ -2399,7 +2749,7 @@ class MacularAnalysisDataframes:
         meta_analysis_dictionary["output"]["dimension"] = "Conditions"
         meta_analysis_dictionary["output"]["condition"] = meta_analysis_dictionary["peak_delay"][1]
 
-        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        # Convert all non-outputs meta-analysis arguments coordinates into the corresponding analysis array.
         MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
                                                                              meta_analysis_dictionary)
 
@@ -2466,7 +2816,7 @@ class MacularAnalysisDataframes:
         # Store dimensions and conditions of output.
         meta_analysis_dictionary["index"] = {"condition": meta_analysis_dictionary["data_to_fit"][1]}
 
-        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        # Convert all non-outputs meta-analysis arguments coordinates into the corresponding analysis array.
         MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
                                                                              meta_analysis_dictionary)
 
@@ -2610,7 +2960,7 @@ class MacularAnalysisDataframes:
         meta_analysis_dictionary["output_prediction"] = {"dimension": meta_analysis_dictionary["activation_time"][0],
                                                          "condition": meta_analysis_dictionary["activation_time"][1]}
 
-        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        # Convert all non-outputs meta-analysis arguments coordinates into the corresponding analysis array.
         MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
                                                                              meta_analysis_dictionary)
 
@@ -2703,7 +3053,7 @@ class MacularAnalysisDataframes:
         meta_analysis_dictionary["output"]["dimension"] = "Conditions"
         meta_analysis_dictionary["output"]["condition"] = meta_analysis_dictionary["latency"][1]
 
-        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        # Convert all non-outputs meta-analysis arguments coordinates into the corresponding analysis array.
         MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
                                                                              meta_analysis_dictionary)
 
@@ -2753,7 +3103,7 @@ class MacularAnalysisDataframes:
 
             This dictionary don't contain any parameters.
         """
-        # Convert all non-outputs meta-analysis arguments levels into the corresponding analysis array.
+        # Convert all non-outputs meta-analysis arguments coordinates into the corresponding analysis array.
         MacularAnalysisDataframes.extract_all_analysis_array_from_dataframes(macular_analysis_dataframes,
                                                                              meta_analysis_dictionary)
 
