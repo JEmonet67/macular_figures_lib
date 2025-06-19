@@ -307,13 +307,13 @@ class MacularAnalysisDataframes:
                             "output_data_prediction": "horizontal_anticipation_data_prediction",
                             "n_segments": 2, "index": "spatial_x", "n_points": 100, "breaks": "auto"}}
             ],
-            "maximal_latency": [
+            "minimal_latency": [
                 {"latency": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
                              "analyses": "latency", "flag": "ms"},
                  "anticipation_range": {"dimensions": "Conditions", "conditions": "all_conditions",
                                         "measurements": "",
                                         "analyses": "horizontal_anticipation_range", "flag": ""},
-                 "params": {"output": "horizontal_maximal_latency_ms", "index": "spatial_x"}}
+                 "params": {"output": "horizontal_minimal_latency_ms", "index": "spatial_x"}}
             ],
             "subtraction": [
                 {"initial_value": {"dimensions": "Conditions", "conditions": "all_conditions",
@@ -1489,7 +1489,7 @@ class MacularAnalysisDataframes:
             "peak_speed": self.peak_speed_analyzing,
             "stationary_peak_delay": self.stationary_peak_delay_analyzing,
             "anticipation_fit": self.anticipation_fit_analyzing,
-            "maximal_latency": self.maximal_latency_analyzing,
+            "minimal_latency": self.minimal_latency_analyzing,
             "linear_fit": self.linear_fit_analyzing,
             "normalization": self.normalization_analyzing,
             "subtraction": self.subtraction_analyzing
@@ -1497,7 +1497,7 @@ class MacularAnalysisDataframes:
 
         # Order in which meta-analyses are performed.
         available_spatial_analyses_dict_order = ("peak_speed", "stationary_peak_delay", "anticipation_fit",
-                                                 "maximal_latency", "linear_fit", "normalization", "subtraction")
+                                                 "minimal_latency", "linear_fit", "normalization", "subtraction")
 
         # Performs all meta-analyses type listed in the current analysis dictionary.
         for meta_analysis_type in available_spatial_analyses_dict_order:
@@ -3010,7 +3010,7 @@ class MacularAnalysisDataframes:
 
     @staticmethod
     @meta_analysis
-    def maximal_latency_analyzing(macular_analysis_dataframes, meta_analysis_dictionary, index,
+    def minimal_latency_analyzing(macular_analysis_dataframes, meta_analysis_dictionary, index,
                                   parameters_meta_analysis_dict):
         """Function to calculate the maximal latency at which latency begins to saturate for a distance between cell and
         object motion origin that exceeds the anticipation range.
@@ -3062,14 +3062,14 @@ class MacularAnalysisDataframes:
             current_index > meta_analysis_dictionary["anticipation_range"])[0][0]:]
 
         # Calculation of the maximal latency
-        maximal_latency_value = MetaAnalyser.mean_computing(stationary_latency)
+        minimal_latency_value = MetaAnalyser.mean_computing(stationary_latency)
 
         # Adds the output value(s) to a new row in the output dataframe.
         MacularAnalysisDataframes.add_array_line_to_dataframes(macular_analysis_dataframes,
                                                                meta_analysis_dictionary["output"]["dimension"],
                                                                meta_analysis_dictionary["output"]["condition"],
                                                                meta_analysis_dictionary["output"]["name"],
-                                                               maximal_latency_value)
+                                                               minimal_latency_value)
 
     @staticmethod
     @meta_analysis

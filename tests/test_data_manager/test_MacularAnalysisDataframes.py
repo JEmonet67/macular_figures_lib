@@ -273,9 +273,9 @@ multiple_dicts_analysis_default = {
                                "analyses": "horizontal_slope_anticipation_range"},
              "params": {"n_segments": 1, "index": "barSpeed", "n_points": 100, "breaks": "auto"}},
             {"data_to_fit": {"dimensions": "Conditions", "conditions": "overall", "measurements": "",
-                             "analyses": "horizontal_maximal_latency_ms", "flag": ""},
+                             "analyses": "horizontal_minimal_latency_ms", "flag": ""},
              "output_slopes": {"dimensions": "MetaConditions", "conditions": "overall", "measurements": "VSDI",
-                               "analyses": "horizontal_slope_maximal_latency_ms"},
+                               "analyses": "horizontal_slope_minimal_latency_ms"},
              "params": {"n_segments": 1, "index": "barSpeed", "n_points": 100, "breaks": "auto"}}
         ],
         "anticipation_fit": [
@@ -296,13 +296,13 @@ multiple_dicts_analysis_default = {
                         "output_data_prediction": "horizontal_anticipation_data_prediction2",
                         "n_segments": 2, "index": "spatial_x", "n_points": 100, "breaks": [51.8, 159.03, 543]}}
         ],
-        "maximal_latency": [
+        "minimal_latency": [
             {"latency": {"dimensions": "X", "conditions": "all_conditions", "measurements": "VSDI",
                          "analyses": "latency", "flag": "ms"},
              "anticipation_range": {"dimensions": "Conditions", "conditions": "all_conditions",
                                     "measurements": "",
                                     "analyses": "horizontal_anticipation_range", "flag": ""},
-             "params": {"output": "horizontal_maximal_latency_ms", "index": "spatial_x"}}
+             "params": {"output": "horizontal_minimal_latency_ms", "index": "spatial_x"}}
         ],
         "subtraction": [
             {"initial_value": {"dimensions": "Conditions", "conditions": "all_conditions",
@@ -469,7 +469,7 @@ def test_multiple_dicts_analysis_getter():
     # Creation of the model multiple analysis dictionaries.
 
     multiple_dicts_analysis_substitued_correct = {
-        'Conditions': {'maximal_latency': [
+        'Conditions': {'minimal_latency': [
             {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
             {"conditions": "barSpeed30dps", "measurements": all_measurements, "params": {'param1': 2}},
             {"conditions": all_conditions, "measurements": "VSDI", "params": {'param1': 1}}
@@ -486,7 +486,7 @@ def test_multiple_dicts_analysis_getter():
 
     # Initialisation of a multiple analysis dictionaries for a complex analysis.
     dict_analysis_test_default = {
-        "Conditions": {"maximal_latency": [
+        "Conditions": {"minimal_latency": [
             {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
             {"conditions": "barSpeed30dps", "measurements": "all_measurements", "params": {'param1': 2}},
             {"conditions": "all_conditions", "measurements": "VSDI", "params": {'param1': 1}}
@@ -1137,7 +1137,7 @@ def test_substituting_all_alias_in_multiple_analysis_dictionaries():
     # Creation of the model multiple analysis dictionaries with 4 common group analysis for each dimension.
     multiple_dicts_analysis_substitued_correct = {
         "Conditions": {
-            "maximal_latency": [
+            "minimal_latency": [
                 {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
                 {"conditions": "barSpeed30dps", "measurements": all_measurements, "params": {"param1": 2}},
                 {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
@@ -1196,7 +1196,7 @@ def test_substituting_all_alias_in_multiple_analysis_dictionaries():
     # Initialisation of a complex multiple analysis dictionaries with 4 common group analysis for each dimension.
     dict_analysis_test_default = {
         "Conditions": {
-            "maximal_latency": [
+            "minimal_latency": [
                 {"conditions": "barSpeed30dps", "measurements": "VSDI", "params": {"param1": 1}},
                 {"conditions": "barSpeed30dps", "measurements": "all_measurements", "params": {"param1": 2}},
                 {"conditions": "barSpeed30dps", "measurements": "BipolarResponse_BipolarGainControl",
@@ -2717,7 +2717,7 @@ def test_anticipation_fit_analyzing():
         macular_analysis_dataframes_default_correct_anticipation.dict_analysis_dataframes)
 
 
-def test_maximal_latency_analyzing():
+def test_minimal_latency_analyzing():
     # Import of a fitted anticipation of a default MacularAnalysisDataframes to test meta-analysis.
     with (open(f"{path_data_test}/MacularAnalysisDataframes/macular_analysis_dataframe_default_anticipation_fitted.pyb",
                "rb") as file_anticipation):
@@ -2729,17 +2729,17 @@ def test_maximal_latency_analyzing():
         macular_analysis_dataframes_anticipation_test_copy = pickle.load(file_anticipation)
 
     # Initialisation of the meta-analysis parameter dictionary for tests.
-    parameters_meta_analysis_dict = {"output": "horizontal_maximal_latency", "index": "spatial_x"}
+    parameters_meta_analysis_dict = {"output": "horizontal_minimal_latency", "index": "spatial_x"}
 
     # Definition of the meta-analysis dictionary for the first condition.
     meta_analysis_dictionary = {"latency": ("X", "barSpeed28,5dps", "VSDI", "latency", "ms"),
                                 "anticipation_range": (
                                     "Conditions", "barSpeed28,5dps", "", "horizontal_anticipation_range",
                                     ""),
-                                "output": {"name": "horizontal_maximal_latency_ms"}}
+                                "output": {"name": "horizontal_minimal_latency_ms"}}
 
     # Performing maximal latency meta-analysis for the first condition.
-    MacularAnalysisDataframes.maximal_latency_analyzing.__wrapped__(macular_analysis_dataframes_anticipation_test,
+    MacularAnalysisDataframes.minimal_latency_analyzing.__wrapped__(macular_analysis_dataframes_anticipation_test,
                                                                     meta_analysis_dictionary, dict_index_default,
                                                                     parameters_meta_analysis_dict)
 
@@ -2747,23 +2747,23 @@ def test_maximal_latency_analyzing():
     meta_analysis_dictionary = {"latency": ("X", "barSpeed30dps", "VSDI", "latency", "ms"),
                                 "anticipation_range": ("Conditions", "barSpeed30dps", "",
                                                        "horizontal_anticipation_range", ""),
-                                "output": {"name": "horizontal_maximal_latency_ms"}}
+                                "output": {"name": "horizontal_minimal_latency_ms"}}
 
     # Performing maximal latency meta-analysis for the second condition.
-    MacularAnalysisDataframes.maximal_latency_analyzing.__wrapped__(macular_analysis_dataframes_anticipation_test,
+    MacularAnalysisDataframes.minimal_latency_analyzing.__wrapped__(macular_analysis_dataframes_anticipation_test,
                                                                     meta_analysis_dictionary, dict_index_default,
                                                                     parameters_meta_analysis_dict)
 
     # Getting the array calculated in the maximal latency meta-analysis.
     output_array = macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["Conditions"].loc[
-        "horizontal_maximal_latency_ms"].values
+        "horizontal_minimal_latency_ms"].values
 
     # Verification of maximal latency values.
     assert np.array_equal(output_array, np.array([-48.141, -41.743]))
 
     # Remove to verify that this addition is the only change made during the meta-analysis.
     macular_analysis_dataframes_anticipation_test.dict_analysis_dataframes["Conditions"].drop(
-        "horizontal_maximal_latency_ms", inplace=True)
+        "horizontal_minimal_latency_ms", inplace=True)
 
     # Verify equality between all analysis dataframes.
     assert MacularAnalysisDataframes.equal_dict_analysis_dataframes(
