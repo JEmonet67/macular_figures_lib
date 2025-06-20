@@ -416,7 +416,8 @@ class MacularDictArray:
         if dict_array1.keys() == dict_array2.keys():
             # Equality between all the arrays of both dictionaries.
             for measurement in dict_array2:
-                equality = equality & np.array_equal(dict_array1[measurement], dict_array2[measurement])
+                equality = equality & np.array_equal(dict_array1[measurement], dict_array2[measurement],
+                                                     equal_nan=True)
         else:
             equality = False
 

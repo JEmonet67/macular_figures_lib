@@ -209,6 +209,10 @@ def test_equal_dict_array():
     assert not MacularDictArray.equal_dict_array(macular_dict_array_head100.index,
                                                  macular_dict_array_head100_centered.index)
 
+    # Case with a dict array containing arrays with np.nan.
+    dict_array_with_nan = MacularDictArray.load(f"{path_data_test}/RC_RM_dSGpCP0033_barSpeed30dps_default_0f.pyb").data
+    assert MacularDictArray.equal_dict_array(dict_array_with_nan, dict_array_with_nan)
+
 
 def test_cleaning_dict_preprocessing():
     # Case of an empty dictionary.
