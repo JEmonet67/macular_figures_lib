@@ -56,6 +56,26 @@ dict_simulation_head100 = {
 dict_preprocessing_default = {}
 
 
+def test_array_slicing():
+    # Initialisation of a 3D array.
+    array = np.random.rand(4, 5, 6)
+
+    # Slicing all dimensions of a 3D array.
+    assert isinstance(DataPreprocessor.array_slicing(array, (1, 4, 5)), float)
+    # Slicing two dimensions of a 3D array.
+    assert DataPreprocessor.array_slicing(array, (2, None, 5)).ndim == 1
+    # Slicing a single dimension of a 3D array.
+    assert DataPreprocessor.array_slicing(array, (None, 3, None)).ndim == 2
+
+    # Case of a 2D array.
+    array = np.random.rand(4, 5)
+    assert DataPreprocessor.array_slicing(array, (None, 4)).ndim == 1
+
+    # Case of a 1D array.
+    array = np.random.rand(4)
+    assert (isinstance(DataPreprocessor.array_slicing(array, (2,)), float))
+
+
 def test_array_edge_cropping():
     # Case without cropping the edges.
     cropped_imbricated_array = preprocessor.array_edge_cropping(macular_dict_array_head100.data[

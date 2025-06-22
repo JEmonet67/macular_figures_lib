@@ -2,27 +2,41 @@ import numpy as np
 
 
 class DataPreprocessor:
-    """Summary
+    @staticmethod
+    def array_slicing(array, slicer_indices):
+        """Slicing an array into an array of smaller dimensions or a single float.
 
-    Explanation
+        Slicing is allowed by a tuple of the same size as the array, which allows each of these dimensions to be sliced
+        or not. If the value corresponding to the dimension is an int, slicing is performed on that dimension, otherwise
+        the dimension remains intact.
 
-    Note
-    ----------
+        Parameters
+        ----------
+        array : np.ndarray
+            3D, 2D or 1D array to be sliced.
 
+        slicer_indices : tuple
+            Indices according to which each dimension of the array should be cut. The tuple therefore has the same
+            length as the number of dimensions in the array. If a dimension should not be cut, simply enter any non-int
+            object. For clarity, we recommend using ‘None’.
 
-    Attributes
-    ----------
-    attr1 : type
-        Summary attr1
+        Returns
+        ----------
+        array : np.ndarray or float
+            Array that has been cut down to a smaller size than the original array or a simple floats number.
+        """
+        # Convert non-int slice indices to empty slice objects.
+        slicer_indices = tuple([i if isinstance(i, int) else slice(None) for i in slicer_indices])
 
-        Explanation attr1
-
-    Example
-    ----------
-    >>> instruction
-    result instruction
-
-    """
+        # 3D array slicing.
+        if array.ndim == 3:
+            return array[slicer_indices]
+        # 2D array slicing.
+        elif array.ndim == 2:
+            return array[slicer_indices]
+        # 1D array slicing.
+        elif array.ndim == 1:
+            return array[slicer_indices]
 
     @staticmethod
     def vsdi_computing(macular_dict_array_data):
@@ -165,9 +179,8 @@ class DataPreprocessor:
                                  "t_min_edge": 0, "t_max_edge": 0}
 
         # Merging of default dictionary keys not present in the crop dictionary provided as input.
-        for key, value in default_cropping_dict.items():
-            if key not in cropping_dict:
-                cropping_dict[key] = value
+        cropping_dict = {key: cropping_dict[key] if key in cropping_dict else default_cropping_dict[key] for key in
+                         default_cropping_dict}
 
         # Cropping each axis of the array with its new respective edges.
         return array[cropping_dict["y_min_edge"]:array.shape[0] - cropping_dict["y_max_edge"],
