@@ -3012,7 +3012,7 @@ class MacularAnalysisDataframes:
     @meta_analysis
     def minimal_latency_analyzing(macular_analysis_dataframes, meta_analysis_dictionary, index,
                                   parameters_meta_analysis_dict):
-        """Function to calculate the maximal latency at which latency begins to saturate for a distance between cell and
+        """Function to calculate the minimal latency at which latency begins to saturate for a distance between cell and
         object motion origin that exceeds the anticipation range.
 
         The calculation is performed by obtaining the latency values and then extracting only the stationary portion.
@@ -3021,7 +3021,7 @@ class MacularAnalysisDataframes:
 
         To work, this meta-analysis requires 2 arguments: the "latency" that needs to be averaged and
         ‘anticipation_range’ which should be used to isolate the stationary portion. This dictionary does not require an
-        ‘output’ key to define the output to which the maximal latency should be sent. Instead, the output is
+        ‘output’ key to define the output to which the minimal latency should be sent. Instead, the output is
         automatically set to the conditions dataframe and directly uses the conditions defined in the ‘latency’
         analysis.
 
@@ -3061,7 +3061,7 @@ class MacularAnalysisDataframes:
         stationary_latency = meta_analysis_dictionary["latency"][np.where(
             current_index > meta_analysis_dictionary["anticipation_range"])[0][0]:]
 
-        # Calculation of the maximal latency
+        # Calculation of the minimal latency
         minimal_latency_value = MetaAnalyser.mean_computing(stationary_latency)
 
         # Adds the output value(s) to a new row in the output dataframe.

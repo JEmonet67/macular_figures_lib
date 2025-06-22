@@ -7,50 +7,7 @@ from src.data_manager.CoordinateManager import CoordinateManager
 
 
 class DataframeChunkProcessor:
-    """Summary
-
-    Explanation
-
-
-    Note
-    ----------
-
-
-    Attributes
-    ----------
-    attr1 : type
-        Summary attr1
-
-        Explanation attr1
-
-    Example
-    ----------
-    >>> instruction
-    result instruction
-
-    """
     def __init__(self):
-        """Summary
-
-            Explanation
-
-            Parameters
-            ----------
-            param1 : type
-                Summary param1
-
-                Explanation param1
-            Returns
-            ----------
-            type
-                Summary
-
-            Raises
-            ----------
-            type
-                Summary
-
-        """
         # Extraction of the output, the number and the Macular cell in the name of the column of a Macular csv.
         self.output_num_celltype_reg = re.compile(r"(.*?) \(([0-9]{1,5})\) (.*)")
 

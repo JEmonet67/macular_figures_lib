@@ -2,50 +2,7 @@ import re
 
 
 class DataframeHelpers:
-    """Summary
-
-    Explanation
-
-    Note
-    ----------
-
-
-    Attributes
-    ----------
-    attr1 : type
-        Summary attr1
-
-        Explanation attr1
-
-    Example
-    ----------
-    >>> instruction
-    result instruction
-
-    """
-
     def __init__(self):
-        """Summary
-
-            Explanation
-
-            Parameters
-            ----------
-            param1 : type
-                Summary param1
-
-                Explanation param1
-            Returns
-            ----------
-            type
-                Summary
-
-            Raises
-            ----------
-            type
-                Summary
-
-        """
         # Extraction of the name, value and unit of a condition.
         self.name_value_unit_cond_reg = re.compile("(^[A-Za-z]+)(-?[0-9]{1,4},?[0-9]{0,4})([A-Za-z]+$)")
 

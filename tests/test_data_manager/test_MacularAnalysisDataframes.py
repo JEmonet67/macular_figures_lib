@@ -5,6 +5,7 @@ import re
 
 import numpy as np
 import pandas as pd
+from tabulate import tabulate
 
 from src.data_manager.MacularDictArray import MacularDictArray
 from src.data_manager.MacularAnalysisDataframes import MacularAnalysisDataframes
@@ -67,7 +68,7 @@ with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_analyzed_macular_a
     macular_analysis_dataframes_default_analyzed = pickle.load(file_test)
 
 # Import of a fully meta-analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
-with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe_copy.pyb", "rb")
+with (open(f"{path_data_test}/fully_meta_analyzed_macular_analysis_dataframe_copy.pyb", "rb")
       as file):
     macular_analysis_dataframes_default_meta_analyzed = pickle.load(file)
 
@@ -165,8 +166,7 @@ multiple_dicts_preprocessings_default = {
 }
 
 path_pyb_default = f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe.pyb"
-path_pyb_default_copy = (f"{path_data_test}/MacularAnalysisDataframes/"
-                         f"fully_meta_analyzed_macular_analysis_dataframe_copy.pyb")
+path_pyb_default_copy = (f"{path_data_test}/fully_meta_analyzed_macular_analysis_dataframe_copy.pyb")
 multiple_dicts_analysis_default = {
     "path_pyb": path_pyb_default,
     "Conditions": {
@@ -655,8 +655,8 @@ def test_make_from_dictionary():
 
 def test_update_from_file():
     # Update existing MacularAnalysisDataframes from the contents of a pyb file.
-    macular_analysis_dataframes_test.update_from_file(f"{path_data_test}/MacularAnalysisDataframes/"
-                                                      f"fully_meta_analyzed_macular_analysis_dataframe_copy.pyb")
+    macular_analysis_dataframes_test.update_from_file(f"{path_data_test}/fully_meta_analyzed_macular_analysis_dataframe"
+                                                      f"_copy.pyb")
 
     # Verification that MacularAnalysisDataframes has been updated correctly.
     assert MacularAnalysisDataframes.equal(macular_analysis_dataframes_test,
@@ -756,7 +756,7 @@ def test_checking_difference_file_json(monkeypatch):
 
 def test_equal():
     # Import a copy of the fully meta-analyzed default MacularAnalysisDataframes for equality tests.
-    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe_copy.pyb", "rb")
+    with (open(f"{path_data_test}/fully_meta_analyzed_macular_analysis_dataframe_copy.pyb", "rb")
           as file):
         macular_analysis_dataframes_default_meta_analyzed_copy = pickle.load(file)
 
@@ -832,7 +832,7 @@ def test_load():
 
 def test_save():
     # Import a copy of a fully meta-analyzed MacularAnalysisDataframes based on default multiple MacularDictArray.
-    with (open(f"{path_data_test}/MacularAnalysisDataframes/fully_meta_analyzed_macular_analysis_dataframe_copy.pyb", "rb")
+    with (open(f"{path_data_test}/fully_meta_analyzed_macular_analysis_dataframe_copy.pyb", "rb")
           as file):
         macular_analysis_dataframes_default_meta_analyzed_copy = pickle.load(file)
 
