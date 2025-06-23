@@ -482,8 +482,13 @@ def test_transient_reg_setter():
 def test_repr():
     # Import of the control display.
     with open(f"{path_data_test}/MacularDictArray/repr.txt", "r") as file:
-        display_head100_npones = "".join(file.readlines())[:-1]
+        display_head100_npones = file.readlines()
 
+    # Modification of the correct display paths to take into account the user's file path.
+    display_head100_npones[0] = f"Path pyb : {path_data_test}/MacularDictArray\n"
+    display_head100_npones[2] = f"Path csv : {path_data_test}\n"
+
+    display_head100_npones = "".join(display_head100_npones)[:-1]
     assert display_head100_npones == macular_dict_array_head100_npones.__repr__()
 
 
@@ -683,7 +688,7 @@ def test_setup_data_dict_array_preprocessing():
     macular_dict_array_test.dict_preprocessing["binning"] = 0.0016
     macular_dict_array_test.dict_preprocessing["VSDI"] = True
     macular_dict_array_test.dict_preprocessing["derivative"] = {"VSDI": 31, "FiringRate_GanglionGainControl": 31}
-    macular_dict_array_test.dict_preprocessing["edge"] = (5, 0)
+    macular_dict_array_test.dict_preprocessing["edge"] = [5, 0]
     macular_dict_array_test.dict_preprocessing["temporal_index_ms"] = 1000
     macular_dict_array_test.dict_preprocessing["spatial_index_mm_retina"] = 0.3
     macular_dict_array_test.dict_preprocessing["spatial_index_mm_cortex"] = 3
@@ -730,7 +735,7 @@ def test_edge_cropping_preprocess():
         macular_dict_array_test = pickle.load(file_test)
 
     # Addition and calculation of edge cropping in the macular dict array test.
-    macular_dict_array_test.dict_preprocessing["edge"] = (5, 0)
+    macular_dict_array_test.dict_preprocessing["edge"] = [5, 0]
     macular_dict_array_test._path_pyb = macular_dict_array_head100_cropEdge.path_pyb
     macular_dict_array_test.edge_cropping_preprocess()
 
@@ -749,7 +754,7 @@ def test_edge_cropping_preprocess():
     assert macular_dict_array_test.index["spatial_y"].shape[0] == 11
 
     # Case of asymmetrical edge cropping in the macular dict array test, different for x and y-axis.
-    macular_dict_array_test.dict_preprocessing["edge"] = ((1, 3), 1)
+    macular_dict_array_test.dict_preprocessing["edge"] = [[1, 3], 1]
     macular_dict_array_test.edge_cropping_preprocess()
     assert macular_dict_array_test.data["FiringRate_GanglionGainControl"].shape == (9, 65, 99)
     assert macular_dict_array_test.index["spatial_x"].shape[0] == 65
@@ -788,13 +793,13 @@ def test_temporal_centering_preprocess():
     assert MacularDictArray.equal(macular_dict_array_test, macular_dict_array_head100_centered)
 
     # Checking centering taking into account horizontal edge cropping.
-    macular_dict_array_test.dict_preprocessing["edge"] = ((5, 5), 2)
+    macular_dict_array_test.dict_preprocessing["edge"] = [[5, 5], 2]
     macular_dict_array_test.temporal_centering_preprocess()
     assert np.array_equal(macular_dict_array_test.index["temporal_centered"],
                           macular_dict_array_head100_centered.index["temporal_centered"][5: 78])
 
     # Checking centering taking into account vertical edge cropping.
-    macular_dict_array_test.dict_preprocessing["edge"] = ((5, 5), 2)
+    macular_dict_array_test.dict_preprocessing["edge"] = [[5, 5], 2]
     macular_dict_array_test.dict_simulation["axis"] = "vertical"
     macular_dict_array_test.temporal_centering_preprocess()
     assert np.array_equal(macular_dict_array_test.index["temporal_centered"][:, 0],

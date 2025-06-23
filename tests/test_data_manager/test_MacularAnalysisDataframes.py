@@ -381,11 +381,12 @@ def test_init():
 
 
 def test_dict_paths_pyb_getter():
+    path = "/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/data_manager"
     assert macular_analysis_dataframes_head100.dict_paths_pyb == {"MacularDictArrays":
-        {"barSpeed6dps": f"{path_data_test}/RC_RM_dSGpCP0026_barSpeed6dps_head100_copy_0f.pyb",
-         "barSpeed15dps": f"{path_data_test}/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb",
-         "barSpeed30dps": f"{path_data_test}/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb"},
-        "self": path_pyb_head100}
+                                  {"barSpeed6dps": f"{path}/RC_RM_dSGpCP0026_barSpeed6dps_head100_copy_0f.pyb",
+                                   "barSpeed15dps": f"{path}/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb",
+                                   "barSpeed30dps": f"{path}/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb"},
+                              "self": f"{path}/MacularAnalysisDataframes/initialized_macular_analysis_dataframe.pyb"}
 
 
 def test_dict_paths_pyb_setter():
@@ -396,13 +397,12 @@ def test_dict_paths_pyb_setter():
     except AttributeError:
         assert True
 
-    dict_paths_pyb_initial = {"self": path_pyb_head100, "MacularDictArrays":
-        {'barSpeed6dps': '/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/'
-                         'data_manager/RC_RM_dSGpCP0026_barSpeed6dps_head100_copy_0f.pyb',
-         'barSpeed15dps': '/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/'
-                          'data_manager/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb',
-         'barSpeed30dps': '/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/'
-                          'data_manager/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb'}}
+    path = "/home/jemonet/Documents/These/Code/macular_figures_lib/tests/data_test/data_manager"
+    dict_paths_pyb_initial = {"MacularDictArrays":
+                                  {"barSpeed6dps": f"{path}/RC_RM_dSGpCP0026_barSpeed6dps_head100_copy_0f.pyb",
+                                   "barSpeed15dps": f"{path}/RC_RM_dSGpCP0028_barSpeed15dps_head100_copy_0f.pyb",
+                                   "barSpeed30dps": f"{path}/RC_RM_dSGpCP0033_barSpeed30dps_head100_0f.pyb"},
+                              "self": f"{path}/MacularAnalysisDataframes/initialized_macular_analysis_dataframe.pyb"}
 
     # Verification that the value of dict_paths_pyb has not changed.
     assert (macular_analysis_dataframes_test.dict_paths_pyb
