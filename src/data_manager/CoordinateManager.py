@@ -137,18 +137,18 @@ class CoordinateManager:
         # Completely symmetrical edge case.
         if isinstance(edge, int):
             dict_edges = {"x_min_edge": edge, "x_max_edge": edge, "y_min_edge": edge, "y_max_edge": edge}
-        elif isinstance(edge, tuple):
+        elif isinstance(edge, list):
             # Partially symmetrical edge case, horizontal relative to vertical.
             if isinstance(edge[0], int) and isinstance(edge[1], int):
                 dict_edges = {"x_min_edge": edge[0], "x_max_edge": edge[0], "y_min_edge": edge[1], "y_max_edge": edge[1]}
             # Partially symmetrical vertical and asymmetrical horizontal edge case.
-            elif isinstance(edge[0], tuple) and isinstance(edge[1], int):
+            elif isinstance(edge[0], list) and isinstance(edge[1], int):
                 dict_edges = {"x_min_edge": edge[0][0], "x_max_edge": edge[0][1], "y_min_edge": edge[1], "y_max_edge": edge[1]}
             # Partially symmetrical horizontal and asymmetrical vertical edge case.
-            elif isinstance(edge[0], int) and isinstance(edge[1], tuple):
+            elif isinstance(edge[0], int) and isinstance(edge[1], list):
                 dict_edges = {"x_min_edge": edge[0], "x_max_edge": edge[0], "y_min_edge": edge[1][0], "y_max_edge": edge[1][1]}
             # Completely asymmetrical edge case.
-            elif isinstance(edge[0], tuple) and isinstance(edge[1], tuple):
+            elif isinstance(edge[0], list) and isinstance(edge[1], list):
                 dict_edges = {"x_min_edge": edge[0][0], "x_max_edge": edge[0][1], "y_min_edge": edge[1][0], "y_max_edge": edge[1][1]}
 
         return dict_edges

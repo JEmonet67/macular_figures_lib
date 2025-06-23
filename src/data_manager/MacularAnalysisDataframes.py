@@ -953,7 +953,7 @@ class MacularAnalysisDataframes:
 
     def save(self):
         """Saving the MacularAnalysisDataframes in a pyb (python binary) file whose path and name correspond to that
-        present in the attribute of the simulation dictionary.
+        present in the attribute of the analysis dictionary.
         """
         with open(f"{self.dict_paths_pyb['self']}", "wb") as pyb_file:
             pickle.dump(self, pyb_file)
